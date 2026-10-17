@@ -23,13 +23,7 @@
     .fc .fc-button { padding: 4px 8px !important; font-size: 0.8rem !important; }
     
     /* 過去を表示・隠すボタンのデザイン */
-    .fc-togglePast-button {
-      background-color: #64748b !important;
-      border: none !important;
-      margin-left: 8px !important;
-      font-size: 0.75rem !important;
-      padding: 4px 8px !important;
-    }
+    .fc-togglePast-button { background-color: #64748b !important; border: none !important; margin-left: 8px !important; font-size: 0.75rem !important; padding: 4px 8px !important; }
 
     .fc .fc-col-header-cell { padding: 4px 0; background: #fafafa; font-size: 0.8rem; }
     .fc-theme-standard td, .fc-theme-standard th { border-color: #e5e7eb; }
@@ -40,17 +34,7 @@
     .fc-day-sat .fc-daygrid-day-number { color: #2563eb !important; }
     .fc-day-holiday .fc-daygrid-day-number { color: #dc2626 !important; font-weight: 800 !important; }
 
-    .fc-event {
-      border: none !important;
-      border-radius: 6px !important;
-      margin: 1px 1px !important;
-      padding: 1px 4px !important;
-      font-size: 0.72rem !important;
-      font-weight: 600 !important;
-      line-height: 1.25 !important;
-      cursor: pointer;
-      display: block !important;
-    }
+    .fc-event { border: none !important; border-radius: 6px !important; margin: 1px 1px !important; padding: 1px 4px !important; font-size: 0.72rem !important; font-weight: 600 !important; line-height: 1.25 !important; cursor: pointer; display: block !important; }
     .fc-daygrid-event .fc-event-main { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
@@ -103,27 +87,12 @@
     <div class="modal">
       <h2 id="modalTitle">予定の追加</h2>
       
-      <div class="form-group">
-        <label>予定のタイトル</label>
-        <input type="text" id="eventTitle" placeholder="例: 🧀チーズ、〇〇会議">
-      </div>
-      
-      <div class="form-group">
-        <label>カラー（カテゴリ）</label>
-        <select id="eventColor"></select>
-      </div>
-      
-      <div class="form-group">
-        <label>開始日</label>
-        <input type="date" id="eventDate">
-      </div>
+      <div class="form-group"><label>予定のタイトル</label><input type="text" id="eventTitle" placeholder="例: 🧀チーズ、〇〇会議"></div>
+      <div class="form-group"><label>カラー（カテゴリ）</label><select id="eventColor"></select></div>
+      <div class="form-group"><label>開始日</label><input type="date" id="eventDate"></div>
       
       <!-- 繰り返し設定エリア -->
-      <div class="checkbox-group" id="repeatWrap">
-        <input type="checkbox" id="eventRepeat">
-        <label for="eventRepeat">複数日に繰り返して追加する</label>
-      </div>
-      
+      <div class="checkbox-group" id="repeatWrap"><input type="checkbox" id="eventRepeat"><label for="eventRepeat">複数日に繰り返して追加する</label></div>
       <div id="repeatEndGroup" style="display: none; background: #fef3c7; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
           <label style="color: #b45309; font-size: 0.85rem; margin: 0; font-weight: bold;">間隔:</label>
@@ -136,26 +105,13 @@
         </div>
       </div>
 
-      <div class="checkbox-group">
-        <input type="checkbox" id="eventAllDay" checked>
-        <label for="eventAllDay">終日（時間指定なし）</label>
-      </div>
-      
+      <div class="checkbox-group"><input type="checkbox" id="eventAllDay" checked><label for="eventAllDay">終日（時間指定なし）</label></div>
       <div id="timePickerGroup" style="display: none; gap: 10px;">
-        <div class="form-group" style="flex: 1; margin-bottom: 0;">
-          <label>開始時間</label>
-          <input type="time" id="eventStartTime" value="12:00">
-        </div>
-        <div class="form-group" style="flex: 1; margin-bottom: 0;">
-          <label>終了時間（任意）</label>
-          <input type="time" id="eventEndTime">
-        </div>
+        <div class="form-group" style="flex: 1; margin-bottom: 0;"><label>開始時間</label><input type="time" id="eventStartTime" value="12:00"></div>
+        <div class="form-group" style="flex: 1; margin-bottom: 0;"><label>終了時間（任意）</label><input type="time" id="eventEndTime"></div>
       </div>
       
-      <div class="form-group" style="margin-top: 12px;">
-        <label>内容説明・メモ</label>
-        <textarea id="eventDesc" rows="3" placeholder="詳細やメモがあれば入力"></textarea>
-      </div>
+      <div class="form-group" style="margin-top: 12px;"><label>内容説明・メモ</label><textarea id="eventDesc" rows="3" placeholder="詳細やメモがあれば入力"></textarea></div>
       
       <div class="modal-buttons">
         <button class="btn-delete" id="deleteEventBtn" style="display: none;">削除</button>
@@ -199,10 +155,7 @@
     ];
 
     function getCustomLabels() {
-      try {
-        const saved = localStorage.getItem("r4_custom_labels_v10");
-        if (saved) return JSON.parse(saved);
-      } catch(e) {}
+      try { const saved = localStorage.getItem("r4_custom_labels_v10"); if (saved) return JSON.parse(saved); } catch(e) {}
       return DEFAULT_COLORS.map(c => c.defaultName);
     }
     
@@ -225,10 +178,7 @@
       const select = document.getElementById("eventColor");
       select.innerHTML = "";
       DEFAULT_COLORS.forEach((c, idx) => {
-        const opt = document.createElement("option");
-        opt.value = idx;
-        opt.textContent = customLabels[idx] || c.defaultName;
-        select.appendChild(opt);
+        const opt = document.createElement("option"); opt.value = idx; opt.textContent = customLabels[idx] || c.defaultName; select.appendChild(opt);
       });
     }
     renderColorOptions();
@@ -253,11 +203,7 @@
           }
         }
       },
-      headerToolbar: { 
-        left: 'prev,next today togglePast', 
-        center: 'title', 
-        right: 'dayGridMonth,listMonth' 
-      },
+      headerToolbar: { left: 'prev,next today togglePast', center: 'title', right: 'dayGridMonth,listMonth' },
       buttonText: { today: '今日', month: '月', list: 'リスト' },
       locale: 'ja',
       contentHeight: 'auto',
@@ -266,18 +212,12 @@
       
       datesSet: function(arg) {
         const btn = document.querySelector('.fc-togglePast-button');
-        if (btn) {
-          btn.style.display = (arg.view.type === 'listMonth') ? 'inline-block' : 'none';
-        }
+        if (btn) btn.style.display = (arg.view.type === 'listMonth') ? 'inline-block' : 'none';
       },
       
       dayCellDidMount: function(arg) {
-        const dateStr = arg.date.getFullYear() + '-' + 
-          String(arg.date.getMonth() + 1).padStart(2, '0') + '-' + 
-          String(arg.date.getDate()).padStart(2, '0');
-        if (holidays[dateStr]) {
-          arg.el.classList.add('fc-day-holiday');
-        }
+        const dateStr = arg.date.getFullYear() + '-' + String(arg.date.getMonth() + 1).padStart(2, '0') + '-' + String(arg.date.getDate()).padStart(2, '0');
+        if (holidays[dateStr]) arg.el.classList.add('fc-day-holiday');
       },
 
       eventDidMount: function(arg) {
@@ -297,16 +237,8 @@
                 timeStr = h + ':' + m;
               }
 
-              let titleHtml = '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-weight:bold;">' +
-                '<span style="background:' + col.bg + '; color:' + col.text + '; padding:2px 6px; border-radius:4px; font-size:0.7rem;">' + labelName + '</span>' +
-                '<span style="font-size:0.85rem; color:#555;">' + timeStr + '</span>' +
-                '<span>' + String(arg.event.title).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>' +
-              '</div>';
-
-              if (props.desc) {
-                let safeDesc = String(props.desc).replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                titleHtml += '<div style="font-size:0.82rem; color:#4b5563; background:#f9fafb; border-left:3px solid #cbd5e1; padding:4px 8px; margin-top:4px; white-space:pre-wrap; word-break:break-all;">' + safeDesc + '</div>';
-              }
+              let titleHtml = '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-weight:bold;"><span style="background:' + col.bg + '; color:' + col.text + '; padding:2px 6px; border-radius:4px; font-size:0.7rem;">' + labelName + '</span><span style="font-size:0.85rem; color:#555;">' + timeStr + '</span><span>' + String(arg.event.title).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span></div>';
+              if (props.desc) { titleHtml += '<div style="font-size:0.82rem; color:#4b5563; background:#f9fafb; border-left:3px solid #cbd5e1; padding:4px 8px; margin-top:4px; white-space:pre-wrap; word-break:break-all;">' + String(props.desc).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>'; }
               titleTd.innerHTML = titleHtml;
             }
           }
@@ -335,16 +267,13 @@
         successCallback(filteredEvents);
       },
 
-      eventClick: function(info) {
-        openEditModal(info.event);
-      },
+      eventClick: function(info) { openEditModal(info.event); },
       
       dateClick: function(info) {
         currentEventDocId = null;
         document.getElementById("modalTitle").textContent = "予定の追加";
         document.getElementById("eventTitle").value = "";
         document.getElementById("eventDesc").value = "";
-        
         document.getElementById("eventDate").value = info.dateStr;
         document.getElementById("eventStartTime").value = "12:00";
         document.getElementById("eventEndTime").value = "";
@@ -381,14 +310,7 @@
           const colorIdx = d.colorIdx !== undefined ? d.colorIdx : 0;
           const col = DEFAULT_COLORS[colorIdx] || DEFAULT_COLORS[0];
           evs.push({
-            id: docSnap.id,
-            title: d.title || "名称未設定",
-            start: d.start,
-            end: d.end || null,
-            allDay: d.allDay !== false,
-            backgroundColor: col.bg,
-            textColor: col.text,
-            extendedProps: { desc: d.desc || "", colorIdx: colorIdx }
+            id: docSnap.id, title: d.title || "名称未設定", start: d.start, end: d.end || null, allDay: d.allDay !== false, backgroundColor: col.bg, textColor: col.text, extendedProps: { desc: d.desc || "", colorIdx: colorIdx }
           });
         } catch(e) {}
       });
@@ -396,15 +318,12 @@
       firebaseEventsList = evs;
       calendar.refetchEvents();
 
-      // 本日の予定アラート（昇順）
       if (!hasShownTodayAlert) {
         hasShownTodayAlert = true; 
         const now = new Date();
         const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         
-        const todaysEvents = evs.filter(e => {
-          return e.start && e.start.startsWith(todayStr);
-        });
+        const todaysEvents = evs.filter(e => e.start && e.start.startsWith(todayStr));
 
         if (todaysEvents.length > 0) {
           todaysEvents.sort((a, b) => {
@@ -417,9 +336,7 @@
           todaysEvents.forEach(e => {
             const colName = customLabels[e.extendedProps.colorIdx] || "未設定";
             let timeStr = "終日";
-            if (!e.allDay && e.start.includes("T")) {
-              timeStr = e.start.substring(11, 16);
-            }
+            if (!e.allDay && e.start.includes("T")) timeStr = e.start.substring(11, 16);
             msg += `・${timeStr} [${colName}] ${e.title}\n`;
           });
           
@@ -431,20 +348,12 @@
       }
     });
 
-    document.getElementById('closeAlertBtn').onclick = () => {
-      document.getElementById('alertOverlay').classList.remove('open');
-    };
+    document.getElementById('closeAlertBtn').onclick = () => document.getElementById('alertOverlay').classList.remove('open');
 
     const allDayCheck = document.getElementById("eventAllDay");
     const timePickerGroup = document.getElementById("timePickerGroup");
 
-    function updateTimeInputVisibility() {
-      if (allDayCheck.checked) {
-        timePickerGroup.style.display = "none";
-      } else {
-        timePickerGroup.style.display = "flex";
-      }
-    }
+    function updateTimeInputVisibility() { timePickerGroup.style.display = allDayCheck.checked ? "none" : "flex"; }
     allDayCheck.addEventListener("change", updateTimeInputVisibility);
 
     document.getElementById("eventRepeat").addEventListener("change", function() {
@@ -490,7 +399,6 @@
       document.getElementById("eventColor").value = ev.extendedProps.colorIdx || 0;
       
       allDayCheck.checked = ev.allDay;
-      
       if (ev.allDay) {
         document.getElementById("eventDate").value = ev.startStr.slice(0, 10);
         document.getElementById("eventStartTime").value = "12:00";
@@ -520,7 +428,6 @@
       const colorIdx = parseInt(document.getElementById("eventColor").value, 10);
       const isAllDay = allDayCheck.checked;
       const desc = document.getElementById("eventDesc").value.trim();
-      
       const dateVal = document.getElementById("eventDate").value;
       const startT = document.getElementById("eventStartTime").value;
       const endT = document.getElementById("eventEndTime").value;
@@ -538,50 +445,34 @@
         if (currentEventDocId) {
           let sVal = isAllDay ? dateVal : `${dateVal}T${startT}:00`;
           let eVal = isAllDay ? null : (endT ? `${dateVal}T${endT}:00` : null);
-          await updateDoc(doc(db, "events", currentEventDocId), {
-            title, colorIdx, allDay: isAllDay, start: sVal, end: eVal, desc
-          });
+          await updateDoc(doc(db, "events", currentEventDocId), { title, colorIdx, allDay: isAllDay, start: sVal, end: eVal, desc });
         } else {
           if (isRepeat) {
             let currDate = new Date(dateVal + 'T00:00:00');
             let endDate = new Date(repeatEndStr + 'T00:00:00');
-            
-            if (currDate > endDate) {
-              alert("終了日は開始日より後にしてください"); return;
-            }
+            if (currDate > endDate) { alert("終了日は開始日より後にしてください"); return; }
 
             while (currDate <= endDate) {
               let loopDateStr = currDate.getFullYear() + '-' + String(currDate.getMonth()+1).padStart(2,'0') + '-' + String(currDate.getDate()).padStart(2,'0');
               let sVal = isAllDay ? loopDateStr : `${loopDateStr}T${startT}:00`;
               let eVal = isAllDay ? null : (endT ? `${loopDateStr}T${endT}:00` : null);
-              
-              await addDoc(eventsRef, { 
-                title, colorIdx, allDay: isAllDay, start: sVal, end: eVal, desc, createdAt: new Date().toISOString() 
-              });
-              
+              await addDoc(eventsRef, { title, colorIdx, allDay: isAllDay, start: sVal, end: eVal, desc, createdAt: new Date().toISOString() });
               currDate.setDate(currDate.getDate() + repeatInt);
             }
           } else {
             let sVal = isAllDay ? dateVal : `${dateVal}T${startT}:00`;
             let eVal = isAllDay ? null : (endT ? `${dateVal}T${endT}:00` : null);
-            await addDoc(eventsRef, { 
-              title, colorIdx, allDay: isAllDay, start: sVal, end: eVal, desc, createdAt: new Date().toISOString() 
-            });
+            await addDoc(eventsRef, { title, colorIdx, allDay: isAllDay, start: sVal, end: eVal, desc, createdAt: new Date().toISOString() });
           }
         }
         modal.classList.remove("open");
-      } catch(e) {
-        alert("保存中にエラーが発生しました: " + e.message);
-      }
+      } catch(e) { alert("保存中にエラーが発生しました: " + e.message); }
     };
 
     deleteBtn.onclick = async () => {
       if (!currentEventDocId) return;
       if (confirm("この予定を削除しますか？")) {
-        try {
-          await deleteDoc(doc(db, "events", currentEventDocId));
-          modal.classList.remove("open");
-        } catch(e) {}
+        try { await deleteDoc(doc(db, "events", currentEventDocId)); modal.classList.remove("open"); } catch(e) {}
       }
     };
 
@@ -591,8 +482,7 @@
     document.getElementById("openSettingsBtn").onclick = () => {
       labelInputsContainer.innerHTML = "";
       DEFAULT_COLORS.forEach((c, idx) => {
-        const row = document.createElement("div");
-        row.className = "label-row";
+        const row = document.createElement("div"); row.className = "label-row";
         row.innerHTML = `<div class="color-box" style="background:${c.bg}"></div><input type="text" data-idx="${idx}" value="${customLabels[idx] || c.defaultName}" placeholder="ラベル名">`;
         labelInputsContainer.appendChild(row);
       });
