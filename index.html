@@ -9,7 +9,8 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; color: #222; }
     header { background: #fff; padding: 10px 14px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-    header h1 { font-size: 1.1rem; font-weight: 700; color: #333; }
+    header h1 { font-size: 1.1rem; font-weight: 700; color: #333; display: flex; align-items: baseline; gap: 4px; }
+    .version-mark { font-size: 0.7rem; color: #10b981; font-weight: bold; background: #d1fae5; padding: 2px 6px; border-radius: 10px; }
     .header-btns { display: flex; gap: 6px; }
     .btn-header { border: none; padding: 6px 12px; border-radius: 16px; font-weight: 600; font-size: 0.8rem; cursor: pointer; }
     .btn-setting { background: #e5e7eb; color: #374151; }
@@ -52,4 +53,121 @@
     /* リスト表示の詳細カードスタイル */
     .fc-list-event { cursor: pointer; }
     .list-item-box { padding: 6px 2px; width: 100%; }
-    .list-title { font-size: 0.95rem;
+    .list-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
+    .list-tag { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; display: inline-block; font-weight: 600; }
+    .list-desc { font-size: 0.82rem; color: #4b5563; background: #f9fafb; border-left: 3px solid #cbd5e1; padding: 4px 8px; margin-top: 4px; border-radius: 2px; white-space: pre-wrap; word-break: break-all; }
+
+    /* モーダル */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 14px; padding: 18px; width: 100%; max-width: 380px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal h2 { font-size: 1.05rem; margin-bottom: 12px; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 3px; color: #444; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; }
+    .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .checkbox-group input { width: auto; }
+    .checkbox-group label { margin-bottom: 0; font-size: 0.85rem; font-weight: 600; }
+    .modal-buttons { display: flex; gap: 8px; margin-top: 14px; }
+    .modal-buttons button { flex: 1; padding: 9px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; border: none; cursor: pointer; }
+    .btn-submit { background: #2563eb; color: #fff; }
+    .btn-delete { background: #ef4444; color: #fff; }
+    .btn-cancel { background: #e5e7eb; color: #4b5563; }
+
+    /* ラベル編集リスト */
+    .label-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .color-box { width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>R4予定表 <span class="version-mark">v2</span></h1>
+    <div class="header-btns">
+      <button class="btn-header btn-setting" id="openSettingsBtn">⚙️ ラベル</button>
+      <button class="btn-header btn-add" id="openModalBtn">＋ 予定追加</button>
+    </div>
+  </header>
+
+  <div id="calendar-container">
+    <div id="calendar"></div>
+  </div>
+
+  <!-- 予定追加・詳細モーダル -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h2 id="modalTitle">予定の追加</h2>
+      <div class="form-group">
+        <label>予定のタイトル</label>
+        <input type="text" id="eventTitle" placeholder="例: 🧀チーズ、〇〇車掌">
+      </div>
+      <div class="form-group">
+        <label>カラー（カテゴリ）</label>
+        <select id="eventColor"></select>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="eventAllDay" checked>
+        <label for="eventAllDay">終日（時間指定なし）</label>
+      </div>
+      <div class="form-group" id="datePickerGroup">
+        <label>日付</label>
+        <input type="date" id="eventDate">
+      </div>
+      <div id="timePickerGroup" style="display: none;">
+        <div class="form-group">
+          <label>開始日時</label>
+          <input type="datetime-local" id="eventStart">
+        </div>
+        <div class="form-group">
+          <label>終了日時（任意）</label>
+          <input type="datetime-local" id="eventEnd">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>内容説明・メモ</label>
+        <textarea id="eventDesc" rows="4" placeholder="詳細やメモがあれば入力"></textarea>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-delete" id="deleteEventBtn" style="display: none;">削除</button>
+        <button class="btn-cancel" id="closeModalBtn">閉じる</button>
+        <button class="btn-submit" id="saveEventBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- カラーラベル編集モーダル -->
+  <div class="modal-overlay" id="settingsOverlay">
+    <div class="modal">
+      <h2>色の名前・ラベル設定</h2>
+      <p style="font-size: 0.78rem; color: #666; margin-bottom: 12px;">それぞれの色に付ける名前を設定できます</p>
+      <div id="labelInputsContainer"></div>
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="closeSettingsBtn">キャンセル</button>
+        <button class="btn-submit" id="saveSettingsBtn">ラベルを保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    // 10色の定義
+    const DEFAULT_COLORS = [
+      { id: 0, defaultName: "黄色", bg: "#FFF066", text: "#000000" },
+      { id: 1, defaultName: "紫", bg: "#A855F7", text: "#ffffff" },
+      { id: 2, defaultName: "濃いグレー", bg: "#4B5563", text: "#ffffff" },
+      { id: 3, defaultName: "黄緑", bg: "#84CC16", text: "#000000" },
+      { id: 4, defaultName: "赤", bg: "#EF4444", text: "#ffffff" },
+      { id: 5, defaultName: "水色", bg: "#06B6D4", text: "#ffffff" },
+      { id: 6, defaultName: "青", bg: "#3B82F6", text: "#ffffff" },
+      { id: 7, defaultName: "オレンジ", bg: "#F97316", text: "#ffffff" },
+      { id: 8, defaultName: "ピンク", bg: "#EC4899", text: "#ffffff" },
+      { id: 9, defaultName: "オリーブ", bg: "#65A30D", text: "#ffffff" }
+    ];
+
+    function getCustomLabels() {
+      const saved = localStorage.getItem("r4_custom_labels");
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e){}
+      }
