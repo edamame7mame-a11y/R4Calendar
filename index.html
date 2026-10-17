@@ -24,7 +24,7 @@
     .fc .fc-col-header-cell { padding: 4px 0; background: #fafafa; font-size: 0.8rem; }
     .fc-theme-standard td, .fc-theme-standard th { border-color: #e5e7eb; }
     .fc .fc-daygrid-day-number { font-size: 0.8rem; font-weight: 600; padding: 2px 4px !important; color: #444; }
-    .fc .fc-daygrid-day-frame { min-height: 80px !important; }
+    .fc .fc-daygrid-day-frame { min-height: 80px !important; cursor: pointer; } /* マス目をタップ可能に */
 
     .fc-day-sun .fc-daygrid-day-number { color: #dc2626 !important; }
     .fc-day-sat .fc-daygrid-day-number { color: #2563eb !important; }
@@ -135,7 +135,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-    // 14色定義
     const DEFAULT_COLORS = [
       { id: 0, defaultName: "ジャザ", bg: "#06B6D4", text: "#ffffff" },
       { id: 1, defaultName: "豆たん", bg: "#84CC16", text: "#000000" },
@@ -189,7 +188,7 @@
 
     let holidays = {};
     let currentEventDocId = null;
-    let hasShownTodayAlert = false; // ページ開いた時のアラートを1回だけにするフラグ
+    let hasShownTodayAlert = false; 
 
     const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -242,8 +241,29 @@
           }
         } catch(e) {}
       },
+      // 予定のバッジをタップした時の処理（変更・削除）
       eventClick: function(info) {
         openEditModal(info.event);
+      },
+      // 何もない日付のマス目をタップした時の処理（新規追加）
+      dateClick: function(info) {
+        currentEventDocId = null;
+        document.getElementById("modalTitle").textContent = "予定の追加";
+        document.getElementById("eventTitle").value = "";
+        document.getElementById("eventDesc").value = "";
+        
+        // タップした日付をセット
+        document.getElementById("eventDate").value = info.dateStr;
+        document.getElementById("eventStartTime").value = "12:00";
+        document.getElementById("eventEndTime").value = "";
+        
+        allDayCheck.checked = true;
+        updateTimeInputVisibility();
+        
+        deleteBtn.style.display = "none";
+        saveBtn.style.display = "block";
+        saveBtn.textContent = "保存"; 
+        modal.classList.add("open");
       }
     });
     calendar.render();
@@ -253,7 +273,6 @@
       .then(data => { holidays = data; calendar.render(); })
       .catch(e => console.log(e));
 
-    // データ読み込みと、ページを開いた時の「本日の予定」ポップアップ処理
     onSnapshot(eventsRef, (snapshot) => {
       const firebaseEventsList = [];
       snapshot.forEach((docSnap) => {
@@ -278,14 +297,11 @@
       calendar.removeAllEvents();
       calendar.addEventSource(firebaseEventsList);
 
-      // 【ページを開いた時に本日の予定をお知らせする機能】
       if (!hasShownTodayAlert) {
-        hasShownTodayAlert = true; // 1回だけ表示する
-        
+        hasShownTodayAlert = true; 
         const now = new Date();
         const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         
-        // 今日の予定だけを抜き出す
         const todaysEvents = firebaseEventsList.filter(ev => {
           return ev.start && ev.start.startsWith(todayStr);
         });
@@ -296,15 +312,12 @@
             const colName = customLabels[ev.extendedProps.colorIdx] || "未設定";
             let timeStr = "終日";
             if (!ev.allDay && ev.start.includes("T")) {
-              timeStr = ev.start.substring(11, 16); // 時間部分だけを切り取る
+              timeStr = ev.start.substring(11, 16);
             }
             msg += `・${timeStr} [${colName}] ${ev.title}\n`;
           });
           
-          // カレンダーが表示された直後にポコンと出すため、少しだけ遅らせる
-          setTimeout(() => {
-            alert(msg);
-          }, 800);
+          setTimeout(() => { alert(msg); }, 800);
         }
       }
     });
