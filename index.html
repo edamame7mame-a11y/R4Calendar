@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>共有カレンダー</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8f9fa; color: #333; }
+    header { background: #fff; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+    header h1 { font-size: 1.1rem; font-weight: 700; }
+    .btn-add { background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+    .member-bar { display: flex; gap: 8px; overflow-x: auto; padding: 10px 16px; background: #fff; border-bottom: 1px solid #e5e7eb; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+    .member-pill { font-size: 0.8rem; padding: 5px 12px; border-radius: 14px; font-weight: 600; color: #fff; }
+    #calendar { padding: 12px; max-width: 900px; margin: 0 auto; min-height: 80vh; }
+    .fc .fc-toolbar-title { font-size: 1.1rem; }
+    .fc .fc-button { padding: 5px 8px; font-size: 0.85rem; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 16px; padding: 20px; width: 100%; max-width: 360px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+    .modal h2 { font-size: 1.1rem; margin-bottom: 12px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #555; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem; }
+    .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
+    .modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; border: none; cursor: pointer; }
+    .btn-submit { background: #2563eb; color: #fff; }
+    .btn-cancel { background: #e5e7eb; color: #4b5563; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>共有カレンダー</h1>
+    <button class="btn-add" id="openModalBtn">＋ 予定追加</button>
+  </header>
+
+  <div class="member-bar" id="memberBar"></div>
+  <div id="calendar"></div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h2>予定の追加</h2>
+      <div class="form-group">
+        <label>予定の名前</label>
+        <input type="text" id="eventTitle" placeholder="例: 食事会、会議">
+      </div>
+      <div class="form-group">
+        <label>メンバー（色）</label>
+        <select id="eventMember"></select>
+      </div>
+      <div class="form-group">
+        <label>開始日時</label>
+        <input type="datetime-local" id="eventStart">
+      </div>
+      <div class="form-group">
+        <label>終了日時（任意）</label>
+        <input type="datetime-local" id="eventEnd">
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="closeModalBtn">キャンセル</button>
+        <button class="btn-submit" id="saveEventBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    // 10人の色分け設定
+    const MEMBERS = [
+      { id: "m1", name: "メンバー1", color: "#EF4444" },
+      { id: "m2", name: "メンバー2", color: "#F97316" },
+      { id: "m3", name: "メンバー3", color: "#F59E0B" },
+      { id: "m4", name: "メンバー4", color: "#10B981" },
+      { id: "m5", name: "メンバー5", color: "#06B6D4" },
+      { id: "m6", name: "メンバー6", color: "#3B82F6" },
+      { id: "m7", name: "メンバー7", color: "#6366F1" },
+      { id: "m8", name: "メンバー8", color: "#8B5CF6" },
+      { id: "m9", name: "メンバー9", color: "#EC4899" },
+      { id: "m10", name: "メンバー10", color: "#64748B" }
+    ];
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDhHBvpdoIfVkRKbDAMsr811zXeI2AVrwo",
+      authDomain: "r4calendar-1cb70.firebaseapp.com",
+      projectId: "r4calendar-1cb70",
+      storageBucket: "r4calendar-1cb70.firebasestorage.app",
+      messagingSenderId: "273656700256",
+      appId: "1:273656700256:web:254da78a155c5c8e3b5205"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const eventsRef = collection(db, "events");
+
+    const memberBar = document.getElementById("memberBar");
+    const memberSelect = document.getElementById("eventMember");
+    MEMBERS.forEach(m => {
+      const pill = document.createElement("span");
+      pill.className = "member-pill";
+      pill.style.backgroundColor = m.color;
+      pill.textContent = m.name;
+      memberBar.appendChild(pill);
+
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = m.name;
+      memberSelect.appendChild(opt);
+    });
+
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,listMonth'
+      },
+      locale: 'ja',
+      height: 'auto',
+      navLinks: true
+    });
+    calendar.render();
+
+    onSnapshot(eventsRef, (snapshot) => {
+      const events = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const member = MEMBERS.find(m => m.id === data.memberId) || { name: "", color: '#333' };
+        events.push({
+          id: doc.id,
+          title: `[${member.name}] ${data.title}`,
+          start: data.start,
+          end: data.end,
+          backgroundColor: member.color,
+          borderColor: member.color
+        });
+      });
+      calendar.removeAllEvents();
+      calendar.addEventSource(events);
+    });
+
+    const modal = document.getElementById("modalOverlay");
+    document.getElementById("openModalBtn").onclick = () => {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById("eventStart").value = now.toISOString().slice(0, 16);
+      modal.classList.add("open");
+    };
+    document.getElementById("closeModalBtn").onclick = () => modal.classList.remove("open");
+
+    document.getElementById("saveEventBtn").onclick = async () => {
+      const title = document.getElementById("eventTitle").value.trim();
+      const memberId = document.getElementById("eventMember").value;
+      const start = document.getElementById("eventStart").value;
+      const end = document.getElementById("eventEnd").value;
+
+      if (!title || !start) {
+        alert("予定の名前と開始日時を入力してください");
+        return;
+      }
+
+      await addDoc(eventsRef, {
+        title,
+        memberId,
+        start,
+        
