@@ -9,8 +9,8 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; color: #222; }
     header { background: #fff; padding: 10px 14px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-    header h1 { font-size: 1.1rem; font-weight: 700; color: #333; display: flex; align-items: baseline; gap: 4px; }
-    .version-mark { font-size: 0.7rem; color: #10b981; font-weight: bold; background: #d1fae5; padding: 2px 6px; border-radius: 10px; }
+    header h1 { font-size: 1.1rem; font-weight: 700; color: #333; display: flex; align-items: baseline; gap: 6px; }
+    .version-mark { font-size: 0.7rem; color: #854d0e; font-weight: bold; background: #fef08a; padding: 3px 8px; border-radius: 12px; }
     .header-btns { display: flex; gap: 6px; }
     .btn-header { border: none; padding: 6px 12px; border-radius: 16px; font-weight: 600; font-size: 0.8rem; cursor: pointer; }
     .btn-setting { background: #e5e7eb; color: #374151; }
@@ -28,15 +28,11 @@
     .fc .fc-daygrid-day-number { font-size: 0.8rem; font-weight: 600; padding: 2px 4px !important; color: #444; }
     .fc .fc-daygrid-day-frame { min-height: 80px !important; }
 
-    /* 日曜日と土曜日の色 */
+    /* 日曜・土曜の色 */
     .fc-day-sun .fc-daygrid-day-number { color: #dc2626 !important; }
     .fc-day-sat .fc-daygrid-day-number { color: #2563eb !important; }
 
-    /* 祝日の赤色表示 */
-    .fc-day-holiday .fc-daygrid-day-number { color: #dc2626 !important; font-weight: 800 !important; }
-    .holiday-badge { font-size: 0.65rem; color: #dc2626; font-weight: bold; margin-left: 2px; }
-
-    /* イベントバッジ表示（月表示） */
+    /* 予定バッジ表示（月表示） */
     .fc-event {
       border: none !important;
       border-radius: 6px !important;
@@ -50,12 +46,10 @@
     }
     .fc-daygrid-event .fc-event-main { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    /* リスト表示の詳細カードスタイル */
-    .fc-list-event { cursor: pointer; }
-    .list-item-box { padding: 6px 2px; width: 100%; }
-    .list-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
-    .list-tag { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; display: inline-block; font-weight: 600; }
-    .list-desc { font-size: 0.82rem; color: #4b5563; background: #f9fafb; border-left: 3px solid #cbd5e1; padding: 4px 8px; margin-top: 4px; border-radius: 2px; white-space: pre-wrap; word-break: break-all; }
+    /* 祝日の特別スタイル */
+    .holiday-text-event { pointer-events: none; border: none !important; box-shadow: none !important; margin: 0 !important; padding: 0 4px !important; }
+    .holiday-text-event .fc-event-main { font-size: 0.65rem; font-weight: bold; color: #e11d48; white-space: normal; }
+    .fc-list-event.holiday-text-event, .fc-list-event.fc-bg-event { display: none !important; } /* リスト表示では祝日ラベルを隠す */
 
     /* モーダル */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
@@ -73,8 +67,6 @@
     .btn-submit { background: #2563eb; color: #fff; }
     .btn-delete { background: #ef4444; color: #fff; }
     .btn-cancel { background: #e5e7eb; color: #4b5563; }
-
-    /* ラベル編集リスト */
     .label-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
     .color-box { width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1); }
   </style>
@@ -82,7 +74,7 @@
 <body>
 
   <header>
-    <h1>R4予定表 <span class="version-mark">v3</span></h1>
+    <h1>R4予定表 <span class="version-mark">v4 (安定版)</span></h1>
     <div class="header-btns">
       <button class="btn-header btn-setting" id="openSettingsBtn">⚙️ ラベル</button>
       <button class="btn-header btn-add" id="openModalBtn">＋ 予定追加</button>
@@ -113,7 +105,7 @@
         <label>日付</label>
         <input type="date" id="eventDate">
       </div>
-      <div id="timePickerGroup" style="display: none;">
+      <div id="timePickerGroup" style="display: none; padding-top: 6px; border-top: 1px dashed #ccc; margin-top: 8px;">
         <div class="form-group">
           <label>開始日時</label>
           <input type="datetime-local" id="eventStart">
@@ -135,7 +127,7 @@
     </div>
   </div>
 
-  <!-- カラーラベル編集モーダル -->
+  <!-- ラベル設定モーダル -->
   <div class="modal-overlay" id="settingsOverlay">
     <div class="modal">
       <h2>色の名前・ラベル設定</h2>
@@ -143,7 +135,7 @@
       <div id="labelInputsContainer"></div>
       <div class="modal-buttons">
         <button class="btn-cancel" id="closeSettingsBtn">キャンセル</button>
-        <button class="btn-submit" id="saveSettingsBtn">ラベルを保存</button>
+        <button class="btn-submit" id="saveSettingsBtn">保存</button>
       </div>
     </div>
   </div>
@@ -152,7 +144,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-    // 10色の定義
     const DEFAULT_COLORS = [
       { id: 0, defaultName: "黄色", bg: "#FFF066", text: "#000000" },
       { id: 1, defaultName: "紫", bg: "#A855F7", text: "#ffffff" },
@@ -166,12 +157,11 @@
       { id: 9, defaultName: "オリーブ", bg: "#65A30D", text: "#ffffff" }
     ];
 
-    // ラベル設定の安全な読み込み
     function getCustomLabels() {
       try {
         const saved = localStorage.getItem("r4_custom_labels");
         if (saved) return JSON.parse(saved);
-      } catch(e) {}
+      } catch(e){}
       return DEFAULT_COLORS.map(c => c.defaultName);
     }
     let customLabels = getCustomLabels();
@@ -195,96 +185,127 @@
       DEFAULT_COLORS.forEach((c, idx) => {
         const opt = document.createElement("option");
         opt.value = idx;
-        opt.textContent = `${customLabels[idx] || c.defaultName}`;
+        opt.textContent = customLabels[idx] || c.defaultName;
         select.appendChild(opt);
       });
     }
     renderColorOptions();
 
-    let holidays = {};
+    let firebaseEvents = [];
+    let holidayEvents = [];
     let currentEventDocId = null;
 
-    // カレンダーの初期化（非同期ブロックなし）
     const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,listMonth'
-      },
-      buttonText: {
-        today: '今日',
-        month: '月',
-        list: 'リスト'
-      },
+      headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
+      buttonText: { today: '今日', month: '月', list: 'リスト' },
       locale: 'ja',
       contentHeight: 'auto',
       dayMaxEventRows: 5,
       eventDisplay: 'block',
       
-      // 祝日の赤色スタイル適用
-      dayCellDidMount: function(arg) {
-        const dateStr = arg.date.getFullYear() + '-' + 
-          String(arg.date.getMonth() + 1).padStart(2, '0') + '-' + 
-          String(arg.date.getDate()).padStart(2, '0');
-        
-        if (holidays[dateStr]) {
-          arg.el.classList.add('fc-day-holiday');
-          const numEl = arg.el.querySelector('.fc-daygrid-day-top');
-          if (numEl && !arg.el.querySelector('.holiday-badge')) {
-            const hName = document.createElement('span');
-            hName.className = 'holiday-badge';
-            hName.textContent = holidays[dateStr];
-            numEl.appendChild(hName);
+      // リスト表示の確実なデザイン調整（フリーズしない安全な方法）
+      eventDidMount: function(arg) {
+        if (arg.view.type === 'listMonth' && !arg.event.extendedProps.isHoliday) {
+          const titleTd = arg.el.querySelector('.fc-list-event-title');
+          if (titleTd) {
+            const props = arg.event.extendedProps;
+            const col = DEFAULT_COLORS[props.colorIdx] || DEFAULT_COLORS[0];
+            const labelName = customLabels[props.colorIdx] || col.defaultName;
+
+            titleTd.innerHTML = '';
+            
+            const wrapper = document.createElement('div');
+            wrapper.style.padding = '4px 0';
+
+            const titleRow = document.createElement('div');
+            titleRow.style.display = 'flex';
+            titleRow.style.alignItems = 'center';
+            titleRow.style.gap = '6px';
+            titleRow.style.fontWeight = '700';
+            titleRow.style.fontSize = '0.95rem';
+
+            const tag = document.createElement('span');
+            tag.style.background = col.bg;
+            tag.style.color = col.text;
+            tag.style.padding = '2px 6px';
+            tag.style.borderRadius = '4px';
+            tag.style.fontSize = '0.7rem';
+            tag.textContent = labelName;
+
+            const titleText = document.createElement('span');
+            titleText.textContent = arg.event.title;
+
+            titleRow.appendChild(tag);
+            titleRow.appendChild(titleText);
+            wrapper.appendChild(titleRow);
+
+            if (props.desc) {
+              const descDiv = document.createElement('div');
+              descDiv.style.fontSize = '0.82rem';
+              descDiv.style.color = '#4b5563';
+              descDiv.style.background = '#f9fafb';
+              descDiv.style.borderLeft = '3px solid #cbd5e1';
+              descDiv.style.padding = '4px 8px';
+              descDiv.style.marginTop = '4px';
+              descDiv.style.whiteSpace = 'pre-wrap';
+              descDiv.style.wordBreak = 'break-all';
+              descDiv.textContent = props.desc;
+              wrapper.appendChild(descDiv);
+            }
+            titleTd.appendChild(wrapper);
           }
         }
       },
-
-      // イベント表示のカスタマイズ（リスト時に内容説明まで全展開）
-      eventContent: function(arg) {
-        if (arg.view.type === 'listMonth') {
-          const props = arg.event.extendedProps;
-          const col = DEFAULT_COLORS[props.colorIdx] || DEFAULT_COLORS[0];
-          const labelName = customLabels[props.colorIdx] || col.defaultName;
-          
-          const html = `
-            <div class="list-item-box">
-              <div class="list-title">
-                <span class="list-tag" style="background:${col.bg}; color:${col.text}">${labelName}</span>
-                <span>${arg.event.title}</span>
-              </div>
-              ${props.desc ? `<div class="list-desc">${props.desc}</div>` : ''}
-            </div>
-          `;
-          return { html: html };
-        }
-      },
-
       eventClick: function(info) {
+        if (info.event.extendedProps.isHoliday) return; // 祝日はタップ無効
         openEditModal(info.event);
       }
     });
-
-    // カレンダーを速攻で描画！
     calendar.render();
 
-    // 祝日データは裏側でこっそり読み込む（フリーズ防止）
+    function refreshCalendar() {
+      calendar.removeAllEvents();
+      calendar.addEventSource([...holidayEvents, ...firebaseEvents]);
+    }
+
+    // 祝日データを「予定データ」として安全に読み込む
     fetch("https://holidays-jp.github.io/api/v1/date.json")
       .then(res => res.json())
       .then(data => {
-        holidays = data;
-        calendar.render(); // 祝日が取得できたら画面だけサッと更新
-      })
-      .catch(e => console.log("祝日読み込みエラー", e));
+        Object.keys(data).forEach(dateStr => {
+          // カレンダーのマス目を赤くする用
+          holidayEvents.push({
+            title: data[dateStr],
+            start: dateStr,
+            allDay: true,
+            display: 'background',
+            backgroundColor: '#ffe4e6',
+            classNames: ['holiday-bg-event'],
+            extendedProps: { isHoliday: true }
+          });
+          // 祝日の名前を表示する用
+          holidayEvents.push({
+            title: data[dateStr],
+            start: dateStr,
+            allDay: true,
+            backgroundColor: 'transparent',
+            borderColor: 'transparent',
+            classNames: ['holiday-text-event'],
+            extendedProps: { isHoliday: true }
+          });
+        });
+        refreshCalendar();
+      }).catch(e => console.log(e));
 
-    // 予定データをリアルタイム同期
+    // Firebaseの予定データ読み込み
     onSnapshot(eventsRef, (snapshot) => {
-      const events = [];
+      firebaseEvents = [];
       snapshot.forEach((docSnap) => {
         const d = docSnap.data();
         const col = DEFAULT_COLORS[d.colorIdx] || DEFAULT_COLORS[0];
-        events.push({
+        firebaseEvents.push({
           id: docSnap.id,
           title: d.title,
           start: d.start,
@@ -294,15 +315,15 @@
           textColor: col.text,
           extendedProps: {
             desc: d.desc || "",
-            colorIdx: d.colorIdx || 0
+            colorIdx: d.colorIdx || 0,
+            isHoliday: false
           }
         });
       });
-      calendar.removeAllEvents();
-      calendar.addEventSource(events);
+      refreshCalendar();
     });
 
-    // 終日チェックボックス切り替え
+    // 終日チェックと時間の切り替え
     const allDayCheck = document.getElementById("eventAllDay");
     const datePickerGroup = document.getElementById("datePickerGroup");
     const timePickerGroup = document.getElementById("timePickerGroup");
@@ -318,7 +339,7 @@
     }
     allDayCheck.addEventListener("change", updateTimeInputVisibility);
 
-    // モーダル操作
+    // モーダル操作群
     const modal = document.getElementById("modalOverlay");
     const deleteBtn = document.getElementById("deleteEventBtn");
     const saveBtn = document.getElementById("saveEventBtn");
@@ -349,4 +370,72 @@
       document.getElementById("eventDesc").value = eventObj.extendedProps.desc || "";
       document.getElementById("eventColor").value = eventObj.extendedProps.colorIdx || 0;
       
-      allDayCheck.checked = eventObj.allDay
+      allDayCheck.checked = eventObj.allDay;
+      if (eventObj.allDay) {
+        document.getElementById("eventDate").value = eventObj.startStr.slice(0, 10);
+      } else {
+        document.getElementById("eventStart").value = eventObj.startStr.slice(0, 16);
+        document.getElementById("eventEnd").value = eventObj.endStr ? eventObj.endStr.slice(0, 16) : "";
+      }
+
+      updateTimeInputVisibility();
+      deleteBtn.style.display = "block";
+      saveBtn.style.display = "none";
+      modal.classList.add("open");
+    }
+
+    document.getElementById("closeModalBtn").onclick = () => modal.classList.remove("open");
+
+    saveBtn.onclick = async () => {
+      const title = document.getElementById("eventTitle").value.trim();
+      const colorIdx = parseInt(document.getElementById("eventColor").value, 10);
+      const isAllDay = allDayCheck.checked;
+      const desc = document.getElementById("eventDesc").value.trim();
+      let startVal = isAllDay ? document.getElementById("eventDate").value : document.getElementById("eventStart").value;
+      let endVal = isAllDay ? null : (document.getElementById("eventEnd").value || null);
+
+      if (!title || !startVal) {
+        alert("タイトルと日時を入力してください");
+        return;
+      }
+      await addDoc(eventsRef, { title, colorIdx, allDay: isAllDay, start: startVal, end: endVal, desc, createdAt: new Date().toISOString() });
+      modal.classList.remove("open");
+    };
+
+    deleteBtn.onclick = async () => {
+      if (!currentEventDocId) return;
+      if (confirm("この予定を削除しますか？")) {
+        await deleteDoc(doc(db, "events", currentEventDocId));
+        modal.classList.remove("open");
+      }
+    };
+
+    const settingsModal = document.getElementById("settingsOverlay");
+    const labelInputsContainer = document.getElementById("labelInputsContainer");
+
+    document.getElementById("openSettingsBtn").onclick = () => {
+      labelInputsContainer.innerHTML = "";
+      DEFAULT_COLORS.forEach((c, idx) => {
+        const row = document.createElement("div");
+        row.className = "label-row";
+        row.innerHTML = `<div class="color-box" style="background:${c.bg}"></div><input type="text" data-idx="${idx}" value="${customLabels[idx] || c.defaultName}" placeholder="ラベル名">`;
+        labelInputsContainer.appendChild(row);
+      });
+      settingsModal.classList.add("open");
+    };
+
+    document.getElementById("closeSettingsBtn").onclick = () => settingsModal.classList.remove("open");
+
+    document.getElementById("saveSettingsBtn").onclick = () => {
+      const inputs = labelInputsContainer.querySelectorAll("input");
+      inputs.forEach(input => {
+        const idx = parseInt(input.dataset.idx, 10);
+        customLabels[idx] = input.value.trim() || DEFAULT_COLORS[idx].defaultName;
+      });
+      try { localStorage.setItem("r4_custom_labels", JSON.stringify(customLabels)); } catch(e){}
+      renderColorOptions();
+      settingsModal.classList.remove("open");
+    };
+  </script>
+</body>
+</html>
