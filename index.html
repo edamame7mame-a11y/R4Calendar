@@ -179,6 +179,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
+    // 色を新しく、分かりやすいものに変更し、2枠追加しました
     const DEFAULT_COLORS = [
       { id: 0, defaultName: "ジャザ", bg: "#06B6D4", text: "#ffffff" },
       { id: 1, defaultName: "豆たん", bg: "#84CC16", text: "#000000" },
@@ -186,18 +187,38 @@
       { id: 3, defaultName: "シチミ", bg: "#A855F7", text: "#ffffff" },
       { id: 4, defaultName: "しず", bg: "#EF4444", text: "#ffffff" },
       { id: 5, defaultName: "ひな", bg: "#3B82F6", text: "#ffffff" },
-      { id: 6, defaultName: "🧀", bg: "#FFF066", text: "#000000" },
+      { id: 6, defaultName: "チーズ", bg: "#FFF066", text: "#000000" },
       { id: 7, defaultName: "秘薬", bg: "#F97316", text: "#ffffff" },
       { id: 8, defaultName: "車掌", bg: "#EC4899", text: "#ffffff" },
-      { id: 9, defaultName: "オリーブ", bg: "#65A30D", text: "#ffffff" },
-      { id: 10, defaultName: "追加枠1", bg: "#14B8A6", text: "#ffffff" },
-      { id: 11, defaultName: "追加枠2", bg: "#4F46E5", text: "#ffffff" },
-      { id: 12, defaultName: "追加枠3", bg: "#22C55E", text: "#ffffff" },
-      { id: 13, defaultName: "追加枠4", bg: "#A16207", text: "#ffffff" }
+      
+      // ここから下の色をハッキリした色に変更
+      { id: 9, defaultName: "わらわら", bg: "#111827", text: "#ffffff" }, // ほぼ黒
+      { id: 10, defaultName: "狩猟戦", bg: "#166534", text: "#ffffff" }, // 深い緑
+      { id: 11, defaultName: "追加枠2", bg: "#991B1B", text: "#ffffff" }, // 深い赤
+      { id: 12, defaultName: "追加枠3", bg: "#1E3A8A", text: "#ffffff" }, // ネイビー（濃い青）
+      { id: 13, defaultName: "追加枠4", bg: "#581C87", text: "#ffffff" }, // 濃い紫
+      
+      // 追加の2枠
+      { id: 14, defaultName: "追加枠5", bg: "#9D174D", text: "#ffffff" }, // ワインレッド
+      { id: 15, defaultName: "追加枠6", bg: "#0F766E", text: "#ffffff" }  // 深い青緑
     ];
 
     function getCustomLabels() {
-      try { const saved = localStorage.getItem("r4_custom_labels_v10"); if (saved) return JSON.parse(saved); } catch(e) {}
+      // まず最新の保存データ(v11)を探す
+      try { 
+        const saved = localStorage.getItem("r4_custom_labels_v11"); 
+        if (saved) return JSON.parse(saved); 
+      } catch(e) {}
+      
+      // なければ古いデータ(v10)から名前だけ引き継いで拡張する
+      try { 
+        const oldSaved = localStorage.getItem("r4_custom_labels_v10"); 
+        if (oldSaved) {
+          const parsed = JSON.parse(oldSaved);
+          return DEFAULT_COLORS.map((c, i) => parsed[i] || c.defaultName);
+        }
+      } catch(e) {}
+      
       return DEFAULT_COLORS.map(c => c.defaultName);
     }
     
@@ -225,14 +246,13 @@
     }
     renderColorOptions();
 
-    // グローバル変数を安全に定義
     let holidays = {};
     let currentEventDocId = null;
     let hasShownTodayAlert = false;
     let showPastInList = false;
     let firebaseEventsList = [];
     let currentViewType = 'dayGridMonth';
-    let calendar; // ここで宣言してエラーを防ぐ！
+    let calendar; 
 
     const calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
@@ -550,7 +570,8 @@
         const idx = parseInt(input.dataset.idx, 10);
         customLabels[idx] = input.value.trim() || DEFAULT_COLORS[idx].defaultName;
       });
-      try { localStorage.setItem("r4_custom_labels_v10", JSON.stringify(customLabels)); } catch(e) {}
+      // 新しいv11として保存
+      try { localStorage.setItem("r4_custom_labels_v11", JSON.stringify(customLabels)); } catch(e) {}
       renderColorOptions();
       settingsModal.classList.remove("open");
     };
