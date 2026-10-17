@@ -6,7 +6,7 @@
   <title>共有カレンダー</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8f9fa; color: #333; }
@@ -14,10 +14,11 @@
     header h1 { font-size: 1.1rem; font-weight: 700; }
     .btn-add { background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
     .member-bar { display: flex; gap: 8px; overflow-x: auto; padding: 10px 16px; background: #fff; border-bottom: 1px solid #e5e7eb; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-    .member-pill { font-size: 0.8rem; padding: 5px 12px; border-radius: 14px; font-weight: 600; color: #fff; }
-    #calendar { padding: 12px; max-width: 900px; margin: 0 auto; min-height: 80vh; }
-    .fc .fc-toolbar-title { font-size: 1.1rem; }
-    .fc .fc-button { padding: 5px 8px; font-size: 0.85rem; }
+    .member-pill { font-size: 0.8rem; padding: 5px 12px; border-radius: 14px; font-weight: 600; color: #fff; flex-shrink: 0; }
+    #calendar-container { padding: 12px; max-width: 900px; margin: 0 auto; }
+    #calendar { background: #fff; padding: 8px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .fc .fc-toolbar-title { font-size: 1rem !important; }
+    .fc .fc-button { padding: 4px 8px !important; font-size: 0.8rem !important; }
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; padding: 20px; }
     .modal-overlay.open { display: flex; }
     .modal { background: #fff; border-radius: 16px; padding: 20px; width: 100%; max-width: 360px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
@@ -39,7 +40,10 @@
   </header>
 
   <div class="member-bar" id="memberBar"></div>
-  <div id="calendar"></div>
+  
+  <div id="calendar-container">
+    <div id="calendar"></div>
+  </div>
 
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
@@ -67,13 +71,10 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-    // 10人の色分け設定
     const MEMBERS = [
       { id: "m1", name: "メンバー1", color: "#EF4444" },
       { id: "m2", name: "メンバー2", color: "#F97316" },
@@ -100,6 +101,7 @@
     const db = getFirestore(app);
     const eventsRef = collection(db, "events");
 
+    // メンバーバッジとセレクトボックス生成
     const memberBar = document.getElementById("memberBar");
     const memberSelect = document.getElementById("eventMember");
     MEMBERS.forEach(m => {
@@ -115,20 +117,21 @@
       memberSelect.appendChild(opt);
     });
 
+    // カレンダー初期化
     const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
       headerToolbar: {
-        left: 'prev,next today',
+        left: 'prev,next',
         center: 'title',
-        right: 'dayGridMonth,timeGridWeek,listMonth'
+        right: 'today'
       },
       locale: 'ja',
-      height: 'auto',
-      navLinks: true
+      contentHeight: 'auto'
     });
     calendar.render();
 
+    // リアルタイム反映
     onSnapshot(eventsRef, (snapshot) => {
       const events = [];
       snapshot.forEach((doc) => {
@@ -147,6 +150,7 @@
       calendar.addEventSource(events);
     });
 
+    // モーダル操作
     const modal = document.getElementById("modalOverlay");
     document.getElementById("openModalBtn").onclick = () => {
       const now = new Date();
@@ -156,6 +160,7 @@
     };
     document.getElementById("closeModalBtn").onclick = () => modal.classList.remove("open");
 
+    // 保存処理
     document.getElementById("saveEventBtn").onclick = async () => {
       const title = document.getElementById("eventTitle").value.trim();
       const memberId = document.getElementById("eventMember").value;
@@ -171,4 +176,13 @@
         title,
         memberId,
         start,
-        
+        end: end || start,
+        createdAt: new Date().toISOString()
+      });
+
+      modal.classList.remove("open");
+      document.getElementById("eventTitle").value = "";
+    };
+  </script>
+</body>
+</html>
