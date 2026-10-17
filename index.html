@@ -225,14 +225,17 @@
     }
     renderColorOptions();
 
+    // グローバル変数を安全に定義
     let holidays = {};
     let currentEventDocId = null;
     let hasShownTodayAlert = false;
     let showPastInList = false;
     let firebaseEventsList = [];
+    let currentViewType = 'dayGridMonth';
+    let calendar; // ここで宣言してエラーを防ぐ！
 
     const calendarEl = document.getElementById('calendar');
-    const calendar = new FullCalendar.Calendar(calendarEl, {
+    calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
       customButtons: {
         togglePast: {
@@ -254,7 +257,14 @@
       
       datesSet: function(arg) {
         const btn = document.querySelector('.fc-togglePast-button');
-        if (btn) btn.style.display = (arg.view.type === 'listMonth') ? 'inline-block' : 'none';
+        if (btn) {
+          btn.style.display = (arg.view.type === 'listMonth') ? 'inline-block' : 'none';
+          btn.textContent = showPastInList ? '過去を隠す' : '過去を表示';
+        }
+        if (currentViewType !== arg.view.type) {
+          currentViewType = arg.view.type;
+          calendar.refetchEvents();
+        }
       },
       
       dayCellDidMount: function(arg) {
@@ -288,18 +298,17 @@
       },
       
       events: function(info, successCallback, failureCallback) {
-        const viewType = typeof calendar !== 'undefined' ? calendar.view.type : 'dayGridMonth';
         const n = new Date();
         const tStr = n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
         
         let filteredEvents = firebaseEventsList.filter(e => {
-          if (viewType === 'listMonth' && !showPastInList) {
+          if (currentViewType === 'listMonth' && !showPastInList) {
             if (e.start.substring(0, 10) < tStr) return false;
           }
           return true;
         });
         
-        if (viewType === 'listMonth') {
+        if (currentViewType === 'listMonth') {
           filteredEvents.sort((a, b) => {
             if (a.allDay && !b.allDay) return -1;
             if (!a.allDay && b.allDay) return 1;
@@ -358,7 +367,9 @@
       });
       
       firebaseEventsList = evs;
-      calendar.refetchEvents();
+      if (calendar) {
+        calendar.refetchEvents();
+      }
 
       if (!hasShownTodayAlert) {
         hasShownTodayAlert = true; 
