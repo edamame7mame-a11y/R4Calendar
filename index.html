@@ -24,7 +24,7 @@
     .fc .fc-col-header-cell { padding: 4px 0; background: #fafafa; font-size: 0.8rem; }
     .fc-theme-standard td, .fc-theme-standard th { border-color: #e5e7eb; }
     .fc .fc-daygrid-day-number { font-size: 0.8rem; font-weight: 600; padding: 2px 4px !important; color: #444; }
-    .fc .fc-daygrid-day-frame { min-height: 80px !important; cursor: pointer; } /* マス目をタップ可能に */
+    .fc .fc-daygrid-day-frame { min-height: 80px !important; cursor: pointer; }
 
     .fc-day-sun .fc-daygrid-day-number { color: #dc2626 !important; }
     .fc-day-sat .fc-daygrid-day-number { color: #2563eb !important; }
@@ -76,6 +76,17 @@
 
   <div id="calendar-container">
     <div id="calendar"></div>
+  </div>
+
+  <!-- 本日の予定をお知らせする専用画面 -->
+  <div class="modal-overlay" id="alertOverlay">
+    <div class="modal">
+      <h2 style="color: #ea580c; display: flex; align-items: center; gap: 8px;">📢 本日の予定</h2>
+      <div id="alertMessage" style="font-size: 0.95rem; white-space: pre-wrap; margin-bottom: 16px; line-height: 1.5; color: #333;"></div>
+      <div class="modal-buttons">
+        <button class="btn-submit" id="closeAlertBtn">OK</button>
+      </div>
+    </div>
   </div>
 
   <div class="modal-overlay" id="modalOverlay">
@@ -241,18 +252,15 @@
           }
         } catch(e) {}
       },
-      // 予定のバッジをタップした時の処理（変更・削除）
       eventClick: function(info) {
         openEditModal(info.event);
       },
-      // 何もない日付のマス目をタップした時の処理（新規追加）
       dateClick: function(info) {
         currentEventDocId = null;
         document.getElementById("modalTitle").textContent = "予定の追加";
         document.getElementById("eventTitle").value = "";
         document.getElementById("eventDesc").value = "";
         
-        // タップした日付をセット
         document.getElementById("eventDate").value = info.dateStr;
         document.getElementById("eventStartTime").value = "12:00";
         document.getElementById("eventEndTime").value = "";
@@ -297,6 +305,7 @@
       calendar.removeAllEvents();
       calendar.addEventSource(firebaseEventsList);
 
+      // 【専用のきれいなお知らせ画面を表示】
       if (!hasShownTodayAlert) {
         hasShownTodayAlert = true; 
         const now = new Date();
@@ -307,7 +316,7 @@
         });
 
         if (todaysEvents.length > 0) {
-          let msg = "📢 【本日の予定があります】\n\n";
+          let msg = "";
           todaysEvents.forEach(ev => {
             const colName = customLabels[ev.extendedProps.colorIdx] || "未設定";
             let timeStr = "終日";
@@ -317,10 +326,18 @@
             msg += `・${timeStr} [${colName}] ${ev.title}\n`;
           });
           
-          setTimeout(() => { alert(msg); }, 800);
+          setTimeout(() => {
+            document.getElementById('alertMessage').textContent = msg;
+            document.getElementById('alertOverlay').classList.add('open');
+          }, 800);
         }
       }
     });
+
+    // お知らせを閉じるボタン
+    document.getElementById('closeAlertBtn').onclick = () => {
+      document.getElementById('alertOverlay').classList.remove('open');
+    };
 
     const allDayCheck = document.getElementById("eventAllDay");
     const timePickerGroup = document.getElementById("timePickerGroup");
@@ -439,7 +456,7 @@
         const row = document.createElement("div");
         row.className = "label-row";
         row.innerHTML = `<div class="color-box" style="background:${c.bg}"></div><input type="text" data-idx="${idx}" value="${customLabels[idx] || c.defaultName}" placeholder="ラベル名">`;
-        labelInputsContainer.appendChild(row);
+        labelInputsConやtainer.appendChild(row);
       });
       settingsModal.classList.add("open");
     };
