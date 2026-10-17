@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>R4予定表</title>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f5f7;color:#222}header{background:#fff;padding:10px 14px;border-bottom:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}header h1{font-size:1.15rem;font-weight:700;color:#333;margin:0}.header-btns{display:flex;gap:6px}.btn-header{border:none;padding:6px 12px;border-radius:16px;font-weight:600;font-size:.8rem;cursor:pointer}.btn-setting{background:#e5e7eb;color:#374151}.btn-add{background:#2563eb;color:#fff}#calendar-container{padding:4px;max-width:900px;margin:0 auto}#calendar{background:#fff;border-radius:8px}.fc .fc-toolbar{padding:8px;margin-bottom:2px}.fc .fc-toolbar-title{font-size:1rem!important;font-weight:700}.fc .fc-button{padding:4px 8px!important;font-size:.8rem!important}.fc .fc-col-header-cell{padding:4px 0;background:#fafafa;font-size:.8rem}.fc-theme-standard td,.fc-theme-standard th{border-color:#e5e7eb}.fc .fc-daygrid-day-number{font-size:.8rem;font-weight:600;padding:2px 4px!important;color:#444}.fc .fc-daygrid-day-frame{min-height:80px!important;cursor:pointer}.fc-day-sun .fc-daygrid-day-number{color:#dc2626!important}.fc-day-sat .fc-daygrid-day-number{color:#2563eb!important}.fc-day-holiday .fc-daygrid-day-number{color:#dc2626!important;font-weight:800!important}.fc-event{border:none!important;border-radius:6px!important;margin:1px!important;padding:1px 4px!important;font-size:.72rem!important;font-weight:600!important;line-height:1.25!important;cursor:pointer;display:block!important}.fc-daygrid-event .fc-event-main{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center;padding:16px}.modal-overlay.open{display:flex}.modal{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;box-shadow:0 10px 25px rgba(0,0,0,.2)}.modal h2{font-size:1.05rem;margin-bottom:12px}.form-group{margin-bottom:10px}.form-group label{display:block;font-size:.8rem;font-weight:600;margin-bottom:3px;color:#444}.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:.9rem}.checkbox-group{display:flex;align-items:center;gap:8px;margin-bottom:12px;background:#f3f4f6;padding:8px 12px;border-radius:8px}.checkbox-group input{width:20px;height:20px}.checkbox-group label{margin-bottom:0;font-size:.9rem;font-weight:600}.modal-buttons{display:flex;gap:8px;margin-top:14px}.modal-buttons button{flex:1;padding:10px;border-radius:6px;font-weight:600;font-size:.95rem;border:none;cursor:pointer}.btn-submit{background:#2563eb;color:#fff}.btn-delete{background:#ef4444;color:#fff}.btn-cancel{background:#e5e7eb;color:#4b5563}.label-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}.color-box{width:24px;height:24px;border-radius:6px;flex-shrink:0;border:1px solid rgba(0,0,0,.1)}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f5f7;color:#222}header{background:#fff;padding:10px 14px;border-bottom:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}header h1{font-size:1.15rem;font-weight:700;color:#333;margin:0}.header-btns{display:flex;gap:6px}.btn-header{border:none;padding:6px 12px;border-radius:16px;font-weight:600;font-size:.8rem;cursor:pointer}.btn-setting{background:#e5e7eb;color:#374151}.btn-add{background:#2563eb;color:#fff}#calendar-container{padding:4px;max-width:900px;margin:0 auto}#calendar{background:#fff;border-radius:8px}.fc .fc-toolbar{padding:8px;margin-bottom:2px}.fc .fc-toolbar-title{font-size:1rem!important;font-weight:700}.fc .fc-button{padding:4px 8px!important;font-size:.8rem!important}.fc-togglePast-button{background-color:#64748b!important;border:none!important;margin-left:8px!important;font-size:0.75rem!important;padding:4px 8px!important}.fc .fc-col-header-cell{padding:4px 0;background:#fafafa;font-size:.8rem}.fc-theme-standard td,.fc-theme-standard th{border-color:#e5e7eb}.fc .fc-daygrid-day-number{font-size:.8rem;font-weight:600;padding:2px 4px!important;color:#444}.fc .fc-daygrid-day-frame{min-height:80px!important;cursor:pointer}.fc-day-sun .fc-daygrid-day-number{color:#dc2626!important}.fc-day-sat .fc-daygrid-day-number{color:#2563eb!important}.fc-day-holiday .fc-daygrid-day-number{color:#dc2626!important;font-weight:800!important}.fc-event{border:none!important;border-radius:6px!important;margin:1px!important;padding:1px 4px!important;font-size:.72rem!important;font-weight:600!important;line-height:1.25!important;cursor:pointer;display:block!important}.fc-daygrid-event .fc-event-main{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center;padding:16px}.modal-overlay.open{display:flex}.modal{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;box-shadow:0 10px 25px rgba(0,0,0,.2)}.modal h2{font-size:1.05rem;margin-bottom:12px}.form-group{margin-bottom:10px}.form-group label{display:block;font-size:.8rem;font-weight:600;margin-bottom:3px;color:#444}.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:.9rem}.checkbox-group{display:flex;align-items:center;gap:8px;margin-bottom:12px;background:#f3f4f6;padding:8px 12px;border-radius:8px}.checkbox-group input{width:20px;height:20px}.checkbox-group label{margin-bottom:0;font-size:.9rem;font-weight:600}.modal-buttons{display:flex;gap:8px;margin-top:14px}.modal-buttons button{flex:1;padding:10px;border-radius:6px;font-weight:600;font-size:.95rem;border:none;cursor:pointer}.btn-submit{background:#2563eb;color:#fff}.btn-delete{background:#ef4444;color:#fff}.btn-cancel{background:#e5e7eb;color:#4b5563}.label-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}.color-box{width:24px;height:24px;border-radius:6px;flex-shrink:0;border:1px solid rgba(0,0,0,.1)}
 </style>
 </head>
 <body>
@@ -52,12 +52,46 @@ const firebaseConfig={apiKey:"AIzaSyDhHBvpdoIfVkRKbDAMsr811zXeI2AVrwo",authDomai
 const app=initializeApp(firebaseConfig);const db=getFirestore(app);const eventsRef=collection(db,"events");
 function renderColorOptions(){const s=document.getElementById("eventColor");s.innerHTML="";DEFAULT_COLORS.forEach((c,i)=>{const o=document.createElement("option");o.value=i;o.textContent=customLabels[i]||c.defaultName;s.appendChild(o);});}
 renderColorOptions();
-let holidays={},currentEventDocId=null,hasShownTodayAlert=false;
+
+let holidays={},currentEventDocId=null,hasShownTodayAlert=false,showPastInList=false,firebaseEventsList=[];
+
 const calendarEl=document.getElementById('calendar');
 const calendar=new FullCalendar.Calendar(calendarEl,{
-  initialView:'dayGridMonth',headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,listMonth'},buttonText:{today:'今日',month:'月',list:'リスト'},locale:'ja',contentHeight:'auto',dayMaxEventRows:5,eventDisplay:'block',
+  initialView:'dayGridMonth',
+  customButtons:{
+    togglePast:{
+      text:'過去を表示',
+      click:function(){
+        showPastInList=!showPastInList;
+        const b=document.querySelector('.fc-togglePast-button');
+        if(b)b.textContent=showPastInList?'過去を隠す':'過去を表示';
+        calendar.refetchEvents();
+      }
+    }
+  },
+  headerToolbar:{left:'prev,next today togglePast',center:'title',right:'dayGridMonth,listMonth'},
+  buttonText:{today:'今日',month:'月',list:'リスト'},
+  locale:'ja',contentHeight:'auto',dayMaxEventRows:5,eventDisplay:'block',
+  datesSet:function(arg){
+    const b=document.querySelector('.fc-togglePast-button');
+    if(b)b.style.display=(arg.view.type==='listMonth')?'inline-block':'none';
+  },
   dayCellDidMount:function(arg){const dStr=arg.date.getFullYear()+'-'+String(arg.date.getMonth()+1).padStart(2,'0')+'-'+String(arg.date.getDate()).padStart(2,'0');if(holidays[dStr])arg.el.classList.add('fc-day-holiday');},
   eventDidMount:function(arg){try{if(arg.view.type==='listMonth'){const td=arg.el.querySelector('.fc-list-event-title');if(td){const p=arg.event.extendedProps||{};const cIdx=p.colorIdx!==undefined?p.colorIdx:0;const col=DEFAULT_COLORS[cIdx]||DEFAULT_COLORS[0];const lName=customLabels[cIdx]||col.defaultName;let tStr='終日';if(!arg.event.allDay&&arg.event.start){let h=String(arg.event.start.getHours()).padStart(2,'0');let m=String(arg.event.start.getMinutes()).padStart(2,'0');tStr=h+':'+m;}let htm='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:bold;"><span style="background:'+col.bg+';color:'+col.text+';padding:2px 6px;border-radius:4px;font-size:0.7rem;">'+lName+'</span><span style="font-size:0.85rem;color:#555;">'+tStr+'</span><span>'+String(arg.event.title).replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span></div>';if(p.desc){htm+='<div style="font-size:0.82rem;color:#4b5563;background:#f9fafb;border-left:3px solid #cbd5e1;padding:4px 8px;margin-top:4px;white-space:pre-wrap;word-break:break-all;">'+String(p.desc).replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>';}td.innerHTML=htm;}}}catch(e){}},
+  events:function(info,successCallback,failureCallback){
+    const viewType=typeof calendar!=='undefined'?calendar.view.type:'dayGridMonth';
+    const n=new Date();const tStr=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+    let fEvs=firebaseEventsList.filter(e=>{
+      if(viewType==='listMonth'&&!showPastInList){
+        if(e.start.substring(0,10)<tStr)return false;
+      }
+      return true;
+    });
+    if(viewType==='listMonth'){
+      fEvs.sort((a,b)=>{if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return a.start.localeCompare(b.start);});
+    }
+    successCallback(fEvs);
+  },
   eventClick:function(info){openEditModal(info.event);},
   dateClick:function(info){
     currentEventDocId=null;document.getElementById("modalTitle").textContent="予定の追加";document.getElementById("eventTitle").value="";document.getElementById("eventDesc").value="";document.getElementById("eventDate").value=info.dateStr;document.getElementById("eventStartTime").value="12:00";document.getElementById("eventEndTime").value="";
@@ -68,9 +102,12 @@ const calendar=new FullCalendar.Calendar(calendarEl,{
 });
 calendar.render();
 fetch("https://holidays-jp.github.io/api/v1/date.json").then(r=>r.json()).then(d=>{holidays=d;calendar.render();}).catch(e=>console.log(e));
+
 onSnapshot(eventsRef,(s)=>{
   const evs=[];s.forEach((dSnap)=>{try{const d=dSnap.data();if(!d.start)return;const cIdx=d.colorIdx!==undefined?d.colorIdx:0;const col=DEFAULT_COLORS[cIdx]||DEFAULT_COLORS[0];evs.push({id:dSnap.id,title:d.title||"名称未設定",start:d.start,end:d.end||null,allDay:d.allDay!==false,backgroundColor:col.bg,textColor:col.text,extendedProps:{desc:d.desc||"",colorIdx:cIdx}});}catch(e){}});
-  calendar.removeAllEvents();calendar.addEventSource(evs);
+  firebaseEventsList=evs;
+  calendar.refetchEvents();
+  
   if(!hasShownTodayAlert){
     hasShownTodayAlert=true;const n=new Date();const tStr=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');const tEvs=evs.filter(e=>e.start&&e.start.startsWith(tStr));
     if(tEvs.length>0){
@@ -81,10 +118,12 @@ onSnapshot(eventsRef,(s)=>{
   }
 });
 document.getElementById('closeAlertBtn').onclick=()=>document.getElementById('alertOverlay').classList.remove('open');
+
 const allDayCheck=document.getElementById("eventAllDay"),timePickerGroup=document.getElementById("timePickerGroup");
 function updateTimeInputVisibility(){timePickerGroup.style.display=allDayCheck.checked?"none":"flex";}
 allDayCheck.addEventListener("change",updateTimeInputVisibility);
 document.getElementById("eventRepeat").addEventListener("change",function(){document.getElementById("repeatEndGroup").style.display=this.checked?"block":"none";});
+
 const modal=document.getElementById("modalOverlay"),deleteBtn=document.getElementById("deleteEventBtn"),saveBtn=document.getElementById("saveEventBtn");
 document.getElementById("openModalBtn").onclick=()=>{
   currentEventDocId=null;document.getElementById("modalTitle").textContent="予定の追加";document.getElementById("eventTitle").value="";document.getElementById("eventDesc").value="";
@@ -93,6 +132,7 @@ document.getElementById("openModalBtn").onclick=()=>{
   document.getElementById("repeatWrap").style.display="flex";document.getElementById("eventRepeat").checked=false;document.getElementById("repeatEndGroup").style.display="none";document.getElementById("eventRepeatEnd").value="";document.getElementById("eventRepeatInterval").value="1";
   deleteBtn.style.display="none";saveBtn.style.display="block";saveBtn.textContent="保存";modal.classList.add("open");
 };
+
 function openEditModal(ev){
   currentEventDocId=ev.id;document.getElementById("modalTitle").textContent="予定の詳細・変更";document.getElementById("eventTitle").value=ev.title;document.getElementById("eventDesc").value=ev.extendedProps.desc||"";document.getElementById("eventColor").value=ev.extendedProps.colorIdx||0;
   allDayCheck.checked=ev.allDay;if(ev.allDay){document.getElementById("eventDate").value=ev.startStr.slice(0,10);document.getElementById("eventStartTime").value="12:00";document.getElementById("eventEndTime").value="";}else{document.getElementById("eventDate").value=ev.startStr.slice(0,10);document.getElementById("eventStartTime").value=ev.startStr.slice(11,16);document.getElementById("eventEndTime").value=ev.endStr?ev.endStr.slice(11,16):"";}
@@ -100,6 +140,7 @@ function openEditModal(ev){
   document.getElementById("repeatWrap").style.display="none";document.getElementById("eventRepeat").checked=false;document.getElementById("repeatEndGroup").style.display="none";
   deleteBtn.style.display="block";saveBtn.style.display="block";saveBtn.textContent="更新";modal.classList.add("open");
 }
+
 document.getElementById("closeModalBtn").onclick=()=>modal.classList.remove("open");
 saveBtn.onclick=async()=>{
   const t=document.getElementById("eventTitle").value.trim(),cIdx=parseInt(document.getElementById("eventColor").value,10),isAll=allDayCheck.checked,d=document.getElementById("eventDesc").value.trim(),dVal=document.getElementById("eventDate").value,sT=document.getElementById("eventStartTime").value,eT=document.getElementById("eventEndTime").value;
