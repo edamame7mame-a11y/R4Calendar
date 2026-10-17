@@ -74,6 +74,7 @@ onSnapshot(eventsRef,(s)=>{
   if(!hasShownTodayAlert){
     hasShownTodayAlert=true;const n=new Date();const tStr=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');const tEvs=evs.filter(e=>e.start&&e.start.startsWith(tStr));
     if(tEvs.length>0){
+      tEvs.sort((a,b)=>{if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return a.start.localeCompare(b.start);});
       let m="";tEvs.forEach(e=>{const cn=customLabels[e.extendedProps.colorIdx]||"未設定";let t="終日";if(!e.allDay&&e.start.includes("T"))t=e.start.substring(11,16);m+=`・${t} [${cn}] ${e.title}\n`;});
       setTimeout(()=>{document.getElementById('alertMessage').textContent=m;document.getElementById('alertOverlay').classList.add('open');},800);
     }
