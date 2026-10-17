@@ -82,7 +82,7 @@
 <body>
 
   <header>
-    <h1>R4予定表 <span class="version-mark">v2</span></h1>
+    <h1>R4予定表 <span class="version-mark">v3</span></h1>
     <div class="header-btns">
       <button class="btn-header btn-setting" id="openSettingsBtn">⚙️ ラベル</button>
       <button class="btn-header btn-add" id="openModalBtn">＋ 予定追加</button>
@@ -166,8 +166,187 @@
       { id: 9, defaultName: "オリーブ", bg: "#65A30D", text: "#ffffff" }
     ];
 
+    // ラベル設定の安全な読み込み
     function getCustomLabels() {
-      const saved = localStorage.getItem("r4_custom_labels");
-      if (saved) {
-        try { return JSON.parse(saved); } catch(e){}
+      try {
+        const saved = localStorage.getItem("r4_custom_labels");
+        if (saved) return JSON.parse(saved);
+      } catch(e) {}
+      return DEFAULT_COLORS.map(c => c.defaultName);
+    }
+    let customLabels = getCustomLabels();
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDhHBvpdoIfVkRKbDAMsr811zXeI2AVrwo",
+      authDomain: "r4calendar-1cb70.firebaseapp.com",
+      projectId: "r4calendar-1cb70",
+      storageBucket: "r4calendar-1cb70.firebasestorage.app",
+      messagingSenderId: "273656700256",
+      appId: "1:273656700256:web:254da78a155c5c8e3b5205"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const eventsRef = collection(db, "events");
+
+    function renderColorOptions() {
+      const select = document.getElementById("eventColor");
+      select.innerHTML = "";
+      DEFAULT_COLORS.forEach((c, idx) => {
+        const opt = document.createElement("option");
+        opt.value = idx;
+        opt.textContent = `${customLabels[idx] || c.defaultName}`;
+        select.appendChild(opt);
+      });
+    }
+    renderColorOptions();
+
+    let holidays = {};
+    let currentEventDocId = null;
+
+    // カレンダーの初期化（非同期ブロックなし）
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,listMonth'
+      },
+      buttonText: {
+        today: '今日',
+        month: '月',
+        list: 'リスト'
+      },
+      locale: 'ja',
+      contentHeight: 'auto',
+      dayMaxEventRows: 5,
+      eventDisplay: 'block',
+      
+      // 祝日の赤色スタイル適用
+      dayCellDidMount: function(arg) {
+        const dateStr = arg.date.getFullYear() + '-' + 
+          String(arg.date.getMonth() + 1).padStart(2, '0') + '-' + 
+          String(arg.date.getDate()).padStart(2, '0');
+        
+        if (holidays[dateStr]) {
+          arg.el.classList.add('fc-day-holiday');
+          const numEl = arg.el.querySelector('.fc-daygrid-day-top');
+          if (numEl && !arg.el.querySelector('.holiday-badge')) {
+            const hName = document.createElement('span');
+            hName.className = 'holiday-badge';
+            hName.textContent = holidays[dateStr];
+            numEl.appendChild(hName);
+          }
+        }
+      },
+
+      // イベント表示のカスタマイズ（リスト時に内容説明まで全展開）
+      eventContent: function(arg) {
+        if (arg.view.type === 'listMonth') {
+          const props = arg.event.extendedProps;
+          const col = DEFAULT_COLORS[props.colorIdx] || DEFAULT_COLORS[0];
+          const labelName = customLabels[props.colorIdx] || col.defaultName;
+          
+          const html = `
+            <div class="list-item-box">
+              <div class="list-title">
+                <span class="list-tag" style="background:${col.bg}; color:${col.text}">${labelName}</span>
+                <span>${arg.event.title}</span>
+              </div>
+              ${props.desc ? `<div class="list-desc">${props.desc}</div>` : ''}
+            </div>
+          `;
+          return { html: html };
+        }
+      },
+
+      eventClick: function(info) {
+        openEditModal(info.event);
       }
+    });
+
+    // カレンダーを速攻で描画！
+    calendar.render();
+
+    // 祝日データは裏側でこっそり読み込む（フリーズ防止）
+    fetch("https://holidays-jp.github.io/api/v1/date.json")
+      .then(res => res.json())
+      .then(data => {
+        holidays = data;
+        calendar.render(); // 祝日が取得できたら画面だけサッと更新
+      })
+      .catch(e => console.log("祝日読み込みエラー", e));
+
+    // 予定データをリアルタイム同期
+    onSnapshot(eventsRef, (snapshot) => {
+      const events = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+        const col = DEFAULT_COLORS[d.colorIdx] || DEFAULT_COLORS[0];
+        events.push({
+          id: docSnap.id,
+          title: d.title,
+          start: d.start,
+          end: d.end || null,
+          allDay: d.allDay !== false,
+          backgroundColor: col.bg,
+          textColor: col.text,
+          extendedProps: {
+            desc: d.desc || "",
+            colorIdx: d.colorIdx || 0
+          }
+        });
+      });
+      calendar.removeAllEvents();
+      calendar.addEventSource(events);
+    });
+
+    // 終日チェックボックス切り替え
+    const allDayCheck = document.getElementById("eventAllDay");
+    const datePickerGroup = document.getElementById("datePickerGroup");
+    const timePickerGroup = document.getElementById("timePickerGroup");
+
+    function updateTimeInputVisibility() {
+      if (allDayCheck.checked) {
+        datePickerGroup.style.display = "block";
+        timePickerGroup.style.display = "none";
+      } else {
+        datePickerGroup.style.display = "none";
+        timePickerGroup.style.display = "block";
+      }
+    }
+    allDayCheck.addEventListener("change", updateTimeInputVisibility);
+
+    // モーダル操作
+    const modal = document.getElementById("modalOverlay");
+    const deleteBtn = document.getElementById("deleteEventBtn");
+    const saveBtn = document.getElementById("saveEventBtn");
+
+    document.getElementById("openModalBtn").onclick = () => {
+      currentEventDocId = null;
+      document.getElementById("modalTitle").textContent = "予定の追加";
+      document.getElementById("eventTitle").value = "";
+      document.getElementById("eventDesc").value = "";
+      allDayCheck.checked = true;
+      
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById("eventDate").value = now.toISOString().slice(0, 10);
+      document.getElementById("eventStart").value = now.toISOString().slice(0, 16);
+      document.getElementById("eventEnd").value = "";
+
+      updateTimeInputVisibility();
+      deleteBtn.style.display = "none";
+      saveBtn.style.display = "block";
+      modal.classList.add("open");
+    };
+
+    function openEditModal(eventObj) {
+      currentEventDocId = eventObj.id;
+      document.getElementById("modalTitle").textContent = "予定の詳細・削除";
+      document.getElementById("eventTitle").value = eventObj.title;
+      document.getElementById("eventDesc").value = eventObj.extendedProps.desc || "";
+      document.getElementById("eventColor").value = eventObj.extendedProps.colorIdx || 0;
+      
+      allDayCheck.checked = eventObj.allDay
