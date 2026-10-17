@@ -9,22 +9,25 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; color: #222; }
     header { background: #fff; padding: 10px 14px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-    header h1 { font-size: 1.15rem; font-weight: 700; color: #333; }
-    .btn-add { background: #2563eb; color: #fff; border: none; padding: 7px 14px; border-radius: 18px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
-    
+    header h1 { font-size: 1.1rem; font-weight: 700; color: #333; }
+    .header-btns { display: flex; gap: 6px; }
+    .btn-header { border: none; padding: 6px 12px; border-radius: 16px; font-weight: 600; font-size: 0.8rem; cursor: pointer; }
+    .btn-setting { background: #e5e7eb; color: #374151; }
+    .btn-add { background: #2563eb; color: #fff; }
+
     #calendar-container { padding: 4px; max-width: 900px; margin: 0 auto; }
-    #calendar { background: #fff; }
-    
-    /* FullCalendarの見た目をスクショ風に調整 */
-    .fc .fc-toolbar { padding: 6px 8px; margin-bottom: 4px; }
-    .fc .fc-toolbar-title { font-size: 1.05rem !important; font-weight: bold; }
-    .fc .fc-button { padding: 3px 8px !important; font-size: 0.8rem !important; }
+    #calendar { background: #fff; border-radius: 8px; }
+
+    /* FullCalendarカスタマイズ */
+    .fc .fc-toolbar { padding: 8px; margin-bottom: 2px; }
+    .fc .fc-toolbar-title { font-size: 1rem !important; font-weight: bold; }
+    .fc .fc-button { padding: 4px 8px !important; font-size: 0.8rem !important; }
     .fc .fc-col-header-cell { padding: 4px 0; background: #fafafa; font-size: 0.8rem; }
     .fc-theme-standard td, .fc-theme-standard th { border-color: #e5e7eb; }
     .fc .fc-daygrid-day-number { font-size: 0.8rem; font-weight: 600; padding: 2px 4px !important; color: #444; }
-    .fc .fc-daygrid-day-frame { min-height: 85px !important; }
-    
-    /* 予定バッジのスタイル（丸角の帯ラベル） */
+    .fc .fc-daygrid-day-frame { min-height: 80px !important; }
+
+    /* イベントバッジ表示 */
     .fc-event {
       border: none !important;
       border-radius: 6px !important;
@@ -36,16 +39,16 @@
       cursor: pointer;
       display: block !important;
     }
-    .fc-event-main {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    
-    /* モーダルダイアログ */
+    .fc-event-main { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* リスト表示時の調整 */
+    .fc-list-event-title { font-weight: 600; font-size: 0.9rem; }
+    .fc-list-event-time { font-size: 0.8rem; color: #555; }
+
+    /* モーダル */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
     .modal-overlay.open { display: flex; }
-    .modal { background: #fff; border-radius: 14px; padding: 18px; width: 100%; max-width: 360px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal { background: #fff; border-radius: 14px; padding: 18px; width: 100%; max-width: 380px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     .modal h2 { font-size: 1.05rem; margin-bottom: 12px; }
     .form-group { margin-bottom: 10px; }
     .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 3px; color: #444; }
@@ -58,13 +61,20 @@
     .btn-submit { background: #2563eb; color: #fff; }
     .btn-delete { background: #ef4444; color: #fff; }
     .btn-cancel { background: #e5e7eb; color: #4b5563; }
+
+    /* ラベル編集リスト */
+    .label-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .color-box { width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
 
   <header>
     <h1>R4予定表</h1>
-    <button class="btn-add" id="openModalBtn">＋ 予定追加</button>
+    <div class="header-btns">
+      <button class="btn-header btn-setting" id="openSettingsBtn">⚙️ ラベル</button>
+      <button class="btn-header btn-add" id="openModalBtn">＋ 予定追加</button>
+    </div>
   </header>
 
   <div id="calendar-container">
@@ -80,20 +90,26 @@
         <input type="text" id="eventTitle" placeholder="例: 🧀チーズ、〇〇車掌">
       </div>
       <div class="form-group">
-        <label>カラー（バッジの色）</label>
+        <label>カラー（カテゴリ）</label>
         <select id="eventColor"></select>
       </div>
       <div class="checkbox-group">
-        <input type="checkbox" id="eventAllDay">
+        <input type="checkbox" id="eventAllDay" checked>
         <label for="eventAllDay">終日（時間指定なし）</label>
       </div>
       <div class="form-group" id="datePickerGroup">
         <label>日付</label>
         <input type="date" id="eventDate">
       </div>
-      <div class="form-group" id="timePickerGroup" style="display: none;">
-        <label>開始日時</label>
-        <input type="datetime-local" id="eventStart">
+      <div id="timePickerGroup" style="display: none;">
+        <div class="form-group">
+          <label>開始日時</label>
+          <input type="datetime-local" id="eventStart">
+        </div>
+        <div class="form-group">
+          <label>終了日時（任意）</label>
+          <input type="datetime-local" id="eventEnd">
+        </div>
       </div>
       <div class="form-group">
         <label>内容説明・メモ</label>
@@ -107,20 +123,47 @@
     </div>
   </div>
 
+  <!-- カラーラベル編集モーダル -->
+  <div class="modal-overlay" id="settingsOverlay">
+    <div class="modal">
+      <h2>色の名前・ラベル設定</h2>
+      <p style="font-size: 0.78rem; color: #666; margin-bottom: 12px;">それぞれの色に付ける名前を設定できます</p>
+      <div id="labelInputsContainer"></div>
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="closeSettingsBtn">キャンセル</button>
+        <button class="btn-submit" id="saveSettingsBtn">ラベルを保存</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-    // スクショ風カラーパレット（黄色・紫・濃いグレー・緑・青など）
-    const COLORS = [
-      { name: "黄色 (文字: 黒)", bg: "#FFF066", text: "#000" },
-      { name: "紫 (文字: 白)", bg: "#A855F7", text: "#fff" },
-      { name: "濃いグレー (文字: 白)", bg: "#4B5563", text: "#fff" },
-      { name: "赤 (文字: 白)", bg: "#EF4444", text: "#fff" },
-      { name: "青 (文字: 白)", bg: "#3B82F6", text: "#fff" },
-      { name: "緑 (文字: 白)", bg: "#10B981", text: "#fff" },
-      { name: "オレンジ (文字: 白)", bg: "#F97316", text: "#fff" }
+    // 10色の定義（視認性の高い配色）
+    const DEFAULT_COLORS = [
+      { id: 0, defaultName: "黄色", bg: "#FFF066", text: "#000000" },
+      { id: 1, defaultName: "紫", bg: "#A855F7", text: "#ffffff" },
+      { id: 2, defaultName: "濃いグレー", bg: "#4B5563", text: "#ffffff" },
+      { id: 3, defaultName: "黄緑", bg: "#84CC16", text: "#000000" },
+      { id: 4, defaultName: "赤", bg: "#EF4444", text: "#ffffff" },
+      { id: 5, defaultName: "水色", bg: "#06B6D4", text: "#ffffff" },
+      { id: 6, defaultName: "青", bg: "#3B82F6", text: "#ffffff" },
+      { id: 7, defaultName: "オレンジ", bg: "#F97316", text: "#ffffff" },
+      { id: 8, defaultName: "ピンク", bg: "#EC4899", text: "#ffffff" },
+      { id: 9, defaultName: "オリーブ", bg: "#65A30D", text: "#ffffff" }
     ];
+
+    // ローカルストレージからラベル名を取得
+    function getCustomLabels() {
+      const saved = localStorage.getItem("r4_custom_labels");
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e){}
+      }
+      return DEFAULT_COLORS.map(c => c.defaultName);
+    }
+
+    let customLabels = getCustomLabels();
 
     const firebaseConfig = {
       apiKey: "AIzaSyDhHBvpdoIfVkRKbDAMsr811zXeI2AVrwo",
@@ -135,38 +178,45 @@
     const db = getFirestore(app);
     const eventsRef = collection(db, "events");
 
-    // カラーのセレクトボックス生成
-    const colorSelect = document.getElementById("eventColor");
-    COLORS.forEach((c, idx) => {
-      const opt = document.createElement("option");
-      opt.value = idx;
-      opt.textContent = c.name;
-      colorSelect.appendChild(opt);
-    });
+    function renderColorOptions() {
+      const select = document.getElementById("eventColor");
+      select.innerHTML = "";
+      DEFAULT_COLORS.forEach((c, idx) => {
+        const opt = document.createElement("option");
+        opt.value = idx;
+        opt.textContent = `${customLabels[idx] || c.defaultName}`;
+        select.appendChild(opt);
+      });
+    }
+    renderColorOptions();
 
     let currentEventDocId = null;
 
-    // FullCalendar初期化
+    // FullCalendar初期化（月表示とリスト表示の両方を配置）
     const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
       headerToolbar: {
         left: 'prev,next today',
         center: 'title',
-        right: ''
+        right: 'dayGridMonth,listMonth'
+      },
+      buttonText: {
+        today: '今日',
+        month: '月',
+        list: 'リスト'
       },
       locale: 'ja',
       contentHeight: 'auto',
-      dayMaxEventRows: 4, // 1日に表示する最大件数
-      eventDisplay: 'block', // 帯（ブロック）形式で文字を表示
+      dayMaxEventRows: 5,
+      eventDisplay: 'block',
       eventClick: function(info) {
-        // イベントタップで詳細確認・削除モーダルを開く
         openEditModal(info.event);
       }
     });
     calendar.render();
 
-    // 終日チェックボックスの切り替え挙動
+    // 終日チェックボックスの挙動
     const allDayCheck = document.getElementById("eventAllDay");
     const datePickerGroup = document.getElementById("datePickerGroup");
     const timePickerGroup = document.getElementById("timePickerGroup");
@@ -187,11 +237,12 @@
       const events = [];
       snapshot.forEach((docSnap) => {
         const d = docSnap.data();
-        const col = COLORS[d.colorIdx] || COLORS[0];
+        const col = DEFAULT_COLORS[d.colorIdx] || DEFAULT_COLORS[0];
         events.push({
           id: docSnap.id,
           title: d.title,
           start: d.start,
+          end: d.end || null,
           allDay: d.allDay !== false,
           backgroundColor: col.bg,
           textColor: col.text,
@@ -205,7 +256,7 @@
       calendar.addEventSource(events);
     });
 
-    // モーダル操作
+    // モーダル処理
     const modal = document.getElementById("modalOverlay");
     const deleteBtn = document.getElementById("deleteEventBtn");
     const saveBtn = document.getElementById("saveEventBtn");
@@ -216,14 +267,13 @@
       document.getElementById("eventTitle").value = "";
       document.getElementById("eventDesc").value = "";
       allDayCheck.checked = true;
-      
-      const todayStr = new Date().toISOString().slice(0, 10);
-      document.getElementById("eventDate").value = todayStr;
+      document.getElementById("eventDate").value = new Date().toISOString().slice(0, 10);
       
       const now = new Date();
       now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
       document.getElementById("eventStart").value = now.toISOString().slice(0, 16);
-      
+      document.getElementById("eventEnd").value = "";
+
       updateTimeInputVisibility();
       deleteBtn.style.display = "none";
       saveBtn.style.display = "block";
@@ -235,17 +285,19 @@
       document.getElementById("modalTitle").textContent = "予定の詳細・削除";
       document.getElementById("eventTitle").value = eventObj.title;
       document.getElementById("eventDesc").value = eventObj.extendedProps.desc || "";
-      colorSelect.value = eventObj.extendedProps.colorIdx || 0;
+      document.getElementById("eventColor").value = eventObj.extendedProps.colorIdx || 0;
       
       allDayCheck.checked = eventObj.allDay;
       if (eventObj.allDay) {
         document.getElementById("eventDate").value = eventObj.startStr.slice(0, 10);
       } else {
         document.getElementById("eventStart").value = eventObj.startStr.slice(0, 16);
+        document.getElementById("eventEnd").value = eventObj.endStr ? eventObj.endStr.slice(0, 16) : "";
       }
+
       updateTimeInputVisibility();
       deleteBtn.style.display = "block";
-      saveBtn.style.display = "none"; // 閲覧・削除モード
+      saveBtn.style.display = "none";
       modal.classList.add("open");
     }
 
@@ -254,14 +306,15 @@
     // 保存処理
     saveBtn.onclick = async () => {
       const title = document.getElementById("eventTitle").value.trim();
-      const colorIdx = parseInt(colorSelect.value, 10);
+      const colorIdx = parseInt(document.getElementById("eventColor").value, 10);
       const isAllDay = allDayCheck.checked;
       const desc = document.getElementById("eventDesc").value.trim();
 
       let startVal = isAllDay ? document.getElementById("eventDate").value : document.getElementById("eventStart").value;
+      let endVal = isAllDay ? null : (document.getElementById("eventEnd").value || null);
 
       if (!title || !startVal) {
-        alert("タイトルと日時を入力してください");
+        alert("タイトルと日付（または開始時間）を入力してください");
         return;
       }
 
@@ -270,6 +323,7 @@
         colorIdx,
         allDay: isAllDay,
         start: startVal,
+        end: endVal,
         desc,
         createdAt: new Date().toISOString()
       });
@@ -284,6 +338,37 @@
         await deleteDoc(doc(db, "events", currentEventDocId));
         modal.classList.remove("open");
       }
+    };
+
+    // ラベル設定モーダル
+    const settingsModal = document.getElementById("settingsOverlay");
+    const labelInputsContainer = document.getElementById("labelInputsContainer");
+
+    document.getElementById("openSettingsBtn").onclick = () => {
+      labelInputsContainer.innerHTML = "";
+      DEFAULT_COLORS.forEach((c, idx) => {
+        const row = document.createElement("div");
+        row.className = "label-row";
+        row.innerHTML = `
+          <div class="color-box" style="background:${c.bg}"></div>
+          <input type="text" data-idx="${idx}" value="${customLabels[idx] || c.defaultName}" placeholder="ラベル名">
+        `;
+        labelInputsContainer.appendChild(row);
+      });
+      settingsModal.classList.add("open");
+    };
+
+    document.getElementById("closeSettingsBtn").onclick = () => settingsModal.classList.remove("open");
+
+    document.getElementById("saveSettingsBtn").onclick = () => {
+      const inputs = labelInputsContainer.querySelectorAll("input");
+      inputs.forEach(input => {
+        const idx = parseInt(input.dataset.idx, 10);
+        customLabels[idx] = input.value.trim() || DEFAULT_COLORS[idx].defaultName;
+      });
+      localStorage.setItem("r4_custom_labels", JSON.stringify(customLabels));
+      renderColorOptions();
+      settingsModal.classList.remove("open");
     };
   </script>
 </body>
