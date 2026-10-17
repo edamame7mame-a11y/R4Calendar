@@ -74,4 +74,164 @@
     .btn-cancel { background: #e5e7eb; color: #4b5563; }
 
     /* ラベル編集リスト */
-    .label-row {
+    .label-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .color-box { width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>R4予定表</h1>
+    <div class="header-btns">
+      <button class="btn-header btn-setting" id="openSettingsBtn">⚙️ ラベル</button>
+      <button class="btn-header btn-add" id="openModalBtn">＋ 予定追加</button>
+    </div>
+  </header>
+
+  <div id="calendar-container">
+    <div id="calendar"></div>
+  </div>
+
+  <!-- 予定追加・詳細モーダル -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h2 id="modalTitle">予定の追加</h2>
+      <div class="form-group">
+        <label>予定のタイトル</label>
+        <input type="text" id="eventTitle" placeholder="例: 🧀チーズ、〇〇車掌">
+      </div>
+      <div class="form-group">
+        <label>カラー（カテゴリ）</label>
+        <select id="eventColor"></select>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="eventAllDay" checked>
+        <label for="eventAllDay">終日（時間指定なし）</label>
+      </div>
+      <div class="form-group" id="datePickerGroup">
+        <label>日付</label>
+        <input type="date" id="eventDate">
+      </div>
+      <div id="timePickerGroup" style="display: none;">
+        <div class="form-group">
+          <label>開始日時</label>
+          <input type="datetime-local" id="eventStart">
+        </div>
+        <div class="form-group">
+          <label>終了日時（任意）</label>
+          <input type="datetime-local" id="eventEnd">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>内容説明・メモ</label>
+        <textarea id="eventDesc" rows="4" placeholder="詳細やメモがあれば入力"></textarea>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-delete" id="deleteEventBtn" style="display: none;">削除</button>
+        <button class="btn-cancel" id="closeModalBtn">閉じる</button>
+        <button class="btn-submit" id="saveEventBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- カラーラベル編集モーダル -->
+  <div class="modal-overlay" id="settingsOverlay">
+    <div class="modal">
+      <h2>色の名前・ラベル設定</h2>
+      <p style="font-size: 0.78rem; color: #666; margin-bottom: 12px;">それぞれの色に付ける名前を設定できます</p>
+      <div id="labelInputsContainer"></div>
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="closeSettingsBtn">キャンセル</button>
+        <button class="btn-submit" id="saveSettingsBtn">ラベルを保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    // 10色の定義
+    const DEFAULT_COLORS = [
+      { id: 0, defaultName: "黄色", bg: "#FFF066", text: "#000000" },
+      { id: 1, defaultName: "紫", bg: "#A855F7", text: "#ffffff" },
+      { id: 2, defaultName: "濃いグレー", bg: "#4B5563", text: "#ffffff" },
+      { id: 3, defaultName: "黄緑", bg: "#84CC16", text: "#000000" },
+      { id: 4, defaultName: "赤", bg: "#EF4444", text: "#ffffff" },
+      { id: 5, defaultName: "水色", bg: "#06B6D4", text: "#ffffff" },
+      { id: 6, defaultName: "青", bg: "#3B82F6", text: "#ffffff" },
+      { id: 7, defaultName: "オレンジ", bg: "#F97316", text: "#ffffff" },
+      { id: 8, defaultName: "ピンク", bg: "#EC4899", text: "#ffffff" },
+      { id: 9, defaultName: "オリーブ", bg: "#65A30D", text: "#ffffff" }
+    ];
+
+    function getCustomLabels() {
+      const saved = localStorage.getItem("r4_custom_labels");
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e){}
+      }
+      return DEFAULT_COLORS.map(c => c.defaultName);
+    }
+
+    let customLabels = getCustomLabels();
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDhHBvpdoIfVkRKbDAMsr811zXeI2AVrwo",
+      authDomain: "r4calendar-1cb70.firebaseapp.com",
+      projectId: "r4calendar-1cb70",
+      storageBucket: "r4calendar-1cb70.firebasestorage.app",
+      messagingSenderId: "273656700256",
+      appId: "1:273656700256:web:254da78a155c5c8e3b5205"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const eventsRef = collection(db, "events");
+
+    function renderColorOptions() {
+      const select = document.getElementById("eventColor");
+      select.innerHTML = "";
+      DEFAULT_COLORS.forEach((c, idx) => {
+        const opt = document.createElement("option");
+        opt.value = idx;
+        opt.textContent = `${customLabels[idx] || c.defaultName}`;
+        select.appendChild(opt);
+      });
+    }
+    renderColorOptions();
+
+    // 日本の祝日データ取得用キャッシュ
+    let holidays = {};
+    async function fetchHolidays() {
+      try {
+        const res = await fetch("https://holidays-jp.github.io/api/v1/date.json");
+        holidays = await res.json();
+      } catch (e) {
+        console.error("祝日取得エラー:", e);
+      }
+    }
+
+    let currentEventDocId = null;
+
+    async function initCalendar() {
+      await fetchHolidays();
+
+      const calendarEl = document.getElementById('calendar');
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,listMonth'
+        },
+        buttonText: {
+          today: '今日',
+          month: '月',
+          list: 'リスト'
+        },
+        locale: 'ja',
+        contentHeight: 'auto',
+        dayMaxEventRows: 5,
+        eventDisplay: 'block',
+        
+        // 祝日の赤色スタイル適用
