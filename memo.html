@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>📝 お知らせテンプレ・要点</title>
+  <title>📝 お知らせ要点＆素材</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0fdf4; color: #222; margin: 0; padding: 16px; }
     
-    header { display: flex; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto 16px auto; }
-    h1 { font-size: 1.2rem; color: #166534; margin: 0; }
-    .btn-add { background: #16a34a; color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; cursor: pointer; box-shadow: 0 2px 5px rgba(22, 163, 74, 0.3); }
+    .section-header { display: flex; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto 12px auto; }
+    h1, h2.sec-title { font-size: 1.15rem; color: #166534; margin: 0; display: flex; align-items: center; gap: 6px; }
+    .btn-add { background: #16a34a; color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: bold; font-size: 0.82rem; cursor: pointer; box-shadow: 0 2px 5px rgba(22, 163, 74, 0.3); }
+    .btn-add-img { background: #0284c7; box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3); }
 
-    .container { max-width: 500px; margin: 0 auto; }
+    .container { max-width: 500px; margin: 0 auto 32px auto; }
     
     /* アコーディオン（折りたたみ）カードのデザイン */
     .card { background: #fff; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left: 5px solid #16a34a; overflow: hidden; }
@@ -23,58 +24,93 @@
     .card-date { font-size: 0.72rem; color: #6b7280; }
     .toggle-icon { font-size: 0.8rem; color: #16a34a; transition: transform 0.2s; flex-shrink: 0; font-weight: bold; }
     
-    /* 開いた時のスタイル */
     .card.open .toggle-icon { transform: rotate(180deg); }
     .card-detail { display: none; padding: 0 16px 16px 16px; border-top: 1px dashed #e5e7eb; }
     .card.open .card-detail { display: block; }
 
     .card-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; margin-bottom: 8px; }
-    .btn-action { border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; }
+    .btn-action { border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
     .btn-copy { background: #dcfce7; color: #15803d; }
     .btn-edit { background: #f3f4f6; color: #4b5563; }
     
     .card-body { font-size: 0.9rem; color: #374151; white-space: pre-wrap; word-break: break-all; background: #f9fafb; padding: 12px; border-radius: 8px; line-height: 1.5; border: 1px solid #f3f4f6; }
 
+    /* イラスト置き場（ギャラリー）のデザイン */
+    .divider { border: none; border-top: 2px dashed #bbf7d0; max-width: 500px; margin: 28px auto; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .img-card { background: #fff; border-radius: 12px; padding: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; border-top: 4px solid #0284c7; }
+    .img-thumb-wrap { width: 100%; height: 160px; background: #f8fafc; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 8px; border: 1px solid #f1f5f9; cursor: pointer; }
+    .img-thumb { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .img-label { font-size: 0.85rem; font-weight: bold; color: #333; margin-bottom: 8px; word-break: break-all; text-align: center; }
+    .img-card-btns { display: flex; gap: 6px; }
+    .btn-dl-full { flex: 1; background: #e0f2fe; color: #0369a1; border: none; padding: 7px 0; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
+    .btn-del-mini { background: #fee2e2; color: #dc2626; border: none; padding: 7px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; }
+
     .back-wrap { text-align: center; margin-top: 30px; margin-bottom: 20px; }
     .back-btn { display: inline-block; padding: 10px 20px; background: #fff; color: #4b5563; text-decoration: none; border-radius: 20px; border: 1px solid #d1d5db; font-size: 0.9rem; font-weight: bold; }
 
     /* モーダル */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
     .modal-overlay.open { display: flex; }
     .modal { background: #fff; border-radius: 14px; padding: 18px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     .modal h2 { font-size: 1.05rem; color: #166534; margin-top: 0; margin-bottom: 12px; }
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-size: 0.8rem; font-weight: bold; color: #444; margin-bottom: 4px; }
-    .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; outline: none; }
-    .form-group textarea { height: 160px; resize: none; line-height: 1.5; }
+    .form-group input[type="text"], .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; outline: none; }
+    .form-group textarea { height: 150px; resize: none; line-height: 1.5; }
     .form-group input:focus, .form-group textarea:focus { border-color: #16a34a; }
     
+    .file-input-wrap { background: #f8fafc; border: 2px dashed #bae6fd; padding: 14px 10px; border-radius: 8px; text-align: center; }
+    .file-input-wrap input[type="file"] { font-size: 0.82rem; width: 100%; }
+    #imgPreviewWrap { margin-top: 10px; display: none; }
+    #imgPreview { max-width: 100%; max-height: 180px; border-radius: 6px; border: 1px solid #ddd; }
+
     .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
     .modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 0.9rem; }
     .btn-save { background: #16a34a; color: #fff; }
+    .btn-save-img { background: #0284c7; color: #fff; }
     .btn-delete { background: #ef4444; color: #fff; }
     .btn-cancel { background: #e5e7eb; color: #4b5563; }
+
+    /* 画像拡大プレビュー用モーダル */
+    .zoom-modal { background: transparent; box-shadow: none; max-width: 95vw; max-height: 95vh; text-align: center; padding: 0; }
+    .zoom-img { max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+    .zoom-close { margin-top: 12px; background: #fff; color: #333; border: none; padding: 8px 24px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <header>
+  <!-- 1. お知らせの要点セクション -->
+  <div class="section-header">
     <h1>📝 お知らせの要点一覧</h1>
-    <button class="btn-add" id="openAddBtn">＋ 追加する</button>
-  </header>
+    <button class="btn-add" id="openAddBtn">＋ 要点を追加</button>
+  </div>
 
   <div class="container" id="memoList">
-    <div style="text-align: center; color: #6b7280; padding: 30px; font-size: 0.9rem;">読み込み中...</div>
+    <div style="text-align: center; color: #6b7280; padding: 20px; font-size: 0.9rem;">読み込み中...</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 2. お知らせ用イラスト置き場セクション -->
+  <div class="section-header">
+    <h2 class="sec-title" style="color: #0369a1;">🖼️ お知らせ用イラスト置き場</h2>
+    <button class="btn-add btn-add-img" id="openAddImgBtn">＋ 画像を投稿</button>
+  </div>
+  <p style="max-width: 500px; margin: -6px auto 12px auto; font-size: 0.75rem; color: #6b7280;">※画像をタップすると拡大表示できます。「📥 保存」または長押しで保存してください。</p>
+
+  <div class="container" id="galleryList">
+    <div style="text-align: center; color: #6b7280; padding: 20px; font-size: 0.9rem;">読み込み中...</div>
   </div>
 
   <div class="back-wrap">
     <a href="index.html" class="back-btn">← カレンダーに戻る</a>
   </div>
 
-  <!-- 追加・編集モーダル -->
+  <!-- ① 要点の追加・編集モーダル -->
   <div class="modal-overlay" id="memoModal">
     <div class="modal">
-      <h2 id="modalTitle">項目の追加</h2>
+      <h2 id="modalTitle">要点の追加</h2>
       <div class="form-group">
         <label>イベント名</label>
         <input type="text" id="memoTitle" placeholder="例: 🧀チーズ、わらわら、シールド">
@@ -88,6 +124,39 @@
         <button class="btn-cancel" id="closeBtn">キャンセル</button>
         <button class="btn-save" id="saveBtn">保存</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ② イラスト投稿モーダル -->
+  <div class="modal-overlay" id="imgModal">
+    <div class="modal">
+      <h2 style="color: #0369a1;">🖼️ イラスト・画像の投稿</h2>
+      <div class="form-group">
+        <label>イラストの名前・用途（任意）</label>
+        <input type="text" id="imgTitleInput" placeholder="例: わらわら1組、チーズ用">
+      </div>
+      <div class="form-group">
+        <label>画像を選ぶ（細かい文字も高画質で保存されます）</label>
+        <div class="file-input-wrap">
+          <input type="file" id="imgFileInput" accept="image/*">
+          <div id="imgPreviewWrap">
+            <img id="imgPreview" src="">
+          </div>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="closeImgBtn">キャンセル</button>
+        <button class="btn-save-img" id="saveImgBtn">投稿する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 画像拡大プレビューモーダル -->
+  <div class="modal-overlay" id="zoomModal" onclick="this.classList.remove('open')">
+    <div class="modal zoom-modal" onclick="event.stopPropagation()">
+      <img id="zoomImg" class="zoom-img" src="">
+      <br>
+      <button class="zoom-close" onclick="document.getElementById('zoomModal').classList.remove('open')">閉じる</button>
     </div>
   </div>
 
@@ -107,7 +176,9 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const memosRef = collection(db, "memos");
+    const imagesRef = collection(db, "memo_images");
 
+    // --- 1. 要点（テキスト）の処理 ---
     let currentDocId = null;
     let memosData = [];
     let openCardIds = new Set();
@@ -117,8 +188,8 @@
     const titleInput = document.getElementById("memoTitle");
     const contentInput = document.getElementById("memoContent");
     const deleteBtn = document.getElementById("deleteBtn");
+    const saveBtn = document.getElementById("saveBtn");
 
-    // 日付を見やすく変換する関数（例: 10/18 更新）
     function formatUpdateDate(isoStr) {
       if (!isoStr) return "";
       const d = new Date(isoStr);
@@ -126,7 +197,6 @@
       return `🔄 ${d.getMonth() + 1}/${d.getDate()} 更新`;
     }
 
-    // データのリアルタイム取得
     onSnapshot(memosRef, (snapshot) => {
       const items = [];
       snapshot.forEach((docSnap) => {
@@ -147,7 +217,7 @@
     function renderList() {
       listEl.innerHTML = "";
       if (memosData.length === 0) {
-        listEl.innerHTML = `<div style="text-align: center; color: #6b7280; padding: 40px 10px; background: #fff; border-radius: 12px; font-size: 0.9rem;">まだ登録されていません。<br>右上の「＋ 追加する」から作成できます！</div>`;
+        listEl.innerHTML = `<div style="text-align: center; color: #6b7280; padding: 30px 10px; background: #fff; border-radius: 12px; font-size: 0.85rem;">まだ登録されていません。<br>右上の「＋ 要点を追加」から作成できます！</div>`;
         return;
       }
 
@@ -176,7 +246,6 @@
           </div>
         `;
 
-        // 題名（ヘッダー）をタップしたら開閉する
         const header = card.querySelector(".card-header");
         header.onclick = () => {
           if (card.classList.contains("open")) {
@@ -191,7 +260,6 @@
         listEl.appendChild(card);
       });
 
-      // コピーボタンの動作
       document.querySelectorAll(".btn-copy").forEach(btn => {
         btn.onclick = (e) => {
           e.stopPropagation();
@@ -201,14 +269,11 @@
               const originalText = btn.textContent;
               btn.textContent = "✔ コピー完了";
               setTimeout(() => { btn.textContent = originalText; }, 1500);
-            }).catch(() => {
-              alert("コピーに失敗しました");
-            });
+            }).catch(() => { alert("コピーに失敗しました"); });
           }
         };
       });
 
-      // 編集ボタンの動作
       document.querySelectorAll(".btn-edit").forEach(btn => {
         btn.onclick = (e) => {
           e.stopPropagation();
@@ -218,7 +283,6 @@
       });
     }
 
-    // 新規追加モーダルを開く
     document.getElementById("openAddBtn").onclick = () => {
       currentDocId = null;
       document.getElementById("modalTitle").textContent = "イベント要点を追加";
@@ -228,7 +292,6 @@
       modal.classList.add("open");
     };
 
-    // 編集モーダルを開く
     function openEditModal(item) {
       currentDocId = item.id;
       document.getElementById("modalTitle").textContent = "内容の編集";
@@ -240,17 +303,14 @@
 
     document.getElementById("closeBtn").onclick = () => modal.classList.remove("open");
 
-    // 保存処理（更新日時も一緒に保存する）
-    document.getElementById("saveBtn").onclick = async () => {
+    saveBtn.onclick = async () => {
       const title = titleInput.value.trim();
       const content = contentInput.value.trim();
       if (!title || !content) {
         alert("イベント名と内容の両方を入力してください！");
         return;
       }
-
       const nowIso = new Date().toISOString();
-
       try {
         if (currentDocId) {
           await updateDoc(doc(db, "memos", currentDocId), { title, content, updatedAt: nowIso });
@@ -259,22 +319,182 @@
           openCardIds.add(docRef.id);
         }
         modal.classList.remove("open");
-      } catch(e) {
-        alert("保存エラー: " + e.message);
-      }
+      } catch(e) { alert("保存エラー: " + e.message); }
     };
 
-    // 削除処理
     deleteBtn.onclick = async () => {
       if (!currentDocId) return;
-      if (confirm("この項目を削除しますか？")) {
+      if (confirm("この要点を削除しますか？")) {
         try {
           await deleteDoc(doc(db, "memos", currentDocId));
           openCardIds.delete(currentDocId);
           modal.classList.remove("open");
-        } catch(e) {
-          alert("削除エラー: " + e.message);
+        } catch(e) { alert("削除エラー: " + e.message); }
+      }
+    };
+
+    // --- 2. イラスト置き場（高画質ギャラリー）の処理 ---
+    let imagesData = [];
+    let selectedImgBase64 = null;
+
+    const galleryEl = document.getElementById("galleryList");
+    const imgModal = document.getElementById("imgModal");
+    const imgTitleInput = document.getElementById("imgTitleInput");
+    const imgFileInput = document.getElementById("imgFileInput");
+    const imgPreviewWrap = document.getElementById("imgPreviewWrap");
+    const imgPreview = document.getElementById("imgPreview");
+    const saveImgBtn = document.getElementById("saveImgBtn");
+
+    // 細かい文字も潰れないように高画質（最大1200px）で調整しつつ、上限を超えないよう自動調整する関数
+    function compressImageHighQuality(file, callback) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxSize = 1200; // 高画質対応
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxSize) { height = Math.round(height * (maxSize / width)); width = maxSize; }
+          } else {
+            if (height > maxSize) { width = Math.round(width * (maxSize / height)); height = maxSize; }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // まずは高画質(0.85)で変換し、もしデータが大きすぎたら少しだけ画質を落として安全圏に収める
+          let quality = 0.85;
+          let dataUrl = canvas.toDataURL('image/jpeg', quality);
+          while (dataUrl.length > 900000 && quality > 0.4) {
+            quality -= 0.1;
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+          callback(dataUrl);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    imgFileInput.addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      saveImgBtn.textContent = "高画質処理中...";
+      saveImgBtn.disabled = true;
+      compressImageHighQuality(file, (compressedUrl) => {
+        selectedImgBase64 = compressedUrl;
+        imgPreview.src = selectedImgBase64;
+        imgPreviewWrap.style.display = "block";
+        saveImgBtn.textContent = "投稿する";
+        saveImgBtn.disabled = false;
+      });
+    });
+
+    onSnapshot(imagesRef, (snapshot) => {
+      const items = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+        if (d.imageData) {
+          items.push({
+            id: docSnap.id,
+            title: d.title || "お知らせ用イラスト",
+            imageData: d.imageData,
+            createdAt: d.createdAt || ""
+          });
         }
+      });
+      items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      imagesData = items;
+      renderGallery();
+    });
+
+    function renderGallery() {
+      galleryEl.innerHTML = "";
+      if (imagesData.length === 0) {
+        galleryEl.innerHTML = `<div style="text-align: center; color: #6b7280; padding: 30px 10px; background: #fff; border-radius: 12px; font-size: 0.85rem;">まだイラストがありません。<br>右上の「＋ 画像を投稿」から追加できます！</div>`;
+        return;
+      }
+
+      const grid = document.createElement("div");
+      grid.className = "gallery-grid";
+
+      imagesData.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "img-card";
+        const safeTitle = String(item.title).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        card.innerHTML = `
+          <div>
+            <div class="img-thumb-wrap" data-src="${item.imageData}">
+              <img class="img-thumb" src="${item.imageData}" alt="${safeTitle}">
+            </div>
+            <div class="img-label">${safeTitle}</div>
+          </div>
+          <div class="img-card-btns">
+            <a class="btn-dl-full" href="${item.imageData}" download="${safeTitle}.jpg">📥 保存</a>
+            <button class="btn-del-mini" data-id="${item.id}">🗑️</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      galleryEl.appendChild(grid);
+
+      // 画像タップで拡大表示
+      document.querySelectorAll(".img-thumb-wrap").forEach(wrap => {
+        wrap.onclick = () => {
+          document.getElementById("zoomImg").src = wrap.dataset.src;
+          document.getElementById("zoomModal").classList.add("open");
+        };
+      });
+
+      // イラスト削除ボタン
+      document.querySelectorAll(".btn-del-mini").forEach(btn => {
+        btn.onclick = async () => {
+          if (confirm("このイラストを削除しますか？")) {
+            try {
+              await deleteDoc(doc(db, "memo_images", btn.dataset.id));
+            } catch(e) { alert("削除エラー: " + e.message); }
+          }
+        };
+      });
+    }
+
+    document.getElementById("openAddImgBtn").onclick = () => {
+      imgTitleInput.value = "";
+      imgFileInput.value = "";
+      selectedImgBase64 = null;
+      imgPreviewWrap.style.display = "none";
+      imgModal.classList.add("open");
+    };
+
+    document.getElementById("closeImgBtn").onclick = () => imgModal.classList.remove("open");
+
+    saveImgBtn.onclick = async () => {
+      if (!selectedImgBase64) {
+        alert("画像を選択してください！");
+        return;
+      }
+      const title = imgTitleInput.value.trim() || "イラスト";
+      saveImgBtn.disabled = true;
+      saveImgBtn.textContent = "投稿中...";
+
+      try {
+        await addDoc(imagesRef, {
+          title: title,
+          imageData: selectedImgBase64,
+          createdAt: new Date().toISOString()
+        });
+        imgModal.classList.remove("open");
+      } catch(e) {
+        alert("投稿エラー: " + e.message);
+      } finally {
+        saveImgBtn.disabled = false;
+        saveImgBtn.textContent = "投稿する";
       }
     };
   </script>
