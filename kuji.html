@@ -24,6 +24,15 @@
     .chip { padding: 6px 12px; border-radius: 20px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; font-size: 0.85rem; font-weight: 600; cursor: pointer; user-select: none; transition: 0.15s; }
     .chip.active { background: #d946ef; color: #fff; border-color: #d946ef; box-shadow: 0 2px 5px rgba(217, 70, 239, 0.3); }
 
+    /* 日付追加エリアのデザイン */
+    .date-add-row { display: flex; gap: 6px; margin-bottom: 10px; }
+    .date-add-row input[type="date"] { flex: 1; }
+    .btn-add-date { background: #a21caf; color: #fff; border: none; padding: 0 14px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
+    .btn-add-date:active { transform: scale(0.96); }
+    
+    .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fae8ff; color: #86198f; border: 1px solid #f0abfc; padding: 5px 10px; border-radius: 16px; font-size: 0.85rem; font-weight: bold; }
+    .date-chip-remove { background: #e879f9; color: #fff; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; justify-content: center; align-items: center; font-size: 0.7rem; cursor: pointer; line-height: 1; }
+
     .mini-btns { display: flex; gap: 6px; }
     .btn-mini { background: #f3f4f6; color: #4b5563; border: none; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; font-weight: bold; }
 
@@ -32,14 +41,19 @@
     
     #result-box { margin-top: 24px; min-height: 110px; }
     
+    /* 結果のリスト表示 */
+    .result-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px; border-bottom: 1px solid #fdf4ff; font-size: 1.05rem; }
+    .result-date { font-weight: bold; color: #a21caf; font-size: 0.95rem; }
+    .result-winner { font-weight: bold; color: #222; font-size: 1.2rem; }
+
     /* 履歴エリア */
     .history-box { margin-top: 32px; background: #fff; padding: 16px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); max-width: 380px; margin-left: auto; margin-right: auto; text-align: left; }
     .history-box h3 { font-size: 1rem; color: #a21caf; margin-top: 0; border-bottom: 2px solid #f5d0fe; padding-bottom: 8px; margin-bottom: 10px; }
-    #history-list { list-style: none; padding: 0; margin: 0; max-height: 260px; overflow-y: auto; }
+    #history-list { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; }
     #history-list li { padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; }
-    .history-date-title { font-size: 0.78rem; color: #6b7280; }
-    .history-winner { font-weight: bold; color: #333; font-size: 1rem; margin: 2px 0; }
-    .history-members { font-size: 0.75rem; color: #9ca3af; line-height: 1.3; }
+    .history-date-title { font-size: 0.8rem; color: #a21caf; font-weight: bold; margin-bottom: 4px; }
+    .history-assign { font-weight: bold; color: #333; font-size: 0.92rem; margin: 3px 0; padding-left: 6px; border-left: 3px solid #f0abfc; }
+    .history-members { font-size: 0.75rem; color: #9ca3af; line-height: 1.3; margin-top: 4px; }
     .btn-clear { margin-top: 12px; background: #e5e7eb; color: #4b5563; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
 
     .back-btn { display: inline-block; margin-top: 30px; margin-bottom: 20px; padding: 10px 20px; background: #fff; color: #4b5563; text-decoration: none; border-radius: 20px; border: 1px solid #d1d5db; font-size: 0.9rem; font-weight: bold; }
@@ -72,9 +86,14 @@
     <input type="text" id="kujiTitle" placeholder="一覧から選ぶか、ここに入力">
 
     <div class="section-title">
-      <span>2. いつの分？</span>
+      <span>2. いつの分？（複数追加OK！）</span>
+      <button class="btn-mini" onclick="clearDates()">日付クリア</button>
     </div>
-    <input type="date" id="targetDate">
+    <div class="date-add-row">
+      <input type="date" id="datePicker">
+      <button class="btn-add-date" onclick="addDate()">＋ 追加</button>
+    </div>
+    <div class="chip-container" id="dateChips"></div>
 
     <div class="section-title">
       <span>3. 候補者を選ぶ（タップでON/OFF）</span>
@@ -124,25 +143,76 @@
     const PRESET_TITLES_KEY = 'r4_kuji_titles_v1';
     const PRESET_NAMES_KEY = 'r4_kuji_names_v1';
 
-    // 初期データ（まだ何も保存されていない時用）
     const DEFAULT_TITLES = ["シールドお知らせ", "チーズお知らせ"];
     const DEFAULT_NAMES = ["ジャザ", "豆たん", "しず", "ひな", "シチミ", "いかれた猫"];
 
     let presetTitles = [];
     let presetNames = [];
-    let selectedNames = new Set(); // 現在ONになっている候補者
+    let selectedNames = new Set();
+    let targetDates = []; // 抽選する日付のリスト
 
     window.onload = () => {
-      // 今日の日付をセット
       const now = new Date();
       now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-      document.getElementById("targetDate").value = now.toISOString().slice(0, 10);
+      const todayStr = now.toISOString().slice(0, 10);
+      document.getElementById("datePicker").value = todayStr;
       
+      // 最初は今日の日付を1つ入れておく
+      targetDates = [todayStr];
+      renderDateChips();
+
       loadPresets();
       loadHistory();
     };
 
-    // 保存された一覧を読み込む
+    // --- 日付の追加・削除処理 ---
+    function formatDateShort(dateStr) {
+      const d = new Date(dateStr);
+      const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
+      return `${d.getMonth() + 1}/${d.getDate()}(${weekDays[d.getDay()]})`;
+    }
+
+    function addDate() {
+      const val = document.getElementById("datePicker").value;
+      if (!val) return;
+      if (!targetDates.includes(val)) {
+        targetDates.push(val);
+        targetDates.sort(); // 日付順に自動で並べる
+        renderDateChips();
+      } else {
+        alert("その日付はすでに追加されています！");
+      }
+    }
+
+    function removeDate(dateStr) {
+      targetDates = targetDates.filter(d => d !== dateStr);
+      renderDateChips();
+    }
+
+    function clearDates() {
+      targetDates = [];
+      renderDateChips();
+    }
+
+    function renderDateChips() {
+      const container = document.getElementById("dateChips");
+      container.innerHTML = "";
+      if (targetDates.length === 0) {
+        container.innerHTML = '<span style="font-size:0.8rem; color:#999;">上のカレンダーから日付を選んで「＋追加」を押してね</span>';
+        return;
+      }
+      targetDates.forEach(dStr => {
+        const chip = document.createElement("div");
+        chip.className = "date-chip";
+        chip.innerHTML = `
+          <span>${formatDateShort(dStr)}</span>
+          <span class="date-chip-remove" onclick="removeDate('${dStr}')">×</span>
+        `;
+        container.appendChild(chip);
+      });
+    }
+
+    // --- 保存された一覧を読み込む ---
     function loadPresets() {
       try {
         const savedT = localStorage.getItem(PRESET_TITLES_KEY);
@@ -154,14 +224,11 @@
         presetNames = savedN ? JSON.parse(savedN) : [...DEFAULT_NAMES];
       } catch(e) { presetNames = [...DEFAULT_NAMES]; }
 
-      // 最初は全員選択状態にしておく
       selectedNames = new Set(presetNames);
-
       renderTitleChips();
       renderNameChips();
     }
 
-    // 「何を決める？」のボタンを描画
     function renderTitleChips() {
       const container = document.getElementById('titleChips');
       container.innerHTML = '';
@@ -173,16 +240,14 @@
         btn.textContent = title;
         btn.onclick = () => {
           document.getElementById('kujiTitle').value = title;
-          renderTitleChips(); // 選択状態を更新
+          renderTitleChips();
         };
         container.appendChild(btn);
       });
     }
 
-    // 手入力された時もボタンの選択状態を連動させる
     document.getElementById('kujiTitle').addEventListener('input', renderTitleChips);
 
-    // 「候補者の名前」のボタンを描画
     function renderNameChips() {
       const container = document.getElementById('nameChips');
       container.innerHTML = '';
@@ -210,7 +275,6 @@
       document.getElementById('selectedCount').textContent = `選択中: ${selectedNames.size}人`;
     }
 
-    // 全員ON / 全解除
     function toggleAllNames(selectAll) {
       if (selectAll) {
         selectedNames = new Set(presetNames);
@@ -243,11 +307,20 @@
         localStorage.setItem(PRESET_NAMES_KEY, JSON.stringify(presetNames));
       } catch(e) {}
 
-      // 保存後、新しく登録された名前をONにする
       selectedNames = new Set(presetNames);
       renderTitleChips();
       renderNameChips();
       closeEditModal();
+    }
+
+    // 配列をランダムにシャッフルする関数
+    function shuffleArray(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
     }
 
     // --- ルーレット実行処理 ---
@@ -256,11 +329,10 @@
       if (isSpinning) return;
       
       const kujiTitle = document.getElementById('kujiTitle').value.trim();
-      const targetDateStr = document.getElementById('targetDate').value;
       const items = Array.from(selectedNames);
       
       if (!kujiTitle) { alert('「1. 何を決める？」を選択するか入力してください！'); return; }
-      if (!targetDateStr) { alert('「2. いつの分？」の日付を選んでください！'); return; }
+      if (targetDates.length === 0) { alert('「2. いつの分？」で日付を1つ以上「＋追加」してください！'); return; }
       if (items.length === 0) { alert('「3. 候補者」を1人以上タップして選んでください！'); return; }
 
       isSpinning = true;
@@ -268,28 +340,45 @@
       const drawBtn = document.querySelector('.btn-draw');
       drawBtn.style.opacity = '0.5';
       drawBtn.textContent = '抽選中...';
-      resultBox.innerHTML = '<div style="font-size: 2rem; font-weight: bold; color: #a21caf; padding: 20px;">🎲</div>';
       
+      // 抽選ロジック（被りが出ないように順番に割り当て、足りなくなったら再シャッフルして補充）
+      let pool = [];
+      const assignments = [];
+      targetDates.forEach(dStr => {
+        if (pool.length === 0) {
+          pool = shuffleArray(items);
+        }
+        assignments.push({
+          date: dStr,
+          winner: pool.pop()
+        });
+      });
+
       let spinCount = 0;
-      
       const timer = setInterval(() => {
-        resultBox.innerHTML = `<div style="font-size: 1.6rem; font-weight: bold; color: #d946ef; margin-top:20px;">${items[Math.floor(Math.random() * items.length)]}</div>`;
+        const randomName = items[Math.floor(Math.random() * items.length)];
+        resultBox.innerHTML = `<div style="font-size: 1.5rem; font-weight: bold; color: #d946ef; margin-top:20px;">🎲 ${randomName} ...</div>`;
         spinCount++;
         
         if (spinCount >= 15) {
           clearInterval(timer);
           
-          const winner = items[Math.floor(Math.random() * items.length)];
-          const d = new Date(targetDateStr);
-          const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
-          const dateText = `${d.getMonth() + 1}/${d.getDate()}(${weekDays[d.getDay()]})`;
           const participantsStr = items.join('、');
           
           let html = '<div style="font-size: 1.1rem; color: #ec4899; font-weight: bold; margin-bottom: 12px;">🎉 決定 🎉</div>';
-          html += `<div style="background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; width: 100%; max-width: 340px;">`;
-          html += `<div style="color: #6b7280; font-size: 0.9rem; margin-bottom: 8px; border-bottom: 1px dashed #f5d0fe; padding-bottom: 8px;">${dateText} の <b>${kujiTitle}</b></div>`;
-          html += `<div style="font-size: 1.8rem; font-weight: bold; color: #333; margin: 10px 0;">${winner}</div>`;
-          html += `<div style="font-size: 0.75rem; color: #6b7280; background: #fdf4ff; padding: 8px; border-radius: 8px; text-align: left; line-height: 1.4;">👥 <b>参加（${items.length}名）:</b><br>${participantsStr}</div>`;
+          html += `<div style="background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; width: 100%; max-width: 350px;">`;
+          html += `<div style="color: #6b7280; font-size: 0.95rem; margin-bottom: 10px; border-bottom: 2px dashed #f5d0fe; padding-bottom: 8px;"><b>${kujiTitle}</b></div>`;
+          
+          assignments.forEach(a => {
+            html += `
+              <div class="result-row">
+                <span class="result-date">${formatDateShort(a.date)}</span>
+                <span class="result-winner">🎉 ${a.winner}</span>
+              </div>
+            `;
+          });
+
+          html += `<div style="font-size: 0.75rem; color: #6b7280; background: #fdf4ff; padding: 8px; border-radius: 8px; text-align: left; line-height: 1.4; margin-top: 12px;">👥 <b>参加（${items.length}名）:</b><br>${participantsStr}</div>`;
           html += `</div>`;
           
           resultBox.innerHTML = html;
@@ -297,8 +386,7 @@
           drawBtn.style.opacity = '1';
           drawBtn.textContent = 'もう一度決める';
 
-          // 参加メンバー（items）も一緒に記録する
-          saveHistory(kujiTitle, targetDateStr, winner, items);
+          saveHistory(kujiTitle, assignments, items);
         }
       }, 60); 
     }
@@ -317,18 +405,31 @@
           }
           history.forEach(item => {
             const li = document.createElement('li');
-            const d = new Date(item.date);
-            const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
             
-            // 参加メンバーの表示（古い記録でデータがない場合は非表示）
             let membersHtml = '';
             if (item.participants && item.participants.length > 0) {
               membersHtml = `<div class="history-members">👥 参加: ${item.participants.join('、')}</div>`;
             }
 
+            // 複数日対応の新しい記録形式と、昔の1日だけの記録形式の両方に対応
+            let detailHtml = '';
+            if (item.assignments && Array.isArray(item.assignments)) {
+              let rows = item.assignments.map(a => `<div class="history-assign">${formatDateShort(a.date)} ➔ 🎉 ${a.winner}</div>`).join('');
+              detailHtml = `
+                <div class="history-date-title">📌 ${item.title}</div>
+                ${rows}
+              `;
+            } else {
+              const d = new Date(item.date);
+              const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
+              detailHtml = `
+                <div class="history-date-title">${dateStr} - ${item.title}</div>
+                <div class="history-assign">🎉 ${item.winner}</div>
+              `;
+            }
+
             li.innerHTML = `
-              <div class="history-date-title">${dateStr} - ${item.title}</div>
-              <div class="history-winner">🎉 ${item.winner}</div>
+              ${detailHtml}
               ${membersHtml}
             `;
             listEl.appendChild(li);
@@ -341,7 +442,7 @@
       }
     }
 
-    function saveHistory(title, dateStr, winner, participants) {
+    function saveHistory(title, assignments, participants) {
       try {
         let history = [];
         const saved = localStorage.getItem(HISTORY_KEY);
@@ -349,8 +450,7 @@
         
         history.unshift({ 
           title: title, 
-          date: dateStr, 
-          winner: winner, 
+          assignments: assignments, 
           participants: participants, 
           timestamp: Date.now() 
         });
