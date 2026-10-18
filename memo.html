@@ -16,9 +16,11 @@
     
     /* アコーディオン（折りたたみ）カードのデザイン */
     .card { background: #fff; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left: 5px solid #16a34a; overflow: hidden; }
-    .card-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; background: #fff; transition: background 0.15s; }
+    .card-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; background: #fff; transition: background 0.15s; }
     .card-header:active { background: #f9fafb; }
-    .card-title { font-size: 1.02rem; font-weight: bold; color: #166534; margin: 0; word-break: break-all; padding-right: 8px; }
+    .card-title-wrap { display: flex; flex-direction: column; gap: 3px; padding-right: 8px; }
+    .card-title { font-size: 1.02rem; font-weight: bold; color: #166534; margin: 0; word-break: break-all; }
+    .card-date { font-size: 0.72rem; color: #6b7280; }
     .toggle-icon { font-size: 0.8rem; color: #16a34a; transition: transform 0.2s; flex-shrink: 0; font-weight: bold; }
     
     /* 開いた時のスタイル */
@@ -108,13 +110,21 @@
 
     let currentDocId = null;
     let memosData = [];
-    let openCardIds = new Set(); // 開いているカードのIDを記憶（更新されても閉じないようにする）
+    let openCardIds = new Set();
 
     const listEl = document.getElementById("memoList");
     const modal = document.getElementById("memoModal");
     const titleInput = document.getElementById("memoTitle");
     const contentInput = document.getElementById("memoContent");
     const deleteBtn = document.getElementById("deleteBtn");
+
+    // 日付を見やすく変換する関数（例: 10/18 更新）
+    function formatUpdateDate(isoStr) {
+      if (!isoStr) return "";
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return "";
+      return `🔄 ${d.getMonth() + 1}/${d.getDate()} 更新`;
+    }
 
     // データのリアルタイム取得
     onSnapshot(memosRef, (snapshot) => {
@@ -125,7 +135,8 @@
           id: docSnap.id,
           title: d.title || "名称未設定",
           content: d.content || "",
-          createdAt: d.createdAt || ""
+          createdAt: d.createdAt || "",
+          updatedAt: d.updatedAt || d.createdAt || ""
         });
       });
       items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -146,10 +157,14 @@
 
         const safeTitle = String(item.title).replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const safeContent = String(item.content).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const dateText = formatUpdateDate(item.updatedAt);
 
         card.innerHTML = `
           <div class="card-header">
-            <h3 class="card-title">${safeTitle}</h3>
+            <div class="card-title-wrap">
+              <h3 class="card-title">${safeTitle}</h3>
+              ${dateText ? `<span class="card-date">${dateText}</span>` : ''}
+            </div>
             <span class="toggle-icon">▼</span>
           </div>
           <div class="card-detail">
@@ -225,7 +240,7 @@
 
     document.getElementById("closeBtn").onclick = () => modal.classList.remove("open");
 
-    // 保存処理
+    // 保存処理（更新日時も一緒に保存する）
     document.getElementById("saveBtn").onclick = async () => {
       const title = titleInput.value.trim();
       const content = contentInput.value.trim();
@@ -234,12 +249,14 @@
         return;
       }
 
+      const nowIso = new Date().toISOString();
+
       try {
         if (currentDocId) {
-          await updateDoc(doc(db, "memos", currentDocId), { title, content });
+          await updateDoc(doc(db, "memos", currentDocId), { title, content, updatedAt: nowIso });
         } else {
-          const docRef = await addDoc(memosRef, { title, content, createdAt: new Date().toISOString() });
-          openCardIds.add(docRef.id); // 新しく追加したカードは自動で開いた状態にする
+          const docRef = await addDoc(memosRef, { title, content, createdAt: nowIso, updatedAt: nowIso });
+          openCardIds.add(docRef.id);
         }
         modal.classList.remove("open");
       } catch(e) {
