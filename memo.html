@@ -14,15 +14,24 @@
 
     .container { max-width: 500px; margin: 0 auto; }
     
-    .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left: 5px solid #16a34a; }
-    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; }
-    .card-title { font-size: 1.05rem; font-weight: bold; color: #166534; margin: 0; word-break: break-all; }
-    .card-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .btn-action { border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
+    /* アコーディオン（折りたたみ）カードのデザイン */
+    .card { background: #fff; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left: 5px solid #16a34a; overflow: hidden; }
+    .card-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; background: #fff; transition: background 0.15s; }
+    .card-header:active { background: #f9fafb; }
+    .card-title { font-size: 1.02rem; font-weight: bold; color: #166534; margin: 0; word-break: break-all; padding-right: 8px; }
+    .toggle-icon { font-size: 0.8rem; color: #16a34a; transition: transform 0.2s; flex-shrink: 0; font-weight: bold; }
+    
+    /* 開いた時のスタイル */
+    .card.open .toggle-icon { transform: rotate(180deg); }
+    .card-detail { display: none; padding: 0 16px 16px 16px; border-top: 1px dashed #e5e7eb; }
+    .card.open .card-detail { display: block; }
+
+    .card-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; margin-bottom: 8px; }
+    .btn-action { border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; }
     .btn-copy { background: #dcfce7; color: #15803d; }
     .btn-edit { background: #f3f4f6; color: #4b5563; }
     
-    .card-body { font-size: 0.9rem; color: #374151; white-space: pre-wrap; word-break: break-all; background: #f9fafb; padding: 10px; border-radius: 8px; line-height: 1.5; border: 1px solid #f3f4f6; }
+    .card-body { font-size: 0.9rem; color: #374151; white-space: pre-wrap; word-break: break-all; background: #f9fafb; padding: 12px; border-radius: 8px; line-height: 1.5; border: 1px solid #f3f4f6; }
 
     .back-wrap { text-align: center; margin-top: 30px; margin-bottom: 20px; }
     .back-btn { display: inline-block; padding: 10px 20px; background: #fff; color: #4b5563; text-decoration: none; border-radius: 20px; border: 1px solid #d1d5db; font-size: 0.9rem; font-weight: bold; }
@@ -70,7 +79,7 @@
       </div>
       <div class="form-group">
         <label>お知らせに絶対入れて欲しい内容</label>
-        <textarea id="memoContent" placeholder="・開始時間の30分前に予告すること&#10;・集合場所の座標を入れること&#10;&#10;【テンプレ文】&#10;本日〇時より〇〇を開催します！"></textarea>
+        <textarea id="memoContent"></textarea>
       </div>
       <div class="modal-buttons">
         <button class="btn-delete" id="deleteBtn" style="display: none;">削除</button>
@@ -99,6 +108,7 @@
 
     let currentDocId = null;
     let memosData = [];
+    let openCardIds = new Set(); // 開いているカードのIDを記憶（更新されても閉じないようにする）
 
     const listEl = document.getElementById("memoList");
     const modal = document.getElementById("memoModal");
@@ -118,7 +128,6 @@
           createdAt: d.createdAt || ""
         });
       });
-      // 作成日順（古い順＝上から順番）に並べる
       items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
       memosData = items;
       renderList();
@@ -133,7 +142,7 @@
 
       memosData.forEach(item => {
         const card = document.createElement("div");
-        card.className = "card";
+        card.className = "card" + (openCardIds.has(item.id) ? " open" : "");
 
         const safeTitle = String(item.title).replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const safeContent = String(item.content).replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -141,19 +150,36 @@
         card.innerHTML = `
           <div class="card-header">
             <h3 class="card-title">${safeTitle}</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="card-detail">
             <div class="card-actions">
               <button class="btn-action btn-copy" data-id="${item.id}">📋 コピー</button>
               <button class="btn-action btn-edit" data-id="${item.id}">✏️ 編集</button>
             </div>
+            <div class="card-body">${safeContent}</div>
           </div>
-          <div class="card-body">${safeContent}</div>
         `;
+
+        // 題名（ヘッダー）をタップしたら開閉する
+        const header = card.querySelector(".card-header");
+        header.onclick = () => {
+          if (card.classList.contains("open")) {
+            card.classList.remove("open");
+            openCardIds.delete(item.id);
+          } else {
+            card.classList.add("open");
+            openCardIds.add(item.id);
+          }
+        };
+
         listEl.appendChild(card);
       });
 
       // コピーボタンの動作
       document.querySelectorAll(".btn-copy").forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
           const target = memosData.find(m => m.id === btn.dataset.id);
           if (target) {
             navigator.clipboard.writeText(target.content).then(() => {
@@ -169,7 +195,8 @@
 
       // 編集ボタンの動作
       document.querySelectorAll(".btn-edit").forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
           const target = memosData.find(m => m.id === btn.dataset.id);
           if (target) openEditModal(target);
         };
@@ -211,7 +238,8 @@
         if (currentDocId) {
           await updateDoc(doc(db, "memos", currentDocId), { title, content });
         } else {
-          await addDoc(memosRef, { title, content, createdAt: new Date().toISOString() });
+          const docRef = await addDoc(memosRef, { title, content, createdAt: new Date().toISOString() });
+          openCardIds.add(docRef.id); // 新しく追加したカードは自動で開いた状態にする
         }
         modal.classList.remove("open");
       } catch(e) {
@@ -225,6 +253,7 @@
       if (confirm("この項目を削除しますか？")) {
         try {
           await deleteDoc(doc(db, "memos", currentDocId));
+          openCardIds.delete(currentDocId);
           modal.classList.remove("open");
         } catch(e) {
           alert("削除エラー: " + e.message);
