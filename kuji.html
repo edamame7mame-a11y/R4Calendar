@@ -2,45 +2,88 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>🎲 くじ引き</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fdf4ff; text-align: center; padding: 20px; color: #333; margin: 0; }
-    h1 { font-size: 1.4rem; color: #a21caf; margin-top: 10px; margin-bottom: 20px; }
-    .settings { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: left; max-width: 350px; margin: 0 auto; }
-    .settings label { font-weight: bold; font-size: 0.85rem; color: #a21caf; display: block; margin-top: 12px; }
-    .settings label:first-child { margin-top: 0; }
-    textarea, input[type="date"], input[type="text"] { width: 100%; padding: 10px; margin-top: 6px; border: 2px solid #f5d0fe; border-radius: 8px; font-size: 1rem; box-sizing: border-box; outline: none; }
-    textarea { height: 160px; resize: none; line-height: 1.5; }
-    textarea:focus, input:focus { border-color: #d946ef; }
-    .btn-draw { background: #d946ef; color: white; border: none; padding: 14px 32px; font-size: 1.1rem; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(217,70,239,0.3); margin-top: 24px; width: 100%; max-width: 350px; }
-    .btn-draw:active { transform: scale(0.95); box-shadow: 0 2px 4px rgba(217,70,239,0.3); }
-    #result-box { margin-top: 30px; min-height: 120px; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fdf4ff; text-align: center; padding: 16px; color: #333; margin: 0; }
     
-    /* 履歴用のデザイン */
-    .history-box { margin-top: 40px; background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); max-width: 350px; margin-left: auto; margin-right: auto; text-align: left; }
-    .history-box h3 { font-size: 1.1rem; color: #a21caf; margin-top: 0; border-bottom: 2px solid #f5d0fe; padding-bottom: 8px; margin-bottom: 12px; }
-    #history-list { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
-    #history-list li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.95rem; }
-    .history-date-title { font-size: 0.8rem; color: #6b7280; margin-bottom: 2px; }
-    .history-winner { font-weight: bold; color: #333; }
-    .btn-clear { margin-top: 15px; background: #e5e7eb; color: #4b5563; border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+    header { display: flex; justify-content: space-between; align-items: center; max-width: 380px; margin: 0 auto 16px auto; }
+    h1 { font-size: 1.3rem; color: #a21caf; margin: 0; }
+    .btn-edit-list { background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
 
-    .back-btn { display: inline-block; margin-top: 40px; padding: 10px 20px; background: #fff; color: #4b5563; text-decoration: none; border-radius: 20px; border: 1px solid #d1d5db; font-size: 0.9rem; font-weight: bold; }
+    .settings { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: left; max-width: 380px; margin: 0 auto; }
+    .section-title { font-weight: bold; font-size: 0.85rem; color: #a21caf; margin-top: 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .section-title:first-child { margin-top: 0; }
+    
+    input[type="date"], input[type="text"], textarea { width: 100%; padding: 10px; border: 2px solid #f5d0fe; border-radius: 8px; font-size: 0.95rem; outline: none; }
+    input:focus, textarea:focus { border-color: #d946ef; }
+
+    /* タップで選ぶチップ（ボタン）のデザイン */
+    .chip-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .chip { padding: 6px 12px; border-radius: 20px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; font-size: 0.85rem; font-weight: 600; cursor: pointer; user-select: none; transition: 0.15s; }
+    .chip.active { background: #d946ef; color: #fff; border-color: #d946ef; box-shadow: 0 2px 5px rgba(217, 70, 239, 0.3); }
+
+    .mini-btns { display: flex; gap: 6px; }
+    .btn-mini { background: #f3f4f6; color: #4b5563; border: none; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; font-weight: bold; }
+
+    .btn-draw { background: #d946ef; color: white; border: none; padding: 14px 32px; font-size: 1.1rem; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(217,70,239,0.3); margin-top: 20px; width: 100%; max-width: 380px; }
+    .btn-draw:active { transform: scale(0.96); }
+    
+    #result-box { margin-top: 24px; min-height: 110px; }
+    
+    /* 履歴エリア */
+    .history-box { margin-top: 32px; background: #fff; padding: 16px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); max-width: 380px; margin-left: auto; margin-right: auto; text-align: left; }
+    .history-box h3 { font-size: 1rem; color: #a21caf; margin-top: 0; border-bottom: 2px solid #f5d0fe; padding-bottom: 8px; margin-bottom: 10px; }
+    #history-list { list-style: none; padding: 0; margin: 0; max-height: 240px; overflow-y: auto; }
+    #history-list li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+    .history-date-title { font-size: 0.78rem; color: #6b7280; }
+    .history-winner { font-weight: bold; color: #333; font-size: 0.95rem; }
+    .btn-clear { margin-top: 12px; background: #e5e7eb; color: #4b5563; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+
+    .back-btn { display: inline-block; margin-top: 30px; margin-bottom: 20px; padding: 10px 20px; background: #fff; color: #4b5563; text-decoration: none; border-radius: 20px; border: 1px solid #d1d5db; font-size: 0.9rem; font-weight: bold; }
+
+    /* 一覧編集モーダル */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 14px; padding: 18px; width: 100%; max-width: 360px; max-height: 90vh; overflow-y: auto; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal h2 { font-size: 1.05rem; color: #a21caf; margin-top: 0; margin-bottom: 12px; }
+    .modal label { display: block; font-size: 0.8rem; font-weight: bold; color: #444; margin-top: 12px; margin-bottom: 4px; }
+    .modal textarea { height: 110px; line-height: 1.4; font-size: 0.9rem; }
+    .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
+    .modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 0.9rem; }
+    .btn-save { background: #d946ef; color: #fff; }
+    .btn-cancel { background: #e5e7eb; color: #4b5563; }
   </style>
 </head>
 <body>
-  <h1>🎲 くじ引き</h1>
+
+  <header>
+    <h1>🎲 くじ引き</h1>
+    <button class="btn-edit-list" onclick="openEditModal()">⚙️ 一覧の編集</button>
+  </header>
   
   <div class="settings">
-    <label>1. 何を決める？</label>
-    <input type="text" id="kujiTitle" placeholder="例: シールドお知らせ、チーズお知らせ">
+    <div class="section-title">
+      <span>1. 何を決める？（タップで選択）</span>
+    </div>
+    <div class="chip-container" id="titleChips"></div>
+    <input type="text" id="kujiTitle" placeholder="一覧から選ぶか、ここに入力">
 
-    <label>2. いつの分？</label>
+    <div class="section-title">
+      <span>2. いつの分？</span>
+    </div>
     <input type="date" id="targetDate">
 
-    <label>3. 候補者の名前（改行して入力）</label>
-    <textarea id="names" placeholder="ジャザ&#10;豆たん..."></textarea>
+    <div class="section-title">
+      <span>3. 候補者を選ぶ（タップでON/OFF）</span>
+      <div class="mini-btns">
+        <button class="btn-mini" onclick="toggleAllNames(true)">全員ON</button>
+        <button class="btn-mini" onclick="toggleAllNames(false)">全解除</button>
+      </div>
+    </div>
+    <div class="chip-container" id="nameChips"></div>
+    <div id="selectedCount" style="font-size: 0.78rem; color: #6b7280; text-align: right; margin-top: 4px;">選択中: 0人</div>
   </div>
   
   <button class="btn-draw" onclick="startKuji()">ルーレットを回す！</button>
@@ -56,32 +99,168 @@
 
   <a href="index.html" class="back-btn">← カレンダーに戻る</a>
 
+  <!-- 一覧編集用の画面（モーダル） -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <h2>⚙️ 一覧の編集・登録</h2>
+      <p style="font-size: 0.78rem; color: #666; margin: 0 0 10px 0;">よく使う項目やメンバーを改行して入力しておくと、画面でポチッと選べるようになります。</p>
+      
+      <label>「何を決める？」の一覧（改行で区切る）</label>
+      <textarea id="editTitlesInput" placeholder="シールドお知らせ&#10;チーズお知らせ"></textarea>
+
+      <label>「候補者の名前」の一覧（改行で区切る）</label>
+      <textarea id="editNamesInput" placeholder="ジャザ&#10;豆たん&#10;しず"></textarea>
+
+      <div class="modal-buttons">
+        <button class="btn-cancel" onclick="closeEditModal()">キャンセル</button>
+        <button class="btn-save" onclick="savePresets()">保存する</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const HISTORY_KEY = 'r4_kuji_history_v1';
+    const PRESET_TITLES_KEY = 'r4_kuji_titles_v1';
+    const PRESET_NAMES_KEY = 'r4_kuji_names_v1';
 
-    // 画面が開いた時の処理
+    // 初期データ（まだ何も保存されていない時用）
+    const DEFAULT_TITLES = ["シールドお知らせ", "チーズお知らせ"];
+    const DEFAULT_NAMES = ["ジャザ", "豆たん", "しず", "ひな", "シチミ", "いかれた猫"];
+
+    let presetTitles = [];
+    let presetNames = [];
+    let selectedNames = new Set(); // 現在ONになっている候補者
+
     window.onload = () => {
       // 今日の日付をセット
       const now = new Date();
       now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
       document.getElementById("targetDate").value = now.toISOString().slice(0, 10);
       
-      // 履歴を読み込む
+      loadPresets();
       loadHistory();
     };
 
+    // 保存された一覧を読み込む
+    function loadPresets() {
+      try {
+        const savedT = localStorage.getItem(PRESET_TITLES_KEY);
+        presetTitles = savedT ? JSON.parse(savedT) : [...DEFAULT_TITLES];
+      } catch(e) { presetTitles = [...DEFAULT_TITLES]; }
+
+      try {
+        const savedN = localStorage.getItem(PRESET_NAMES_KEY);
+        presetNames = savedN ? JSON.parse(savedN) : [...DEFAULT_NAMES];
+      } catch(e) { presetNames = [...DEFAULT_NAMES]; }
+
+      // 最初は全員選択状態にしておく
+      selectedNames = new Set(presetNames);
+
+      renderTitleChips();
+      renderNameChips();
+    }
+
+    // 「何を決める？」のボタンを描画
+    function renderTitleChips() {
+      const container = document.getElementById('titleChips');
+      container.innerHTML = '';
+      const currentVal = document.getElementById('kujiTitle').value;
+
+      presetTitles.forEach(title => {
+        const btn = document.createElement('div');
+        btn.className = 'chip' + (currentVal === title ? ' active' : '');
+        btn.textContent = title;
+        btn.onclick = () => {
+          document.getElementById('kujiTitle').value = title;
+          renderTitleChips(); // 選択状態を更新
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    // 手入力された時もボタンの選択状態を連動させる
+    document.getElementById('kujiTitle').addEventListener('input', renderTitleChips);
+
+    // 「候補者の名前」のボタンを描画
+    function renderNameChips() {
+      const container = document.getElementById('nameChips');
+      container.innerHTML = '';
+
+      if (presetNames.length === 0) {
+        container.innerHTML = '<span style="font-size:0.8rem; color:#999;">右上の「⚙️ 一覧の編集」から名前を登録してね</span>';
+      }
+
+      presetNames.forEach(name => {
+        const isSelected = selectedNames.has(name);
+        const btn = document.createElement('div');
+        btn.className = 'chip' + (isSelected ? ' active' : '');
+        btn.textContent = name;
+        btn.onclick = () => {
+          if (selectedNames.has(name)) {
+            selectedNames.delete(name);
+          } else {
+            selectedNames.add(name);
+          }
+          renderNameChips();
+        };
+        container.appendChild(btn);
+      });
+
+      document.getElementById('selectedCount').textContent = `選択中: ${selectedNames.size}人`;
+    }
+
+    // 全員ON / 全解除
+    function toggleAllNames(selectAll) {
+      if (selectAll) {
+        selectedNames = new Set(presetNames);
+      } else {
+        selectedNames.clear();
+      }
+      renderNameChips();
+    }
+
+    // --- 一覧の編集モーダル処理 ---
+    function openEditModal() {
+      document.getElementById('editTitlesInput').value = presetTitles.join('\n');
+      document.getElementById('editNamesInput').value = presetNames.join('\n');
+      document.getElementById('editModal').classList.add('open');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('open');
+    }
+
+    function savePresets() {
+      const tText = document.getElementById('editTitlesInput').value;
+      const nText = document.getElementById('editNamesInput').value;
+
+      presetTitles = tText.split('\n').map(s => s.trim()).filter(s => s !== '');
+      presetNames = nText.split('\n').map(s => s.trim()).filter(s => s !== '');
+
+      try {
+        localStorage.setItem(PRESET_TITLES_KEY, JSON.stringify(presetTitles));
+        localStorage.setItem(PRESET_NAMES_KEY, JSON.stringify(presetNames));
+      } catch(e) {}
+
+      // 保存後、新しく登録された名前をONにする
+      selectedNames = new Set(presetNames);
+      renderTitleChips();
+      renderNameChips();
+      closeEditModal();
+    }
+
+    // --- ルーレット実行処理 ---
     let isSpinning = false;
     function startKuji() {
       if (isSpinning) return;
       
       const kujiTitle = document.getElementById('kujiTitle').value.trim();
       const targetDateStr = document.getElementById('targetDate').value;
-      const text = document.getElementById('names').value;
-      const items = text.split('\n').map(item => item.trim()).filter(item => item !== '');
+      const items = Array.from(selectedNames);
       
-      if (!kujiTitle) { alert('「何を決めるか」を入力してください！'); return; }
-      if (!targetDateStr) { alert('日付を選んでください！'); return; }
-      if (items.length === 0) { alert('候補者の名前を入力してください！'); return; }
+      if (!kujiTitle) { alert('「1. 何を決める？」を選択するか入力してください！'); return; }
+      if (!targetDateStr) { alert('「2. いつの分？」の日付を選んでください！'); return; }
+      if (items.length === 0) { alert('「3. 候補者」を1人以上タップして選んでください！'); return; }
 
       isSpinning = true;
       const resultBox = document.getElementById('result-box');
@@ -92,7 +271,6 @@
       
       let spinCount = 0;
       
-      // パラパラ切り替わるアニメーション
       const timer = setInterval(() => {
         resultBox.innerHTML = `<div style="font-size: 1.6rem; font-weight: bold; color: #d946ef; margin-top:20px;">${items[Math.floor(Math.random() * items.length)]}</div>`;
         spinCount++;
@@ -100,16 +278,15 @@
         if (spinCount >= 15) {
           clearInterval(timer);
           
-          // 最終決定
           const winner = items[Math.floor(Math.random() * items.length)];
           const d = new Date(targetDateStr);
           const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
           const dateText = `${d.getMonth() + 1}/${d.getDate()}(${weekDays[d.getDay()]})`;
           
           let html = '<div style="font-size: 1.1rem; color: #ec4899; font-weight: bold; margin-bottom: 12px;">🎉 決定 🎉</div>';
-          html += `<div style="background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; min-width: 250px;">`;
-          html += `<div style="color: #6b7280; font-size: 0.95rem; margin-bottom: 8px; border-bottom: 1px dashed #f5d0fe; padding-bottom: 8px;">${dateText} の ${kujiTitle}</div>`;
-          html += `<div style="font-size: 1.8rem; font-weight: bold; color: #333; margin-top: 10px;">${winner}</div>`;
+          html += `<div style="background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; min-width: 260px;">`;
+          html += `<div style="color: #6b7280; font-size: 0.9rem; margin-bottom: 8px; border-bottom: 1px dashed #f5d0fe; padding-bottom: 8px;">${dateText} の <b>${kujiTitle}</b></div>`;
+          html += `<div style="font-size: 1.8rem; font-weight: bold; color: #333; margin-top: 8px;">${winner}</div>`;
           html += `</div>`;
           
           resultBox.innerHTML = html;
@@ -117,14 +294,12 @@
           drawBtn.style.opacity = '1';
           drawBtn.textContent = 'もう一度決める';
 
-          // 記録を保存
           saveHistory(kujiTitle, targetDateStr, winner);
         }
       }, 60); 
     }
 
-    // --- 履歴（記録）の処理 ---
-
+    // --- 履歴の処理 ---
     function loadHistory() {
       const listEl = document.getElementById('history-list');
       listEl.innerHTML = '';
@@ -133,21 +308,26 @@
         if (saved) {
           const history = JSON.parse(saved);
           if (history.length === 0) {
-            listEl.innerHTML = '<li style="font-size: 0.9rem; color: #9ca3af; border: none;">まだ記録がありません</li>';
+            listEl.innerHTML = '<li style="font-size: 0.85rem; color: #9ca3af; border: none; justify-content: center;">まだ記録がありません</li>';
             return;
           }
           history.forEach(item => {
             const li = document.createElement('li');
             const d = new Date(item.date);
             const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
-            li.innerHTML = `<div class="history-date-title">${dateStr} - ${item.title}</div><div class="history-winner">🎉 ${item.winner}</div>`;
+            li.innerHTML = `
+              <div>
+                <div class="history-date-title">${dateStr} - ${item.title}</div>
+                <div class="history-winner">🎉 ${item.winner}</div>
+              </div>
+            `;
             listEl.appendChild(li);
           });
         } else {
-          listEl.innerHTML = '<li style="font-size: 0.9rem; color: #9ca3af; border: none;">まだ記録がありません</li>';
+          listEl.innerHTML = '<li style="font-size: 0.85rem; color: #9ca3af; border: none; justify-content: center;">まだ記録がありません</li>';
         }
       } catch(e) {
-        listEl.innerHTML = '<li style="font-size: 0.9rem; color: #9ca3af; border: none;">まだ記録がありません</li>';
+        listEl.innerHTML = '<li style="font-size: 0.85rem; color: #9ca3af; border: none; justify-content: center;">まだ記録がありません</li>';
       }
     }
 
@@ -157,10 +337,7 @@
         const saved = localStorage.getItem(HISTORY_KEY);
         if (saved) history = JSON.parse(saved);
         
-        // 新しい記録を一番上に追加
         history.unshift({ title: title, date: dateStr, winner: winner, timestamp: Date.now() });
-        
-        // 最大50件まで残す
         if (history.length > 50) history = history.slice(0, 50);
         
         localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
