@@ -35,10 +35,11 @@
     /* 履歴エリア */
     .history-box { margin-top: 32px; background: #fff; padding: 16px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); max-width: 380px; margin-left: auto; margin-right: auto; text-align: left; }
     .history-box h3 { font-size: 1rem; color: #a21caf; margin-top: 0; border-bottom: 2px solid #f5d0fe; padding-bottom: 8px; margin-bottom: 10px; }
-    #history-list { list-style: none; padding: 0; margin: 0; max-height: 240px; overflow-y: auto; }
-    #history-list li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+    #history-list { list-style: none; padding: 0; margin: 0; max-height: 260px; overflow-y: auto; }
+    #history-list li { padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; }
     .history-date-title { font-size: 0.78rem; color: #6b7280; }
-    .history-winner { font-weight: bold; color: #333; font-size: 0.95rem; }
+    .history-winner { font-weight: bold; color: #333; font-size: 1rem; margin: 2px 0; }
+    .history-members { font-size: 0.75rem; color: #9ca3af; line-height: 1.3; }
     .btn-clear { margin-top: 12px; background: #e5e7eb; color: #4b5563; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
 
     .back-btn { display: inline-block; margin-top: 30px; margin-bottom: 20px; padding: 10px 20px; background: #fff; color: #4b5563; text-decoration: none; border-radius: 20px; border: 1px solid #d1d5db; font-size: 0.9rem; font-weight: bold; }
@@ -282,11 +283,13 @@
           const d = new Date(targetDateStr);
           const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
           const dateText = `${d.getMonth() + 1}/${d.getDate()}(${weekDays[d.getDay()]})`;
+          const participantsStr = items.join('、');
           
           let html = '<div style="font-size: 1.1rem; color: #ec4899; font-weight: bold; margin-bottom: 12px;">🎉 決定 🎉</div>';
-          html += `<div style="background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; min-width: 260px;">`;
+          html += `<div style="background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; width: 100%; max-width: 340px;">`;
           html += `<div style="color: #6b7280; font-size: 0.9rem; margin-bottom: 8px; border-bottom: 1px dashed #f5d0fe; padding-bottom: 8px;">${dateText} の <b>${kujiTitle}</b></div>`;
-          html += `<div style="font-size: 1.8rem; font-weight: bold; color: #333; margin-top: 8px;">${winner}</div>`;
+          html += `<div style="font-size: 1.8rem; font-weight: bold; color: #333; margin: 10px 0;">${winner}</div>`;
+          html += `<div style="font-size: 0.75rem; color: #6b7280; background: #fdf4ff; padding: 8px; border-radius: 8px; text-align: left; line-height: 1.4;">👥 <b>参加（${items.length}名）:</b><br>${participantsStr}</div>`;
           html += `</div>`;
           
           resultBox.innerHTML = html;
@@ -294,7 +297,8 @@
           drawBtn.style.opacity = '1';
           drawBtn.textContent = 'もう一度決める';
 
-          saveHistory(kujiTitle, targetDateStr, winner);
+          // 参加メンバー（items）も一緒に記録する
+          saveHistory(kujiTitle, targetDateStr, winner, items);
         }
       }, 60); 
     }
@@ -308,36 +312,48 @@
         if (saved) {
           const history = JSON.parse(saved);
           if (history.length === 0) {
-            listEl.innerHTML = '<li style="font-size: 0.85rem; color: #9ca3af; border: none; justify-content: center;">まだ記録がありません</li>';
+            listEl.innerHTML = '<li style="font-size: 0.85rem; color: #9ca3af; border: none; text-align: center;">まだ記録がありません</li>';
             return;
           }
           history.forEach(item => {
             const li = document.createElement('li');
             const d = new Date(item.date);
             const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
+            
+            // 参加メンバーの表示（古い記録でデータがない場合は非表示）
+            let membersHtml = '';
+            if (item.participants && item.participants.length > 0) {
+              membersHtml = `<div class="history-members">👥 参加: ${item.participants.join('、')}</div>`;
+            }
+
             li.innerHTML = `
-              <div>
-                <div class="history-date-title">${dateStr} - ${item.title}</div>
-                <div class="history-winner">🎉 ${item.winner}</div>
-              </div>
+              <div class="history-date-title">${dateStr} - ${item.title}</div>
+              <div class="history-winner">🎉 ${item.winner}</div>
+              ${membersHtml}
             `;
             listEl.appendChild(li);
           });
         } else {
-          listEl.innerHTML = '<li style="font-size: 0.85rem; color: #9ca3af; border: none; justify-content: center;">まだ記録がありません</li>';
+          listEl.innerHTML = '<li style="font-size: 0.85rem; color: #9ca3af; border: none; text-align: center;">まだ記録がありません</li>';
         }
       } catch(e) {
-        listEl.innerHTML = '<li style="font-size: 0.85rem; color: #9ca3af; border: none; justify-content: center;">まだ記録がありません</li>';
+        listEl.innerHTML = '<li style="font-size: 0.85rem; color: #9ca3af; border: none; text-align: center;">まだ記録がありません</li>';
       }
     }
 
-    function saveHistory(title, dateStr, winner) {
+    function saveHistory(title, dateStr, winner, participants) {
       try {
         let history = [];
         const saved = localStorage.getItem(HISTORY_KEY);
         if (saved) history = JSON.parse(saved);
         
-        history.unshift({ title: title, date: dateStr, winner: winner, timestamp: Date.now() });
+        history.unshift({ 
+          title: title, 
+          date: dateStr, 
+          winner: winner, 
+          participants: participants, 
+          timestamp: Date.now() 
+        });
         if (history.length > 50) history = history.slice(0, 50);
         
         localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
