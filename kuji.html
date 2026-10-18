@@ -3,63 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎲 お知らせ当番決め</title>
+  <title>🎲 くじ引き</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fdf4ff; text-align: center; padding: 20px; color: #333; margin: 0; }
     h1 { font-size: 1.4rem; color: #a21caf; margin-top: 10px; margin-bottom: 20px; }
     .settings { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: left; max-width: 350px; margin: 0 auto; }
     .settings label { font-weight: bold; font-size: 0.85rem; color: #a21caf; display: block; margin-top: 12px; }
     .settings label:first-child { margin-top: 0; }
-    textarea, input[type="date"] { width: 100%; padding: 10px; margin-top: 6px; border: 2px solid #f5d0fe; border-radius: 8px; font-size: 1rem; box-sizing: border-box; outline: none; }
+    textarea, input[type="date"], input[type="text"] { width: 100%; padding: 10px; margin-top: 6px; border: 2px solid #f5d0fe; border-radius: 8px; font-size: 1rem; box-sizing: border-box; outline: none; }
     textarea { height: 160px; resize: none; line-height: 1.5; }
     textarea:focus, input:focus { border-color: #d946ef; }
     .btn-draw { background: #d946ef; color: white; border: none; padding: 14px 32px; font-size: 1.1rem; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(217,70,239,0.3); margin-top: 24px; width: 100%; max-width: 350px; }
     .btn-draw:active { transform: scale(0.95); box-shadow: 0 2px 4px rgba(217,70,239,0.3); }
     #result-box { margin-top: 30px; min-height: 120px; }
+    
+    /* 履歴用のデザイン */
+    .history-box { margin-top: 40px; background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); max-width: 350px; margin-left: auto; margin-right: auto; text-align: left; }
+    .history-box h3 { font-size: 1.1rem; color: #a21caf; margin-top: 0; border-bottom: 2px solid #f5d0fe; padding-bottom: 8px; margin-bottom: 12px; }
+    #history-list { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
+    #history-list li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.95rem; }
+    .history-date-title { font-size: 0.8rem; color: #6b7280; margin-bottom: 2px; }
+    .history-winner { font-weight: bold; color: #333; }
+    .btn-clear { margin-top: 15px; background: #e5e7eb; color: #4b5563; border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+
     .back-btn { display: inline-block; margin-top: 40px; padding: 10px 20px; background: #fff; color: #4b5563; text-decoration: none; border-radius: 20px; border: 1px solid #d1d5db; font-size: 0.9rem; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>🎲 お知らせ当番決め</h1>
+  <h1>🎲 くじ引き</h1>
   
   <div class="settings">
-    <label>1. どの日のお知らせ当番？</label>
+    <label>1. 何を決める？</label>
+    <input type="text" id="kujiTitle" placeholder="例: お知らせ当番、買い出し">
+
+    <label>2. いつの分？</label>
     <input type="date" id="targetDate">
 
-    <label>2. 候補者の名前（改行して入力）</label>
-    <textarea id="names">ジャザ
-豆たん
-たきりん
-86円
-しず
-むぎ
-ひな</textarea>
+    <label>3. 候補者の名前（改行して入力）</label>
+    <textarea id="names" placeholder="ジャザ&#10;豆たん&#10;たきりん..."></textarea>
   </div>
   
   <button class="btn-draw" onclick="startKuji()">ルーレットを回す！</button>
   
   <div id="result-box"></div>
 
+  <!-- 記録エリア -->
+  <div class="history-box">
+    <h3>📜 過去の記録</h3>
+    <ul id="history-list"></ul>
+    <button class="btn-clear" onclick="clearHistory()">記録を消去</button>
+  </div>
+
   <a href="index.html" class="back-btn">← カレンダーに戻る</a>
 
   <script>
-    // 今日の日付をセット
+    const HISTORY_KEY = 'r4_kuji_history_v1';
+
+    // 画面が開いた時の処理
     window.onload = () => {
+      // 今日の日付をセット
       const now = new Date();
       now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
       document.getElementById("targetDate").value = now.toISOString().slice(0, 10);
+      
+      // 履歴を読み込む
+      loadHistory();
     };
 
     let isSpinning = false;
     function startKuji() {
       if (isSpinning) return;
       
+      const kujiTitle = document.getElementById('kujiTitle').value.trim();
+      const targetDateStr = document.getElementById('targetDate').value;
       const text = document.getElementById('names').value;
       const items = text.split('\n').map(item => item.trim()).filter(item => item !== '');
-      const targetDateStr = document.getElementById('targetDate').value;
       
+      if (!kujiTitle) { alert('「何を決めるか」を入力してください！'); return; }
       if (!targetDateStr) { alert('日付を選んでください！'); return; }
-      if (items.length === 0) { alert('名前を入力してください！'); return; }
+      if (items.length === 0) { alert('候補者の名前を入力してください！'); return; }
 
       isSpinning = true;
       const resultBox = document.getElementById('result-box');
@@ -84,9 +106,9 @@
           const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
           const dateText = `${d.getMonth() + 1}/${d.getDate()}(${weekDays[d.getDay()]})`;
           
-          let html = '<div style="font-size: 1.1rem; color: #ec4899; font-weight: bold; margin-bottom: 12px;">🎉 当番決定 🎉</div>';
+          let html = '<div style="font-size: 1.1rem; color: #ec4899; font-weight: bold; margin-bottom: 12px;">🎉 決定 🎉</div>';
           html += `<div style="background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; min-width: 250px;">`;
-          html += `<div style="color: #6b7280; font-size: 0.95rem; margin-bottom: 8px; border-bottom: 1px dashed #f5d0fe; padding-bottom: 8px;">${dateText} の担当は…</div>`;
+          html += `<div style="color: #6b7280; font-size: 0.95rem; margin-bottom: 8px; border-bottom: 1px dashed #f5d0fe; padding-bottom: 8px;">${dateText} の ${kujiTitle}</div>`;
           html += `<div style="font-size: 1.8rem; font-weight: bold; color: #333; margin-top: 10px;">${winner}</div>`;
           html += `</div>`;
           
@@ -94,8 +116,63 @@
           isSpinning = false;
           drawBtn.style.opacity = '1';
           drawBtn.textContent = 'もう一度決める';
+
+          // 記録を保存
+          saveHistory(kujiTitle, targetDateStr, winner);
         }
       }, 60); 
+    }
+
+    // --- 履歴（記録）の処理 ---
+
+    function loadHistory() {
+      const listEl = document.getElementById('history-list');
+      listEl.innerHTML = '';
+      try {
+        const saved = localStorage.getItem(HISTORY_KEY);
+        if (saved) {
+          const history = JSON.parse(saved);
+          if (history.length === 0) {
+            listEl.innerHTML = '<li style="font-size: 0.9rem; color: #9ca3af; border: none;">まだ記録がありません</li>';
+            return;
+          }
+          history.forEach(item => {
+            const li = document.createElement('li');
+            const d = new Date(item.date);
+            const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
+            li.innerHTML = `<div class="history-date-title">${dateStr} - ${item.title}</div><div class="history-winner">🎉 ${item.winner}</div>`;
+            listEl.appendChild(li);
+          });
+        } else {
+          listEl.innerHTML = '<li style="font-size: 0.9rem; color: #9ca3af; border: none;">まだ記録がありません</li>';
+        }
+      } catch(e) {
+        listEl.innerHTML = '<li style="font-size: 0.9rem; color: #9ca3af; border: none;">まだ記録がありません</li>';
+      }
+    }
+
+    function saveHistory(title, dateStr, winner) {
+      try {
+        let history = [];
+        const saved = localStorage.getItem(HISTORY_KEY);
+        if (saved) history = JSON.parse(saved);
+        
+        // 新しい記録を一番上に追加
+        history.unshift({ title: title, date: dateStr, winner: winner, timestamp: Date.now() });
+        
+        // 最大50件まで残す
+        if (history.length > 50) history = history.slice(0, 50);
+        
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        loadHistory();
+      } catch(e) {}
+    }
+
+    function clearHistory() {
+      if (confirm('過去の記録をすべて消去しますか？（元に戻せません）')) {
+        localStorage.removeItem(HISTORY_KEY);
+        loadHistory();
+      }
     }
   </script>
 </body>
