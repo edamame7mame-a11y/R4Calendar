@@ -8,12 +8,14 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; color: #222; }
-    header { background: #fff; padding: 10px 14px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-    header h1 { font-size: 1.15rem; font-weight: 700; color: #333; margin: 0; }
-    .header-btns { display: flex; gap: 6px; }
-    .btn-header { border: none; padding: 6px 12px; border-radius: 16px; font-weight: 600; font-size: 0.8rem; cursor: pointer; }
+    header { background: #fff; padding: 10px 8px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+    header h1 { font-size: 1rem; font-weight: 700; color: #333; margin: 0; white-space: nowrap; }
+    .header-btns { display: flex; gap: 4px; }
+    .btn-header { border: none; padding: 6px 8px; border-radius: 14px; font-weight: 600; font-size: 0.72rem; cursor: pointer; white-space: nowrap; }
     .btn-setting { background: #e5e7eb; color: #374151; }
     .btn-add { background: #2563eb; color: #fff; }
+    .btn-kuji { background: #d946ef; color: #fff; }
+    .btn-memo { background: #16a34a; color: #fff; }
 
     #calendar-container { padding: 4px; max-width: 900px; margin: 0 auto; }
     #calendar { background: #fff; border-radius: 8px; }
@@ -22,14 +24,7 @@
     .fc .fc-toolbar-title { font-size: 1rem !important; font-weight: bold; }
     .fc .fc-button { padding: 4px 8px !important; font-size: 0.8rem !important; }
     
-    /* 過去を表示・隠すボタンのデザイン */
-    .fc-togglePast-button {
-      background-color: #64748b !important;
-      border: none !important;
-      margin-left: 8px !important;
-      font-size: 0.75rem !important;
-      padding: 4px 8px !important;
-    }
+    .fc-togglePast-button { background-color: #64748b !important; border: none !important; margin-left: 8px !important; font-size: 0.75rem !important; padding: 4px 8px !important; }
 
     .fc .fc-col-header-cell { padding: 4px 0; background: #fafafa; font-size: 0.8rem; }
     .fc-theme-standard td, .fc-theme-standard th { border-color: #e5e7eb; }
@@ -40,17 +35,7 @@
     .fc-day-sat .fc-daygrid-day-number { color: #2563eb !important; }
     .fc-day-holiday .fc-daygrid-day-number { color: #dc2626 !important; font-weight: 800 !important; }
 
-    .fc-event {
-      border: none !important;
-      border-radius: 6px !important;
-      margin: 1px 1px !important;
-      padding: 1px 4px !important;
-      font-size: 0.72rem !important;
-      font-weight: 600 !important;
-      line-height: 1.25 !important;
-      cursor: pointer;
-      display: block !important;
-    }
+    .fc-event { border: none !important; border-radius: 6px !important; margin: 1px 1px !important; padding: 1px 4px !important; font-size: 0.72rem !important; font-weight: 600 !important; line-height: 1.25 !important; cursor: pointer; display: block !important; }
     .fc-daygrid-event .fc-event-main { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
@@ -59,19 +44,18 @@
     .modal h2 { font-size: 1.05rem; margin-bottom: 12px; }
     .form-group { margin-bottom: 10px; }
     .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 3px; color: #444; }
-    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; }
+    .form-group input[type="text"], .form-group input[type="date"], .form-group input[type="time"], .form-group input[type="number"], .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; }
     
     .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; background: #f3f4f6; padding: 8px 12px; border-radius: 8px; }
     .checkbox-group input { width: 20px; height: 20px; }
     .checkbox-group label { margin-bottom: 0; font-size: 0.9rem; font-weight: 600; }
     
-    .modal-buttons { display: flex; gap: 8px; margin-top: 14px; }
-    .modal-buttons button { flex: 1; padding: 10px; border-radius: 6px; font-weight: 600; font-size: 0.95rem; border: none; cursor: pointer; }
+    .modal-buttons { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+    .modal-buttons button { flex: 1; min-width: 60px; padding: 10px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; border: none; cursor: pointer; }
     .btn-submit { background: #2563eb; color: #fff; }
     .btn-delete { background: #ef4444; color: #fff; }
     .btn-cancel { background: #e5e7eb; color: #4b5563; }
     .label-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .color-box { width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
@@ -79,6 +63,8 @@
   <header>
     <h1>R4予定表</h1>
     <div class="header-btns">
+      <button class="btn-header btn-memo" onclick="location.href='memo.html'">📝 要点</button>
+      <button class="btn-header btn-kuji" onclick="location.href='kuji.html'">🎲 くじ</button>
       <button class="btn-header btn-setting" id="openSettingsBtn">⚙️ ラベル</button>
       <button class="btn-header btn-add" id="openModalBtn">＋ 追加</button>
     </div>
@@ -166,7 +152,7 @@
   <div class="modal-overlay" id="settingsOverlay">
     <div class="modal">
       <h2>色の名前・ラベル設定</h2>
-      <p style="font-size: 0.78rem; color: #666; margin-bottom: 12px;">それぞれの色に付ける名前を設定できます</p>
+      <p style="font-size: 0.78rem; color: #666; margin-bottom: 12px;">それぞれの色に付ける名前と<br><b>カラー（左の色をタップして変更）</b>を設定できます</p>
       <div id="labelInputsContainer" style="max-height: 50vh; overflow-y: auto; padding-right: 4px;"></div>
       <div class="modal-buttons">
         <button class="btn-cancel" id="closeSettingsBtn">キャンセル</button>
@@ -179,38 +165,34 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-    // 色を新しく、分かりやすいものに変更し、2枠追加しました
     const DEFAULT_COLORS = [
-      { id: 0, defaultName: "ジャザ", bg: "#06B6D4", text: "#ffffff" },
-      { id: 1, defaultName: "豆たん", bg: "#84CC16", text: "#000000" },
-      { id: 2, defaultName: "いかれた猫", bg: "#4B5563", text: "#ffffff" },
-      { id: 3, defaultName: "シチミ", bg: "#A855F7", text: "#ffffff" },
-      { id: 4, defaultName: "しず", bg: "#EF4444", text: "#ffffff" },
-      { id: 5, defaultName: "ひな", bg: "#3B82F6", text: "#ffffff" },
-      { id: 6, defaultName: "チーズ", bg: "#FFF066", text: "#000000" },
-      { id: 7, defaultName: "秘薬", bg: "#F97316", text: "#ffffff" },
-      { id: 8, defaultName: "車掌", bg: "#EC4899", text: "#ffffff" },
-      
-      // ここから下の色をハッキリした色に変更
-      { id: 9, defaultName: "わらわら", bg: "#111827", text: "#ffffff" }, // ほぼ黒
-      { id: 10, defaultName: "狩猟戦", bg: "#166534", text: "#ffffff" }, // 深い緑
-      { id: 11, defaultName: "追加枠2", bg: "#991B1B", text: "#ffffff" }, // 深い赤
-      { id: 12, defaultName: "追加枠3", bg: "#1E3A8A", text: "#ffffff" }, // ネイビー（濃い青）
-      { id: 13, defaultName: "追加枠4", bg: "#581C87", text: "#ffffff" }, // 濃い紫
-      
-      // 追加の2枠
-      { id: 14, defaultName: "追加枠5", bg: "#9D174D", text: "#ffffff" }, // ワインレッド
-      { id: 15, defaultName: "追加枠6", bg: "#0F766E", text: "#ffffff" }  // 深い青緑
+      { id: 0, defaultName: "ジャザ", bg: "#06B6D4" },
+      { id: 1, defaultName: "豆たん", bg: "#84CC16" },
+      { id: 2, defaultName: "いかれた猫", bg: "#4B5563" },
+      { id: 3, defaultName: "シチミ", bg: "#A855F7" },
+      { id: 4, defaultName: "しず", bg: "#EF4444" },
+      { id: 5, defaultName: "ひな", bg: "#3B82F6" },
+      { id: 6, defaultName: "チーズ", bg: "#FFF066" },
+      { id: 7, defaultName: "秘薬", bg: "#F97316" },
+      { id: 8, defaultName: "車掌", bg: "#EC4899" },
+      { id: 9, defaultName: "わらわら", bg: "#111827" }, 
+      { id: 10, defaultName: "狩猟戦", bg: "#166534" }, 
+      { id: 11, defaultName: "追加枠2", bg: "#991B1B" }, 
+      { id: 12, defaultName: "追加枠3", bg: "#1E3A8A" }, 
+      { id: 13, defaultName: "追加枠4", bg: "#581C87" }, 
+      { id: 14, defaultName: "追加枠5", bg: "#9D174D" }, 
+      { id: 15, defaultName: "追加枠6", bg: "#0F766E" }  
     ];
 
+    function getTextColor(hex) {
+      let h = hex.replace("#", "");
+      if(h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+      const r = parseInt(h.substr(0,2),16), g = parseInt(h.substr(2,2),16), b = parseInt(h.substr(4,2),16);
+      return (((r*299)+(g*587)+(b*114))/1000 >= 128) ? '#000000' : '#ffffff';
+    }
+
     function getCustomLabels() {
-      // まず最新の保存データ(v11)を探す
-      try { 
-        const saved = localStorage.getItem("r4_custom_labels_v11"); 
-        if (saved) return JSON.parse(saved); 
-      } catch(e) {}
-      
-      // なければ古いデータ(v10)から名前だけ引き継いで拡張する
+      try { const saved = localStorage.getItem("r4_custom_labels_v11"); if (saved) return JSON.parse(saved); } catch(e) {}
       try { 
         const oldSaved = localStorage.getItem("r4_custom_labels_v10"); 
         if (oldSaved) {
@@ -218,11 +200,16 @@
           return DEFAULT_COLORS.map((c, i) => parsed[i] || c.defaultName);
         }
       } catch(e) {}
-      
       return DEFAULT_COLORS.map(c => c.defaultName);
     }
     
+    function getCustomColors() {
+      try { const saved = localStorage.getItem("r4_custom_colors_v1"); if (saved) return JSON.parse(saved); } catch(e) {}
+      return DEFAULT_COLORS.map(c => c.bg);
+    }
+
     let customLabels = getCustomLabels();
+    let customColors = getCustomColors();
 
     const firebaseConfig = {
       apiKey: "AIzaSyDhHBvpdoIfVkRKbDAMsr811zXeI2AVrwo",
@@ -299,17 +286,18 @@
             if (titleTd) {
               const props = arg.event.extendedProps || {};
               const colorIdx = props.colorIdx !== undefined ? props.colorIdx : 0;
-              const col = DEFAULT_COLORS[colorIdx] || DEFAULT_COLORS[0];
-              const labelName = customLabels[colorIdx] || col.defaultName;
+              const colBg = customColors[colorIdx] || DEFAULT_COLORS[0].bg;
+              const colTxt = getTextColor(colBg);
+              const labelName = customLabels[colorIdx] || DEFAULT_COLORS[colorIdx].defaultName;
 
-              let timeStr = '終日';
+              let timeStr = ''; 
               if (!arg.event.allDay && arg.event.start) {
                 let h = String(arg.event.start.getHours()).padStart(2, '0');
                 let m = String(arg.event.start.getMinutes()).padStart(2, '0');
-                timeStr = h + ':' + m;
+                timeStr = '<span style="font-size:0.85rem; color:#555;">' + h + ':' + m + '</span>';
               }
 
-              let titleHtml = '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-weight:bold;"><span style="background:' + col.bg + '; color:' + col.text + '; padding:2px 6px; border-radius:4px; font-size:0.7rem;">' + labelName + '</span><span style="font-size:0.85rem; color:#555;">' + timeStr + '</span><span>' + String(arg.event.title).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span></div>';
+              let titleHtml = '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-weight:bold;"><span style="background:' + colBg + '; color:' + colTxt + '; padding:2px 6px; border-radius:4px; font-size:0.7rem;">' + labelName + '</span>' + timeStr + '<span>' + String(arg.event.title).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span></div>';
               if (props.desc) { titleHtml += '<div style="font-size:0.82rem; color:#4b5563; background:#f9fafb; border-left:3px solid #cbd5e1; padding:4px 8px; margin-top:4px; white-space:pre-wrap; word-break:break-all;">' + String(props.desc).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>'; }
               titleTd.innerHTML = titleHtml;
             }
@@ -379,9 +367,10 @@
           const d = docSnap.data();
           if (!d.start) return;
           const colorIdx = d.colorIdx !== undefined ? d.colorIdx : 0;
-          const col = DEFAULT_COLORS[colorIdx] || DEFAULT_COLORS[0];
+          const colBg = customColors[colorIdx] || DEFAULT_COLORS[0].bg;
+          const colTxt = getTextColor(colBg);
           evs.push({
-            id: docSnap.id, title: d.title || "名称未設定", start: d.start, end: d.end || null, allDay: d.allDay !== false, backgroundColor: col.bg, textColor: col.text, extendedProps: { desc: d.desc || "", colorIdx: colorIdx }
+            id: docSnap.id, title: d.title || "名称未設定", start: d.start, end: d.end || null, allDay: d.allDay !== false, backgroundColor: colBg, textColor: colTxt, extendedProps: { desc: d.desc || "", colorIdx: colorIdx }
           });
         } catch(e) {}
       });
@@ -408,9 +397,9 @@
           let msg = "";
           todaysEvents.forEach(e => {
             const colName = customLabels[e.extendedProps.colorIdx] || "未設定";
-            let timeStr = "終日";
-            if (!e.allDay && e.start.includes("T")) timeStr = e.start.substring(11, 16);
-            msg += `・${timeStr} [${colName}] ${e.title}\n`;
+            let timeStr = ""; 
+            if (!e.allDay && e.start.includes("T")) timeStr = e.start.substring(11, 16) + " ";
+            msg += `・${timeStr}[${colName}] ${e.title}\n`;
           });
           
           setTimeout(() => {
@@ -556,7 +545,11 @@
       labelInputsContainer.innerHTML = "";
       DEFAULT_COLORS.forEach((c, idx) => {
         const row = document.createElement("div"); row.className = "label-row";
-        row.innerHTML = `<div class="color-box" style="background:${c.bg}"></div><input type="text" data-idx="${idx}" value="${customLabels[idx] || c.defaultName}" placeholder="ラベル名">`;
+        
+        row.innerHTML = `
+          <input type="color" data-color-idx="${idx}" value="${customColors[idx] || c.bg}" style="width:36px; height:36px; border:none; padding:0; cursor:pointer; flex-shrink:0; border-radius:6px; background:none;">
+          <input type="text" data-idx="${idx}" value="${customLabels[idx] || c.defaultName}" placeholder="ラベル名">
+        `;
         labelInputsContainer.appendChild(row);
       });
       settingsModal.classList.add("open");
@@ -565,14 +558,26 @@
     document.getElementById("closeSettingsBtn").onclick = () => settingsModal.classList.remove("open");
 
     document.getElementById("saveSettingsBtn").onclick = () => {
-      const inputs = labelInputsContainer.querySelectorAll("input");
-      inputs.forEach(input => {
+      const textInputs = labelInputsContainer.querySelectorAll("input[type='text']");
+      const colorInputs = labelInputsContainer.querySelectorAll("input[type='color']");
+      
+      textInputs.forEach(input => {
         const idx = parseInt(input.dataset.idx, 10);
         customLabels[idx] = input.value.trim() || DEFAULT_COLORS[idx].defaultName;
       });
-      // 新しいv11として保存
-      try { localStorage.setItem("r4_custom_labels_v11", JSON.stringify(customLabels)); } catch(e) {}
+      
+      colorInputs.forEach(input => {
+        const idx = parseInt(input.dataset.colorIdx, 10);
+        customColors[idx] = input.value;
+      });
+      
+      try { 
+        localStorage.setItem("r4_custom_labels_v11", JSON.stringify(customLabels)); 
+        localStorage.setItem("r4_custom_colors_v1", JSON.stringify(customColors)); 
+      } catch(e) {}
+      
       renderColorOptions();
+      if(calendar) calendar.refetchEvents();
       settingsModal.classList.remove("open");
     };
   </script>
