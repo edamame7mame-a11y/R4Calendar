@@ -113,7 +113,10 @@
     .check-label { display: flex; align-items: center; gap: 5px; font-size: 0.82rem; font-weight: bold; cursor: pointer; }
     .check-label input { width: 17px; height: 17px; }
 
-    /* 会長入力セクションの枠 */
+    /* 連絡・会長入力セクションの枠 */
+    .sub-form-box { background: #fff5f5; border: 1px solid #fecaca; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+    .sub-form-title { font-size: 0.82rem; font-weight: bold; color: #991b1b; margin-bottom: 8px; border-bottom: 1px dashed #fca5a5; padding-bottom: 4px; }
+
     .master-form-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
     .master-form-title { font-size: 0.82rem; font-weight: bold; color: #1e293b; margin-bottom: 8px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; }
 
@@ -213,13 +216,18 @@
           <label>略奪された人（複数の場合は「、」などで区切る）</label>
           <input type="text" id="firstVictims" placeholder="被害を受けたメンバー名">
         </div>
-        <div class="form-group">
-          <label>相手ギルドの会長へ連絡を入れた人</label>
-          <input type="text" id="firstContact" placeholder="連絡担当者名">
-        </div>
-        <div class="form-group">
-          <label>相手へ連絡した日時（何日の何時頃か）</label>
-          <input type="datetime-local" id="firstContactTime">
+
+        <!-- 略奪犯本人への連絡エリア -->
+        <div class="sub-form-box">
+          <div class="sub-form-title">💬 略奪犯本人への連絡（被害者または代表者）</div>
+          <div class="form-group">
+            <label>略奪犯本人へ連絡した人</label>
+            <input type="text" id="firstOffenderContact" placeholder="被害者本人、またはまとめて言いに行った人">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>本人へ連絡した日時</label>
+            <input type="datetime-local" id="firstOffenderContactTime">
+          </div>
         </div>
 
         <div class="form-group">
@@ -232,11 +240,19 @@
           </div>
         </div>
 
-        <!-- 相手会長の対応エリア -->
+        <!-- 相手会長への連絡・対応エリア -->
         <div class="master-form-box">
-          <div class="master-form-title">👑 相手ギルド会長の対応</div>
+          <div class="master-form-title">👑 相手ギルド会長への連絡・対応</div>
           <div class="form-group">
-            <label>会長の名前</label>
+            <label>会長への連絡担当</label>
+            <input type="text" id="firstContact" placeholder="会長へ連絡を入れた人の名前">
+          </div>
+          <div class="form-group">
+            <label>会長へ連絡した日時</label>
+            <input type="datetime-local" id="firstContactTime">
+          </div>
+          <div class="form-group">
+            <label>相手の会長の名前</label>
             <input type="text" id="firstMasterName" placeholder="相手ギルドの会長名">
           </div>
           <div class="form-group">
@@ -296,13 +312,18 @@
         <label>略奪された人（複数の場合は「、」などで区切る）</label>
         <input type="text" id="incVictims" placeholder="被害を受けたメンバー名">
       </div>
-      <div class="form-group">
-        <label>相手ギルドの会長へ連絡を入れた人</label>
-        <input type="text" id="incContact" placeholder="連絡担当者名">
-      </div>
-      <div class="form-group">
-        <label>相手へ連絡した日時（何日の何時頃か）</label>
-        <input type="datetime-local" id="incContactTime">
+
+      <!-- 略奪犯本人への連絡エリア -->
+      <div class="sub-form-box">
+        <div class="sub-form-title">💬 略奪犯本人への連絡（被害者または代表者）</div>
+        <div class="form-group">
+          <label>略奪犯本人へ連絡した人</label>
+          <input type="text" id="incOffenderContact" placeholder="被害者本人、またはまとめて言いに行った人">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>本人へ連絡した日時</label>
+          <input type="datetime-local" id="incOffenderContactTime">
+        </div>
       </div>
 
       <div class="form-group">
@@ -315,11 +336,19 @@
         </div>
       </div>
 
-      <!-- 相手会長の対応エリア -->
+      <!-- 相手会長への連絡・対応エリア -->
       <div class="master-form-box">
-        <div class="master-form-title">👑 相手ギルド会長の対応</div>
+        <div class="master-form-title">👑 相手ギルド会長への連絡・対応</div>
         <div class="form-group">
-          <label>会長の名前</label>
+          <label>会長への連絡担当</label>
+          <input type="text" id="incContact" placeholder="会長へ連絡を入れた人の名前">
+        </div>
+        <div class="form-group">
+          <label>会長へ連絡した日時</label>
+          <input type="datetime-local" id="incContactTime">
+        </div>
+        <div class="form-group">
+          <label>相手の会長の名前</label>
           <input type="text" id="incMasterName" placeholder="相手ギルドの会長名">
         </div>
         <div class="form-group">
@@ -403,7 +432,6 @@
 
     function formatDateTime(dtStr) {
       if (!dtStr) return "";
-      // "2026-10-19T14:30" -> "2026/10/19 14:30頃"
       const parts = dtStr.split("T");
       if (parts.length === 2) {
         return `${parts[0].replace(/-/g, '/')} ${parts[1]}頃`;
@@ -572,11 +600,12 @@
             if (inc.burned) statusHtml += `<span class="status-tag status-burned-yes">🔥 謝罪なく燃やした(10回)</span>`;
             if (!inc.pending && !inc.waitBurn && !inc.apology && !inc.burned) statusHtml = `<span class="status-tag status-none">未チェック</span>`;
 
-            const contactTimeFormatted = formatDateTime(inc.contactTime);
+            const offenderContactTimeFormatted = formatDateTime(inc.offenderContactTime);
+            const masterContactTimeFormatted = formatDateTime(inc.contactTime);
 
-            // 会長対応の表示作成
+            // 会長への連絡・対応の表示作成
             let masterHtml = "";
-            if (inc.masterName || inc.masterApology || inc.masterAttitude) {
+            if (inc.contactPerson || inc.contactTime || inc.masterName || inc.masterApology || inc.masterAttitude) {
               let mBadges = "";
               if (inc.masterApology === "謝罪あり") mBadges += `<span class="m-badge m-good">会長: 謝罪あり</span>`;
               if (inc.masterApology === "謝罪なし") mBadges += `<span class="m-badge m-bad">会長: 謝罪なし</span>`;
@@ -587,7 +616,11 @@
 
               masterHtml = `
                 <div class="master-info-box">
-                  <div class="master-info-title">👑 相手会長: ${escapeHtml(inc.masterName || "名前未記入")}</div>
+                  <div class="inc-row" style="margin-bottom:2px;">
+                    <span class="inc-label">会長への連絡担当:</span> ${escapeHtml(inc.contactPerson || "未記入")}
+                    ${masterContactTimeFormatted ? ` <span style="font-size:0.75rem; color:#6b7280;">（🕒 ${escapeHtml(masterContactTimeFormatted)}）</span>` : ""}
+                  </div>
+                  ${(inc.masterName || mBadges) ? `<div class="master-info-title" style="margin-top:4px;">👑 相手会長: ${escapeHtml(inc.masterName || "名前未記入")}</div>` : ""}
                   ${mBadges ? `<div class="master-badges">${mBadges}</div>` : ""}
                 </div>
               `;
@@ -612,8 +645,8 @@
                 </div>
                 <div class="inc-row"><span class="inc-label">被害者:</span> ${escapeHtml(inc.victims || "未記入")}</div>
                 <div class="inc-row">
-                  <span class="inc-label">連絡担当:</span> ${escapeHtml(inc.contactPerson || "未記入")}
-                  ${contactTimeFormatted ? ` <span style="font-size:0.78rem; color:#6b7280;">（🕒 連絡: ${escapeHtml(contactTimeFormatted)}）</span>` : ""}
+                  <span class="inc-label">本人への連絡担当:</span> ${escapeHtml(inc.offenderContactPerson || "未記入")}
+                  ${offenderContactTimeFormatted ? ` <span style="font-size:0.78rem; color:#6b7280;">（🕒 ${escapeHtml(offenderContactTimeFormatted)}）</span>` : ""}
                 </div>
                 <div class="status-boxes">${statusHtml}</div>
                 ${masterHtml}
@@ -747,6 +780,8 @@
       document.getElementById("firstTypeSecret").checked = false;
       document.getElementById("firstTypeCart").checked = false;
       document.getElementById("firstVictims").value = "";
+      document.getElementById("firstOffenderContact").value = "";
+      document.getElementById("firstOffenderContactTime").value = "";
       document.getElementById("firstContact").value = "";
       document.getElementById("firstContactTime").value = "";
       document.getElementById("firstPending").checked = false;
@@ -809,6 +844,8 @@
             date: document.getElementById("firstDate").value || getTodayStr(),
             types: types,
             victims: document.getElementById("firstVictims").value.trim(),
+            offenderContactPerson: document.getElementById("firstOffenderContact").value.trim(),
+            offenderContactTime: document.getElementById("firstOffenderContactTime").value,
             contactPerson: document.getElementById("firstContact").value.trim(),
             contactTime: document.getElementById("firstContactTime").value,
             pending: document.getElementById("firstPending").checked,
@@ -875,6 +912,8 @@
         document.getElementById("incTypeSecret").checked = types.includes("秘密作戦");
         document.getElementById("incTypeCart").checked = types.includes("馬車");
         document.getElementById("incVictims").value = inc.victims || "";
+        document.getElementById("incOffenderContact").value = inc.offenderContactPerson || "";
+        document.getElementById("incOffenderContactTime").value = inc.offenderContactTime || "";
         document.getElementById("incContact").value = inc.contactPerson || "";
         document.getElementById("incContactTime").value = inc.contactTime || "";
         document.getElementById("incPending").checked = !!inc.pending;
@@ -892,6 +931,8 @@
         document.getElementById("incTypeSecret").checked = false;
         document.getElementById("incTypeCart").checked = false;
         document.getElementById("incVictims").value = "";
+        document.getElementById("incOffenderContact").value = "";
+        document.getElementById("incOffenderContactTime").value = "";
         document.getElementById("incContact").value = "";
         document.getElementById("incContactTime").value = "";
         document.getElementById("incPending").checked = false;
@@ -923,6 +964,8 @@
         date: document.getElementById("incDate").value || getTodayStr(),
         types: types,
         victims: document.getElementById("incVictims").value.trim(),
+        offenderContactPerson: document.getElementById("incOffenderContact").value.trim(),
+        offenderContactTime: document.getElementById("incOffenderContactTime").value,
         contactPerson: document.getElementById("incContact").value.trim(),
         contactTime: document.getElementById("incContactTime").value,
         pending: document.getElementById("incPending").checked,
