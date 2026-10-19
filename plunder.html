@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>🚨 略奪犯リスト・被害記録</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fef2f2; color: #222; margin: 0; padding: 14px; }
+    
+    header { display: flex; justify-content: space-between; align-items: center; max-width: 550px; margin: 0 auto 14px auto; }
+    h1 { font-size: 1.2rem; color: #991b1b; margin: 0; display: flex; align-items: center; gap: 6px; }
+    .btn-add-main { background: #dc2626; color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: bold; font-size: 0.82rem; cursor: pointer; box-shadow: 0 2px 5px rgba(220, 38, 38, 0.3); }
+
+    /* 検索・ソートバー */
+    .control-bar { background: #fff; padding: 12px; border-radius: 12px; max-width: 550px; margin: 0 auto 16px auto; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    .search-input { width: 100%; padding: 10px 12px; border: 2px solid #fecaca; border-radius: 8px; font-size: 0.9rem; outline: none; margin-bottom: 10px; }
+    .search-input:focus { border-color: #ef4444; }
+    .sort-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: #666; font-weight: bold; }
+    .sort-btns { display: flex; gap: 6px; }
+    .btn-sort { background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; padding: 5px 10px; border-radius: 14px; font-size: 0.78rem; font-weight: bold; cursor: pointer; }
+    .btn-sort.active { background: #991b1b; color: #fff; border-color: #991b1b; }
+
+    .container { max-width: 550px; margin: 0 auto 30px auto; }
+
+    /* 犯人カード */
+    .card { background: #fff; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border-left: 5px solid #dc2626; overflow: hidden; }
+    .card-header { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; background: #fff; }
+    .card-header:active { background: #fef2f2; }
+    
+    .offender-info { flex: 1; padding-right: 8px; }
+    .offender-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+    .offender-name { font-size: 1.05rem; font-weight: bold; color: #111; }
+    .badge-count { background: #dc2626; color: #fff; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 12px; }
+    .guild-info { font-size: 0.8rem; color: #4b5563; line-height: 1.3; }
+    .guild-history { font-size: 0.75rem; color: #6b7280; }
+    .coord-badge { display: inline-block; background: #f3f4f6; color: #374151; font-size: 0.75rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-top: 4px; border: 1px solid #e5e7eb; }
+
+    .toggle-icon { font-size: 0.8rem; color: #dc2626; transition: transform 0.2s; font-weight: bold; }
+    .card.open .toggle-icon { transform: rotate(180deg); }
+    .card-detail { display: none; padding: 0 14px 14px 14px; border-top: 1px dashed #fecaca; background: #fffafa; }
+    .card.open .card-detail { display: block; }
+
+    .offender-actions { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #fee2e2; margin-bottom: 10px; gap: 6px; flex-wrap: wrap; }
+    .btn-add-incident { background: #ea580c; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+    .btn-edit-offender { background: #e5e7eb; color: #374151; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
+
+    /* 個別の略奪事件ボックス */
+    .incident-box { background: #fff; border: 1px solid #fecaca; border-radius: 8px; padding: 10px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .inc-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #f3f4f6; padding-bottom: 6px; margin-bottom: 8px; }
+    .inc-date { font-size: 0.8rem; font-weight: bold; color: #6b7280; }
+    .inc-types { display: flex; gap: 4px; }
+    .type-tag { background: #fee2e2; color: #991b1b; font-size: 0.72rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+    
+    .inc-row { font-size: 0.85rem; margin-bottom: 4px; color: #333; line-height: 1.4; }
+    .inc-label { font-weight: bold; color: #6b7280; font-size: 0.8rem; }
+    
+    .status-boxes { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+    .status-tag { font-size: 0.8rem; font-weight: bold; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; }
+    .status-apology-yes { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .status-burned-yes { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+    .status-none { background: #f3f4f6; color: #9ca3af; font-size: 0.75rem; }
+
+    .inc-note { background: #f9fafb; padding: 8px; border-radius: 6px; font-size: 0.82rem; color: #4b5563; white-space: pre-wrap; word-break: break-all; margin-top: 6px; border: 1px solid #f3f4f6; }
+
+    /* スクショ一覧 */
+    .inc-images { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+    .ss-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; text-align: center; }
+    .ss-thumb { width: 100%; height: 70px; object-fit: cover; border-radius: 4px; cursor: pointer; display: block; margin-bottom: 4px; }
+    .btn-ss-dl { display: block; background: #e0f2fe; color: #0369a1; text-decoration: none; font-size: 0.7rem; font-weight: bold; padding: 3px 0; border-radius: 4px; }
+
+    .inc-footer { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+    .btn-mini-edit { background: #f3f4f6; color: #4b5563; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: bold; cursor: pointer; }
+    .btn-mini-del { background: #fee2e2; color: #dc2626; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: bold; cursor: pointer; }
+
+    .back-wrap { text-align: center; margin-top: 30px; margin-bottom: 20px; }
+    .back-btn { display: inline-block; padding: 10px 20px; background: #fff; color: #4b5563; text-decoration: none; border-radius: 20px; border: 1px solid #d1d5db; font-size: 0.9rem; font-weight: bold; }
+
+    /* モーダル共通 */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 14px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 14px; padding: 16px; width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal h2 { font-size: 1.05rem; color: #991b1b; margin-top: 0; margin-bottom: 12px; border-bottom: 2px solid #fecaca; padding-bottom: 6px; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-size: 0.78rem; font-weight: bold; color: #374151; margin-bottom: 3px; }
+    .form-group input[type="text"], .form-group input[type="number"], .form-group input[type="date"], .form-group textarea { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; outline: none; }
+    .form-group textarea { height: 70px; resize: none; }
+    
+    .coord-inputs { display: flex; gap: 8px; }
+    .coord-inputs div { flex: 1; display: flex; align-items: center; gap: 4px; }
+    .coord-inputs span { font-weight: bold; font-size: 0.85rem; color: #555; }
+
+    .check-row { display: flex; gap: 10px; flex-wrap: wrap; background: #f9fafb; padding: 8px 10px; border-radius: 8px; border: 1px solid #e5e7eb; }
+    .check-label { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
+    .check-label input { width: 18px; height: 18px; }
+
+    .preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+    .preview-item { position: relative; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; height: 70px; }
+    .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+    .btn-rm-preview { position: absolute; top: 2px; right: 2px; background: rgba(220,38,38,0.9); color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; cursor: pointer; font-weight: bold; line-height: 1; }
+
+    .modal-buttons { display: flex; gap: 8px; margin-top: 14px; }
+    .modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 0.9rem; }
+    .btn-save { background: #dc2626; color: #fff; }
+    .btn-cancel { background: #e5e7eb; color: #4b5563; }
+    .btn-delete { background: #374151; color: #fff; }
+
+    /* 画像拡大モーダル */
+    .zoom-modal { background: transparent; box-shadow: none; max-width: 95vw; max-height: 95vh; text-align: center; padding: 0; }
+    .zoom-img { max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+    .zoom-close { margin-top: 12px; background: #fff; color: #333; border: none; padding: 8px 24px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🚨 略奪犯ブラックリスト</h1>
+    <button class="btn-add-main" id="openNewOffenderBtn">＋ 新規の犯人を登録</button>
+  </header>
+
+  <!-- 検索＆ソート -->
+  <div class="control-bar">
+    <input type="text" id="searchInput" class="search-input" placeholder="🔍 犯人の名前・ギルド名で検索...">
+    <div class="sort-row">
+      <span>並び替え:</span>
+      <div class="sort-btns">
+        <button class="btn-sort active" id="sortCountBtn">略奪回数が多い順</button>
+        <button class="btn-sort" id="sortDateBtn">最近略奪された順</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- リスト表示エリア -->
+  <div class="container" id="offenderList">
+    <div style="text-align: center; color: #6b7280; padding: 30px; font-size: 0.9rem;">読み込み中...</div>
+  </div>
+
+  <div class="back-wrap">
+    <a href="index.html" class="back-btn">← カレンダーに戻る</a>
+  </div>
+
+  <!-- ① 新規登録 / 犯人プロフィール編集モーダル -->
+  <div class="modal-overlay" id="offenderModal">
+    <div class="modal">
+      <h2 id="offenderModalTitle">略奪犯の登録</h2>
+      
+      <div class="form-group">
+        <label>略奪犯の名前 ※必須</label>
+        <input type="text" id="offName" placeholder="犯人の名前を入力">
+      </div>
+      <div class="form-group">
+        <label>現在のギルド名</label>
+        <input type="text" id="offGuild" placeholder="例: 〇〇ギルド（無所属なら空欄）">
+      </div>
+      <div class="form-group">
+        <label>過去のギルド・移行履歴（移籍した場合など）</label>
+        <input type="text" id="offGuildHistory" placeholder="例: 旧△△ギルド → 現〇〇ギルド">
+      </div>
+      <div class="form-group">
+        <label>位置情報（座標）</label>
+        <div class="coord-inputs">
+          <div><span>X:</span><input type="number" id="offX" placeholder="000"></div>
+          <div><span>Y:</span><input type="number" id="offY" placeholder="000"></div>
+        </div>
+      </div>
+
+      <!-- 新規登録時のみ、1回目の被害内容も一緒に入力するエリア -->
+      <div id="firstIncidentSection">
+        <hr style="border:none; border-top:1px dashed #ccc; margin: 14px 0;">
+        <div style="font-size:0.85rem; font-weight:bold; color:#991b1b; margin-bottom:8px;">▼ 1回目の略奪被害内容</div>
+        
+        <div class="form-group">
+          <label>発生日</label>
+          <input type="date" id="firstDate">
+        </div>
+        <div class="form-group">
+          <label>略奪内容（複数チェック可）</label>
+          <div class="check-row">
+            <label class="check-label"><input type="checkbox" id="firstTypeSecret"> 秘密作戦</label>
+            <label class="check-label"><input type="checkbox" id="firstTypeCart"> 馬車</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>略奪された人（複数の場合は「、」などで区切る）</label>
+          <input type="text" id="firstVictims" placeholder="被害を受けたメンバー名">
+        </div>
+        <div class="form-group">
+          <label>相手ギルドの会長へ連絡を入れた人</label>
+          <input type="text" id="firstContact" placeholder="連絡担当者名">
+        </div>
+        <div class="form-group">
+          <label>謝罪・対応状況</label>
+          <div class="check-row">
+            <label class="check-label"><input type="checkbox" id="firstApology"> 謝罪あり</label>
+            <label class="check-label"><input type="checkbox" id="firstBurned"> 謝罪なく燃やした🔥(10回)</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>備考欄</label>
+          <textarea id="firstNote" placeholder="状況ややり取りのメモなど"></textarea>
+        </div>
+        <div class="form-group">
+          <label>証拠スクショ（複数枚追加できます）</label>
+          <input type="file" id="firstImgInput" accept="image/*" multiple style="font-size:0.8rem; width:100%;">
+          <div class="preview-grid" id="firstPreviewGrid"></div>
+        </div>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="btn-delete" id="deleteOffenderBtn" style="display: none;">犯人ごと削除</button>
+        <button class="btn-cancel" id="closeOffenderBtn">キャンセル</button>
+        <button class="btn-save" id="saveOffenderBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 余罪（2回目以降の略奪）追加・編集モーダル -->
+  <div class="modal-overlay" id="incidentModal">
+    <div class="modal">
+      <h2 id="incModalTitle">余罪（略奪記録）の追加</h2>
+      <div class="form-group">
+        <label>発生日</label>
+        <input type="date" id="incDate">
+      </div>
+      <div class="form-group">
+        <label>略奪内容（複数チェック可）</label>
+        <div class="check-row">
+          <label class="check-label"><input type="checkbox" id="incTypeSecret"> 秘密作戦</label>
+          <label class="check-label"><input type="checkbox" id="incTypeCart"> 馬車</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>略奪された人（複数の場合は「、」などで区切る）</label>
+        <input type="text" id="incVictims" placeholder="被害を受けたメンバー名">
+      </div>
+      <div class="form-group">
+        <label>相手ギルドの会長へ連絡を入れた人</label>
+        <input type="text" id="incContact" placeholder="連絡担当者名">
+      </div>
+      <div class="form-group">
+        <label>謝罪・対応状況</label>
+        <div class="check-row">
+          <label class="check-label"><input type="checkbox" id="incApology"> 謝罪あり</label>
+          <label class="check-label"><input type="checkbox" id="incBurned"> 謝罪なく燃やした🔥(10回)</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>備考欄</label>
+        <textarea id="incNote" placeholder="状況ややり取りのメモなど"></textarea>
+      </div>
+      <div class="form-group">
+        <label>証拠スクショ（複数枚追加できます）</label>
+        <input type="file" id="incImgInput" accept="image/*" multiple style="font-size:0.8rem; width:100%;">
+        <div class="preview-grid" id="incPreviewGrid"></div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="closeIncBtn">キャンセル</button>
+        <button class="btn-save" id="saveIncBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 画像拡大モーダル -->
+  <div class="modal-overlay" id="zoomModal" onclick="this.classList.remove('open')">
+    <div class="modal zoom-modal" onclick="event.stopPropagation()">
+      <img id="zoomImg" class="zoom-img" src="">
+      <br>
+      <button class="zoom-close" onclick="document.getElementById('zoomModal').classList.remove('open')">閉じる</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDhHBvpdoIfVkRKbDAMsr811zXeI2AVrwo",
+      authDomain: "r4calendar-1cb70.firebaseapp.com",
+      projectId: "r4calendar-1cb70",
+      storageBucket: "r4calendar-1cb70.firebasestorage.app",
+      messagingSenderId: "273656700256",
+      appId: "1:273656700256:web:254da78a155c5c8e3b5205"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const plundersRef = collection(db, "plunders");
+
+    let offendersData = [];
+    let openCardIds = new Set();
+    let currentSort = "count"; // "count" または "date"
+    let searchQuery = "";
+
+    // 編集用の状態管理
+    let editingOffenderId = null; 
+    let editingIncidentId = null; 
+    let tempImages = []; // モーダルで選択中の画像リスト
+
+    const listEl = document.getElementById("offenderList");
+
+    function getTodayStr() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      return now.toISOString().slice(0, 10);
+    }
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // 複数枚貼っても容量オーバーにならないよう画像をバランス良く圧縮する関数
+    function compressImage(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxSize = 850;
+            let w = img.width, h = img.height;
+            if (w > h) { if (w > maxSize) { h = Math.round(h * (maxSize / w)); w = maxSize; } }
+            else { if (h > maxSize) { w = Math.round(w * (maxSize / h)); h = maxSize; } }
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            let q = 0.75;
+            let dataUrl = canvas.toDataURL('image/jpeg', q);
+            while (dataUrl.length > 250000 && q > 0.3) {
+              q -= 0.1;
+              dataUrl = canvas.toDataURL('image/jpeg', q);
+            }
+            resolve(dataUrl);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // データ取得
+    onSnapshot(plundersRef, (snapshot) => {
+      const items = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+        const incidents = Array.isArray(d.incidents) ? d.incidents : [];
+        // 事件を新しい日付順に並べる
+        incidents.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+        const lastDate = incidents.length > 0 ? incidents[0].date : (d.updatedAt || "");
+
+        items.push({
+          id: docSnap.id,
+          name: d.name || "名称未設定",
+          guild: d.guild || "",
+          guildHistory: d.guildHistory || "",
+          coordX: d.coordX || "",
+          coordY: d.coordY || "",
+          incidents: incidents,
+          count: incidents.length,
+          lastDate: lastDate,
+          updatedAt: d.updatedAt || ""
+        });
+      });
+      offendersData = items;
+      renderList();
+    });
+
+    // 検索とソートのイベント
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      searchQuery = e.target.value.trim().toLowerCase();
+      renderList();
+    });
+
+    document.getElementById("sortCountBtn").onclick = () => {
+      currentSort = "count";
+      document.getElementById("sortCountBtn").classList.add("active");
+      document.getElementById("sortDateBtn").classList.remove("active");
+      renderList();
+    };
+
+    document.getElementById("sortDateBtn").onclick = () => {
+      currentSort = "date";
+      document.getElementById("sortDateBtn").classList.add("active");
+      document.getElementById("sortCountBtn").classList.remove("active");
+      renderList();
+    };
+
+    // リスト描画
+    function renderList() {
+      listEl.innerHTML = "";
+
+      // 検索フィルタ（名前・現ギルド・過去ギルド）
+      let filtered = offendersData.filter(item => {
+        if (!searchQuery) return true;
+        const targetStr = `${item.name} ${item.guild} ${item.guildHistory}`.toLowerCase();
+        return targetStr.includes(searchQuery);
+      });
+
+      // ソート
+      filtered.sort((a, b) => {
+        if (currentSort === "count") {
+          if (b.count !== a.count) return b.count - a.count;
+          return (b.lastDate || "").localeCompare(a.lastDate || "");
+        } else {
+          if (b.lastDate !== a.lastDate) return (b.lastDate || "").localeCompare(a.lastDate || "");
+          return b.count - a.count;
+        }
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div style="text-align: center; color: #6b7280; padding: 40px 10px; background: #fff; border-radius: 12px; font-size: 0.9rem;">該当する略奪犯のデータがありません。</div>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card" + (openCardIds.has(item.id) ? " open" : "");
+
+        const coordStr = (item.coordX !== "" || item.coordY !== "") 
+          ? `<div class="coord-badge">📍 座標 X:${escapeHtml(item.coordX || "-")} / Y:${escapeHtml(item.coordY || "-")}</div>` 
+          : "";
+
+        // 事件履歴のHTML作成
+        let incidentsHtml = "";
+        if (item.incidents.length === 0) {
+          incidentsHtml = `<div style="font-size:0.8rem; color:#999; padding:10px 0;">記録された略奪履歴はありません</div>`;
+        } else {
+          item.incidents.forEach((inc, idx) => {
+            const types = Array.isArray(inc.types) ? inc.types : [];
+            const typeTags = types.map(t => `<span class="type-tag">${escapeHtml(t)}</span>`).join("");
+
+            let statusHtml = "";
+            if (inc.apology) statusHtml += `<span class="status-tag status-apology-yes">✔ 謝罪あり</span>`;
+            if (inc.burned) statusHtml += `<span class="status-tag status-burned-yes">🔥 謝罪なく燃やした(10回)</span>`;
+            if (!inc.apology && !inc.burned) statusHtml = `<span class="status-tag status-none">未対応 / チェックなし</span>`;
+
+            let imgsHtml = "";
+            if (Array.isArray(inc.images) && inc.images.length > 0) {
+              const thumbs = inc.images.map((src, i) => `
+                <div class="ss-card">
+                  <img class="ss-thumb" src="${src}" data-src="${src}">
+                  <a class="btn-ss-dl" href="${src}" download="${escapeHtml(item.name)}_${inc.date || 'ss'}_${i+1}.jpg">📥 保存</a>
+                </div>
+              `).join("");
+              imgsHtml = `<div class="inc-images">${thumbs}</div>`;
+            }
+
+            incidentsHtml += `
+              <div class="incident-box">
+                <div class="inc-header">
+                  <span class="inc-date">📅 ${escapeHtml(inc.date || "日付不明")}</span>
+                  <div class="inc-types">${typeTags}</div>
+                </div>
+                <div class="inc-row"><span class="inc-label">被害者:</span> ${escapeHtml(inc.victims || "未記入")}</div>
+                <div class="inc-row"><span class="inc-label">会長への連絡者:</span> ${escapeHtml(inc.contactPerson || "未記入")}</div>
+                <div class="status-boxes">${statusHtml}</div>
+                ${inc.note ? `<div class="inc-note">${escapeHtml(inc.note)}</div>` : ""}
+                ${imgsHtml}
+                <div class="inc-footer">
+                  <button class="btn-mini-edit" data-off-id="${item.id}" data-inc-id="${inc.id}">✏️ 編集</button>
+                  <button class="btn-mini-del" data-off-id="${item.id}" data-inc-id="${inc.id}">🗑️ 削除</button>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        card.innerHTML = `
+          <div class="card-header">
+            <div class="offender-info">
+              <div class="offender-name-row">
+                <span class="offender-name">${escapeHtml(item.name)}</span>
+                <span class="badge-count">略奪 ${item.count}回</span>
+              </div>
+              <div class="guild-info">🏰 現ギルド: <b>${escapeHtml(item.guild || "不明・無所属")}</b></div>
+              ${item.guildHistory ? `<div class="guild-history">🔄 移行履歴: ${escapeHtml(item.guildHistory)}</div>` : ""}
+              ${coordStr}
+            </div>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="card-detail">
+            <div class="offender-actions">
+              <button class="btn-add-incident" data-id="${item.id}">＋ 余罪（略奪記録）を追加</button>
+              <button class="btn-edit-offender" data-id="${item.id}">⚙️ 犯人情報・座標・ギルド編集</button>
+            </div>
+            ${incidentsHtml}
+          </div>
+        `;
+
+        // アコーディオン開閉
+        card.querySelector(".card-header").onclick = () => {
+          if (card.classList.contains("open")) {
+            card.classList.remove("open");
+            openCardIds.delete(item.id);
+          } else {
+            card.classList.add("open");
+            openCardIds.add(item.id);
+          }
+        };
+
+        listEl.appendChild(card);
+      });
+
+      // イベント登録（余罪追加、犯人編集、個別事件編集・削除、画像拡大）
+      document.querySelectorAll(".btn-add-incident").forEach(btn => {
+        btn.onclick = () => openIncidentModal(btn.dataset.id, null);
+      });
+
+      document.querySelectorAll(".btn-edit-offender").forEach(btn => {
+        btn.onclick = () => openEditOffenderModal(btn.dataset.id);
+      });
+
+      document.querySelectorAll(".btn-mini-edit").forEach(btn => {
+        btn.onclick = () => openIncidentModal(btn.dataset.offId, btn.dataset.incId);
+      });
+
+      document.querySelectorAll(".btn-mini-del").forEach(btn => {
+        btn.onclick = () => deleteIncident(btn.dataset.offId, btn.dataset.incId);
+      });
+
+      document.querySelectorAll(".ss-thumb").forEach(img => {
+        img.onclick = () => {
+          document.getElementById("zoomImg").src = img.dataset.src;
+          document.getElementById("zoomModal").classList.add("open");
+        };
+      });
+    }
+
+    // --- プレビュー画像の描画処理 ---
+    function renderPreviewGrid(gridEl) {
+      gridEl.innerHTML = "";
+      tempImages.forEach((src, idx) => {
+        const div = document.createElement("div");
+        div.className = "preview-item";
+        div.innerHTML = `
+          <img src="${src}">
+          <button type="button" class="btn-rm-preview" data-idx="${idx}">×</button>
+        `;
+        gridEl.appendChild(div);
+      });
+      gridEl.querySelectorAll(".btn-rm-preview").forEach(btn => {
+        btn.onclick = () => {
+          tempImages.splice(parseInt(btn.dataset.idx, 10), 1);
+          renderPreviewGrid(gridEl);
+        };
+      });
+    }
+
+    async function handleFilesSelected(files, gridEl, saveBtnEl) {
+      if (!files || files.length === 0) return;
+      saveBtnEl.disabled = true;
+      const origText = saveBtnEl.textContent;
+      saveBtnEl.textContent = "画像処理中...";
+      for (let i = 0; i < files.length; i++) {
+        const b64 = await compressImage(files[i]);
+        tempImages.push(b64);
+      }
+      renderPreviewGrid(gridEl);
+      saveBtnEl.disabled = false;
+      saveBtnEl.textContent = origText;
+    }
+
+    // --- ① 新規犯人登録 ＆ プロフィール編集モーダル ---
+    const offenderModal = document.getElementById("offenderModal");
+    const firstPreviewGrid = document.getElementById("firstPreviewGrid");
+    const saveOffenderBtn = document.getElementById("saveOffenderBtn");
+
+    document.getElementById("firstImgInput").addEventListener("change", (e) => {
+      handleFilesSelected(e.target.files, firstPreviewGrid, saveOffenderBtn);
+      e.target.value = "";
+    });
+
+    document.getElementById("openNewOffenderBtn").onclick = () => {
+      editingOffenderId = null;
+      tempImages = [];
+      document.getElementById("offenderModalTitle").textContent = "🚨 新規の略奪犯を登録";
+      document.getElementById("offName").value = "";
+      document.getElementById("offGuild").value = "";
+      document.getElementById("offGuildHistory").value = "";
+      document.getElementById("offX").value = "";
+      document.getElementById("offY").value = "";
+
+      document.getElementById("firstIncidentSection").style.display = "block";
+      document.getElementById("firstDate").value = getTodayStr();
+      document.getElementById("firstTypeSecret").checked = false;
+      document.getElementById("firstTypeCart").checked = false;
+      document.getElementById("firstVictims").value = "";
+      document.getElementById("firstContact").value = "";
+      document.getElementById("firstApology").checked = false;
+      document.getElementById("firstBurned").checked = false;
+      document.getElementById("firstNote").value = "";
+      renderPreviewGrid(firstPreviewGrid);
+
+      document.getElementById("deleteOffenderBtn").style.display = "none";
+      offenderModal.classList.add("open");
+    };
+
+    function openEditOffenderModal(offId) {
+      const target = offendersData.find(o => o.id === offId);
+      if (!target) return;
+      editingOffenderId = offId;
+      document.getElementById("offenderModalTitle").textContent = "⚙️ 犯人情報・座標・ギルドの編集";
+      document.getElementById("offName").value = target.name;
+      document.getElementById("offGuild").value = target.guild;
+      document.getElementById("offGuildHistory").value = target.guildHistory;
+      document.getElementById("offX").value = target.coordX;
+      document.getElementById("offY").value = target.coordY;
+
+      document.getElementById("firstIncidentSection").style.display = "none";
+      document.getElementById("deleteOffenderBtn").style.display = "block";
+      offenderModal.classList.add("open");
+    }
+
+    document.getElementById("closeOffenderBtn").onclick = () => offenderModal.classList.remove("open");
+
+    saveOffenderBtn.onclick = async () => {
+      const name = document.getElementById("offName").value.trim();
+      if (!name) { alert("略奪犯の名前を入力してください！"); return; }
+
+      const guild = document.getElementById("offGuild").value.trim();
+      const guildHistory = document.getElementById("offGuildHistory").value.trim();
+      const coordX = document.getElementById("offX").value.trim();
+      const coordY = document.getElementById("offY").value.trim();
+      const nowIso = new Date().toISOString();
+
+      saveOffenderBtn.disabled = true;
+      saveOffenderBtn.textContent = "保存中...";
+
+      try {
+        if (editingOffenderId) {
+          await updateDoc(doc(db, "plunders", editingOffenderId), {
+            name, guild, guildHistory, coordX, coordY, updatedAt: nowIso
+          });
+        } else {
+          // 新規登録時は1回目の事件データも作成
+          const types = [];
+          if (document.getElementById("firstTypeSecret").checked) types.push("秘密作戦");
+          if (document.getElementById("firstTypeCart").checked) types.push("馬車");
+
+          const firstInc = {
+            id: "inc_" + Date.now(),
+            date: document.getElementById("firstDate").value || getTodayStr(),
+            types: types,
+            victims: document.getElementById("firstVictims").value.trim(),
+            contactPerson: document.getElementById("firstContact").value.trim(),
+            apology: document.getElementById("firstApology").checked,
+            burned: document.getElementById("firstBurned").checked,
+            note: document.getElementById("firstNote").value.trim(),
+            images: [...tempImages]
+          };
+
+          const docRef = await addDoc(plundersRef, {
+            name, guild, guildHistory, coordX, coordY,
+            incidents: [firstInc],
+            createdAt: nowIso,
+            updatedAt: nowIso
+          });
+          openCardIds.add(docRef.id);
+        }
+        offenderModal.classList.remove("open");
+      } catch(e) {
+        alert("保存エラー（画像が多すぎる場合は減らしてみてください）: " + e.message);
+      } finally {
+        saveOffenderBtn.disabled = false;
+        saveOffenderBtn.textContent = "保存";
+      }
+    };
+
+    document.getElementById("deleteOffenderBtn").onclick = async () => {
+      if (!editingOffenderId) return;
+      if (confirm("この略奪犯のデータとすべての履歴を完全に削除しますか？")) {
+        try {
+          await deleteDoc(doc(db, "plunders", editingOffenderId));
+          openCardIds.delete(editingOffenderId);
+          offenderModal.classList.remove("open");
+        } catch(e) { alert("削除エラー: " + e.message); }
+      }
+    };
+
+    // --- ② 余罪（略奪事件）の追加・編集モーダル ---
+    const incidentModal = document.getElementById("incidentModal");
+    const incPreviewGrid = document.getElementById("incPreviewGrid");
+    const saveIncBtn = document.getElementById("saveIncBtn");
+
+    document.getElementById("incImgInput").addEventListener("change", (e) => {
+      handleFilesSelected(e.target.files, incPreviewGrid, saveIncBtn);
+      e.target.value = "";
+    });
+
+    function openIncidentModal(offId, incId) {
+      const targetOff = offendersData.find(o => o.id === offId);
+      if (!targetOff) return;
+      editingOffenderId = offId;
+      editingIncidentId = incId;
+
+      if (incId) {
+        const inc = targetOff.incidents.find(i => i.id === incId);
+        if (!inc) return;
+        document.getElementById("incModalTitle").textContent = `✏️ 略奪記録の編集（${targetOff.name}）`;
+        document.getElementById("incDate").value = inc.date || getTodayStr();
+        const types = Array.isArray(inc.types) ? inc.types : [];
+        document.getElementById("incTypeSecret").checked = types.includes("秘密作戦");
+        document.getElementById("incTypeCart").checked = types.includes("馬車");
+        document.getElementById("incVictims").value = inc.victims || "";
+        document.getElementById("incContact").value = inc.contactPerson || "";
+        document.getElementById("incApology").checked = !!inc.apology;
+        document.getElementById("incBurned").checked = !!inc.burned;
+        document.getElementById("incNote").value = inc.note || "";
+        tempImages = Array.isArray(inc.images) ? [...inc.images] : [];
+      } else {
+        document.getElementById("incModalTitle").textContent = `＋ 余罪を追加（${targetOff.name}）`;
+        document.getElementById("incDate").value = getTodayStr();
+        document.getElementById("incTypeSecret").checked = false;
+        document.getElementById("incTypeCart").checked = false;
+        document.getElementById("incVictims").value = "";
+        document.getElementById("incContact").value = "";
+        document.getElementById("incApology").checked = false;
+        document.getElementById("incBurned").checked = false;
+        document.getElementById("incNote").value = "";
+        tempImages = [];
+      }
+      renderPreviewGrid(incPreviewGrid);
+      incidentModal.classList.add("open");
+    }
+
+    document.getElementById("closeIncBtn").onclick = () => incidentModal.classList.remove("open");
+
+    saveIncBtn.onclick = async () => {
+      const targetOff = offendersData.find(o => o.id === editingOffenderId);
+      if (!targetOff) return;
+
+      const types = [];
+      if (document.getElementById("incTypeSecret").checked) types.push("秘密作戦");
+      if (document.getElementById("incTypeCart").checked) types.push("馬車");
+
+      const newIncData = {
+        id: editingIncidentId || ("inc_" + Date.now()),
+        date: document.getElementById("incDate").value || getTodayStr(),
+        types: types,
+        victims: document.getElementById("incVictims").value.trim(),
+        contactPerson: document.getElementById("incContact").value.trim(),
+        apology: document.getElementById("incApology").checked,
+        burned: document.getElementById("incBurned").checked,
+        note: document.getElementById("incNote").value.trim(),
+        images: [...tempImages]
+      };
+
+      let updatedIncidents = [...targetOff.incidents];
+      if (editingIncidentId) {
+        updatedIncidents = updatedIncidents.map(i => i.id === editingIncidentId ? newIncData : i);
+      } else {
+        updatedIncidents.push(newIncData);
+      }
+
+      saveIncBtn.disabled = true;
+      saveIncBtn.textContent = "保存中...";
+
+      try {
+        await updateDoc(doc(db, "plunders", editingOffenderId), {
+          incidents: updatedIncidents,
+          updatedAt: new Date().toISOString()
+        });
+        openCardIds.add(editingOffenderId);
+        incidentModal.classList.remove("open");
+      } catch(e) {
+        alert("保存エラー（スクショの枚数が多すぎる場合は少し減らしてください）: " + e.message);
+      } finally {
+        saveIncBtn.disabled = false;
+        saveIncBtn.textContent = "保存";
+      }
+    };
+
+    async function deleteIncident(offId, incId) {
+      const targetOff = offendersData.find(o => o.id === offId);
+      if (!targetOff) return;
+      if (!confirm("この略奪記録を削除しますか？")) return;
+
+      const updatedIncidents = targetOff.incidents.filter(i => i.id !== incId);
+      try {
+        await updateDoc(doc(db, "plunders", offId), {
+          incidents: updatedIncidents,
+          updatedAt: new Date().toISOString()
+        });
+      } catch(e) { alert("削除エラー: " + e.message); }
+    }
+  </script>
+</body>
+</html>
