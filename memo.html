@@ -6,21 +6,28 @@
   <title>📝 お知らせ要点＆素材</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0fdf4; color: #222; margin: 0; padding: 16px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0fdf4; color: #222; margin: 0; padding: 14px; }
     
+    /* 上部の切り替えタブ */
+    .tab-bar { display: flex; gap: 8px; max-width: 500px; margin: 0 auto 16px auto; background: #dcfce7; padding: 5px; border-radius: 14px; }
+    .tab-btn { flex: 1; padding: 10px 6px; border: none; border-radius: 10px; font-weight: bold; font-size: 0.9rem; cursor: pointer; background: transparent; color: #166534; transition: 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .tab-btn.active { background: #fff; color: #15803d; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+    .tab-btn.tab-img.active { color: #0369a1; }
+    .badge-num { background: rgba(0,0,0,0.08); padding: 1px 7px; border-radius: 10px; font-size: 0.75rem; }
+
     .section-header { display: flex; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto 12px auto; }
-    h1, h2.sec-title { font-size: 1.15rem; color: #166534; margin: 0; display: flex; align-items: center; gap: 6px; }
+    h1, h2.sec-title { font-size: 1.1rem; color: #166534; margin: 0; display: flex; align-items: center; gap: 6px; }
     .btn-add { background: #16a34a; color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: bold; font-size: 0.82rem; cursor: pointer; box-shadow: 0 2px 5px rgba(22, 163, 74, 0.3); }
     .btn-add-img { background: #0284c7; box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3); }
 
-    .container { max-width: 500px; margin: 0 auto 32px auto; }
+    .container { max-width: 500px; margin: 0 auto 24px auto; }
     
     /* アコーディオン（折りたたみ）カードのデザイン */
     .card { background: #fff; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left: 5px solid #16a34a; overflow: hidden; }
     .card-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; background: #fff; transition: background 0.15s; }
     .card-header:active { background: #f9fafb; }
     .card-title-wrap { display: flex; flex-direction: column; gap: 3px; padding-right: 8px; }
-    .card-title { font-size: 1.02rem; font-weight: bold; color: #166534; margin: 0; word-break: break-all; }
+    .card-title { font-size: 1rem; font-weight: bold; color: #166534; margin: 0; word-break: break-all; }
     .card-date { font-size: 0.72rem; color: #6b7280; }
     .toggle-icon { font-size: 0.8rem; color: #16a34a; transition: transform 0.2s; flex-shrink: 0; font-weight: bold; }
     
@@ -35,18 +42,22 @@
     
     .card-body { font-size: 0.9rem; color: #374151; white-space: pre-wrap; word-break: break-all; background: #f9fafb; padding: 12px; border-radius: 8px; line-height: 1.5; border: 1px solid #f3f4f6; }
 
-    /* イラスト置き場（ギャラリー）のデザイン */
-    .divider { border: none; border-top: 2px dashed #bbf7d0; max-width: 500px; margin: 28px auto; }
-    .gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .img-card { background: #fff; border-radius: 12px; padding: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; border-top: 4px solid #0284c7; }
-    .img-thumb-wrap { width: 100%; height: 160px; background: #f8fafc; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 8px; border: 1px solid #f1f5f9; cursor: pointer; }
-    .img-thumb { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .img-label { font-size: 0.85rem; font-weight: bold; color: #333; margin-bottom: 8px; word-break: break-all; text-align: center; }
-    .img-card-btns { display: flex; gap: 6px; }
-    .btn-dl-full { flex: 1; background: #e0f2fe; color: #0369a1; border: none; padding: 7px 0; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
-    .btn-del-mini { background: #fee2e2; color: #dc2626; border: none; padding: 7px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; }
+    /* イラスト置き場（3列コンパクト＆スクロール枠）のデザイン */
+    .img-search-input { width: 100%; padding: 9px 12px; border: 2px solid #bae6fd; border-radius: 10px; font-size: 0.88rem; outline: none; margin-bottom: 10px; background: #fff; }
+    .img-search-input:focus { border-color: #0284c7; }
+    
+    .gallery-scroll-box { max-height: 62vh; overflow-y: auto; background: #fff; padding: 10px; border-radius: 12px; box-shadow: inset 0 1px 4px rgba(0,0,0,0.05); border: 1px solid #e0f2fe; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    
+    .img-card { background: #f8fafc; border-radius: 8px; padding: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; }
+    .img-thumb-wrap { width: 100%; height: 95px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 5px; border: 1px solid #f1f5f9; cursor: pointer; }
+    .img-thumb { max-width: 100%; max-height: 100%; object-fit: cover; width: 100%; height: 100%; }
+    .img-label { font-size: 0.72rem; font-weight: bold; color: #333; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+    .img-card-btns { display: flex; gap: 4px; }
+    .btn-dl-full { flex: 1; background: #e0f2fe; color: #0369a1; border: none; padding: 5px 0; border-radius: 5px; font-size: 0.7rem; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
+    .btn-del-mini { background: #fee2e2; color: #dc2626; border: none; padding: 5px 6px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; cursor: pointer; }
 
-    .back-wrap { text-align: center; margin-top: 30px; margin-bottom: 20px; }
+    .back-wrap { text-align: center; margin-top: 24px; margin-bottom: 20px; }
     .back-btn { display: inline-block; padding: 10px 20px; background: #fff; color: #4b5563; text-decoration: none; border-radius: 20px; border: 1px solid #d1d5db; font-size: 0.9rem; font-weight: bold; }
 
     /* モーダル */
@@ -74,33 +85,48 @@
 
     /* 画像拡大プレビュー用モーダル */
     .zoom-modal { background: transparent; box-shadow: none; max-width: 95vw; max-height: 95vh; text-align: center; padding: 0; }
-    .zoom-img { max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
-    .zoom-close { margin-top: 12px; background: #fff; color: #333; border: none; padding: 8px 24px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; cursor: pointer; }
+    .zoom-title { color: #fff; font-weight: bold; font-size: 0.95rem; margin-bottom: 8px; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+    .zoom-img { max-width: 100%; max-height: 75vh; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+    .zoom-btns { display: flex; justify-content: center; gap: 12px; margin-top: 12px; }
+    .zoom-dl { background: #0284c7; color: #fff; text-decoration: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
+    .zoom-close { background: #fff; color: #333; border: none; padding: 8px 24px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; cursor: pointer; }
   </style>
 </head>
 <body>
 
+  <!-- 切り替えタブ -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabMemoBtn">📝 お知らせ要点 <span class="badge-num" id="memoCountBadge">0</span></button>
+    <button class="tab-btn tab-img" id="tabImgBtn">🖼️ イラスト素材 <span class="badge-num" id="imgCountBadge">0</span></button>
+  </div>
+
   <!-- 1. お知らせの要点セクション -->
-  <div class="section-header">
-    <h1>📝 お知らせの要点一覧</h1>
-    <button class="btn-add" id="openAddBtn">＋ 要点を追加</button>
+  <div id="memoSection">
+    <div class="section-header">
+      <h1>📝 お知らせの要点一覧</h1>
+      <button class="btn-add" id="openAddBtn">＋ 要点を追加</button>
+    </div>
+
+    <div class="container" id="memoList">
+      <div style="text-align: center; color: #6b7280; padding: 20px; font-size: 0.9rem;">読み込み中...</div>
+    </div>
   </div>
 
-  <div class="container" id="memoList">
-    <div style="text-align: center; color: #6b7280; padding: 20px; font-size: 0.9rem;">読み込み中...</div>
-  </div>
-
-  <hr class="divider">
-
-  <!-- 2. お知らせ用イラスト置き場セクション -->
-  <div class="section-header">
-    <h2 class="sec-title" style="color: #0369a1;">🖼️ お知らせ用イラスト置き場</h2>
-    <button class="btn-add btn-add-img" id="openAddImgBtn">＋ 画像を投稿</button>
-  </div>
-  <p style="max-width: 500px; margin: -6px auto 12px auto; font-size: 0.75rem; color: #6b7280;">※画像をタップすると拡大表示できます。「📥 保存」または長押しで保存してください。</p>
-
-  <div class="container" id="galleryList">
-    <div style="text-align: center; color: #6b7280; padding: 20px; font-size: 0.9rem;">読み込み中...</div>
+  <!-- 2. お知らせ用イラスト置き場セクション（初期は非表示・タブで切り替え） -->
+  <div id="imgSection" style="display: none;">
+    <div class="section-header">
+      <h2 class="sec-title" style="color: #0369a1;">🖼️ イラスト置き場</h2>
+      <button class="btn-add btn-add-img" id="openAddImgBtn">＋ 画像を投稿</button>
+    </div>
+    
+    <div class="container">
+      <input type="text" id="imgSearchInput" class="img-search-input" placeholder="🔍 イラストの名前で検索...">
+      <p style="margin: 0 0 8px 0; font-size: 0.72rem; color: #6b7280;">※画像をタップすると大きく表示されます</p>
+      
+      <div class="gallery-scroll-box" id="galleryList">
+        <div style="text-align: center; color: #6b7280; padding: 20px; font-size: 0.9rem;">読み込み中...</div>
+      </div>
+    </div>
   </div>
 
   <div class="back-wrap">
@@ -132,7 +158,7 @@
     <div class="modal">
       <h2 style="color: #0369a1;">🖼️ イラスト・画像の投稿</h2>
       <div class="form-group">
-        <label>イラストの名前・用途（任意）</label>
+        <label>イラストの名前・用途（検索しやすくなります）</label>
         <input type="text" id="imgTitleInput" placeholder="例: わらわら1組、チーズ用">
       </div>
       <div class="form-group">
@@ -154,9 +180,12 @@
   <!-- ③ 画像拡大プレビューモーダル -->
   <div class="modal-overlay" id="zoomModal" onclick="this.classList.remove('open')">
     <div class="modal zoom-modal" onclick="event.stopPropagation()">
+      <div id="zoomTitle" class="zoom-title"></div>
       <img id="zoomImg" class="zoom-img" src="">
-      <br>
-      <button class="zoom-close" onclick="document.getElementById('zoomModal').classList.remove('open')">閉じる</button>
+      <div class="zoom-btns">
+        <a id="zoomDlBtn" class="zoom-dl" href="" download="">📥 この画像を保存</a>
+        <button class="zoom-close" onclick="document.getElementById('zoomModal').classList.remove('open')">閉じる</button>
+      </div>
     </div>
   </div>
 
@@ -177,6 +206,28 @@
     const db = getFirestore(app);
     const memosRef = collection(db, "memos");
     const imagesRef = collection(db, "memo_images");
+
+    // --- タブ切り替え処理 ---
+    const tabMemoBtn = document.getElementById("tabMemoBtn");
+    const tabImgBtn = document.getElementById("tabImgBtn");
+    const memoSection = document.getElementById("memoSection");
+    const imgSection = document.getElementById("imgSection");
+
+    tabMemoBtn.onclick = () => {
+      tabMemoBtn.classList.add("active");
+      tabImgBtn.classList.remove("active");
+      memoSection.style.display = "block";
+      imgSection.style.display = "none";
+      document.body.style.background = "#f0fdf4";
+    };
+
+    tabImgBtn.onclick = () => {
+      tabImgBtn.classList.add("active");
+      tabMemoBtn.classList.remove("active");
+      imgSection.style.display = "block";
+      memoSection.style.display = "none";
+      document.body.style.background = "#f0f9ff";
+    };
 
     // --- 1. 要点（テキスト）の処理 ---
     let currentDocId = null;
@@ -211,6 +262,7 @@
       });
       items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
       memosData = items;
+      document.getElementById("memoCountBadge").textContent = items.length;
       renderList();
     });
 
@@ -333,9 +385,10 @@
       }
     };
 
-    // --- 2. イラスト置き場（高画質ギャラリー）の処理 ---
+    // --- 2. イラスト置き場（3列コンパクト＆高画質ギャラリー）の処理 ---
     let imagesData = [];
     let selectedImgBase64 = null;
+    let imgSearchQuery = "";
 
     const galleryEl = document.getElementById("galleryList");
     const imgModal = document.getElementById("imgModal");
@@ -345,14 +398,18 @@
     const imgPreview = document.getElementById("imgPreview");
     const saveImgBtn = document.getElementById("saveImgBtn");
 
-    // 細かい文字も潰れないように高画質（最大1200px）で調整しつつ、上限を超えないよう自動調整する関数
+    document.getElementById("imgSearchInput").addEventListener("input", (e) => {
+      imgSearchQuery = e.target.value.trim().toLowerCase();
+      renderGallery();
+    });
+
     function compressImageHighQuality(file, callback) {
       const reader = new FileReader();
       reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
           const canvas = document.createElement('canvas');
-          const maxSize = 1200; // 高画質対応
+          const maxSize = 1200;
           let width = img.width;
           let height = img.height;
 
@@ -366,7 +423,6 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           
-          // まずは高画質(0.85)で変換し、もしデータが大きすぎたら少しだけ画質を落として安全圏に収める
           let quality = 0.85;
           let dataUrl = canvas.toDataURL('image/jpeg', quality);
           while (dataUrl.length > 900000 && quality > 0.4) {
@@ -401,7 +457,7 @@
         if (d.imageData) {
           items.push({
             id: docSnap.id,
-            title: d.title || "お知らせ用イラスト",
+            title: d.title || "イラスト",
             imageData: d.imageData,
             createdAt: d.createdAt || ""
           });
@@ -409,33 +465,40 @@
       });
       items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       imagesData = items;
+      document.getElementById("imgCountBadge").textContent = items.length;
       renderGallery();
     });
 
     function renderGallery() {
       galleryEl.innerHTML = "";
-      if (imagesData.length === 0) {
-        galleryEl.innerHTML = `<div style="text-align: center; color: #6b7280; padding: 30px 10px; background: #fff; border-radius: 12px; font-size: 0.85rem;">まだイラストがありません。<br>右上の「＋ 画像を投稿」から追加できます！</div>`;
+      
+      const filtered = imagesData.filter(item => {
+        if (!imgSearchQuery) return true;
+        return item.title.toLowerCase().includes(imgSearchQuery);
+      });
+
+      if (filtered.length === 0) {
+        galleryEl.innerHTML = `<div style="text-align: center; color: #6b7280; padding: 30px 10px; font-size: 0.85rem;">該当するイラストがありません。</div>`;
         return;
       }
 
       const grid = document.createElement("div");
       grid.className = "gallery-grid";
 
-      imagesData.forEach(item => {
+      filtered.forEach(item => {
         const card = document.createElement("div");
         card.className = "img-card";
         const safeTitle = String(item.title).replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
         card.innerHTML = `
           <div>
-            <div class="img-thumb-wrap" data-src="${item.imageData}">
+            <div class="img-thumb-wrap" data-src="${item.imageData}" data-title="${safeTitle}">
               <img class="img-thumb" src="${item.imageData}" alt="${safeTitle}">
             </div>
-            <div class="img-label">${safeTitle}</div>
+            <div class="img-label" title="${safeTitle}">${safeTitle}</div>
           </div>
           <div class="img-card-btns">
-            <a class="btn-dl-full" href="${item.imageData}" download="${safeTitle}.jpg">📥 保存</a>
+            <a class="btn-dl-full" href="${item.imageData}" download="${safeTitle}.jpg">📥保存</a>
             <button class="btn-del-mini" data-id="${item.id}">🗑️</button>
           </div>
         `;
@@ -444,10 +507,14 @@
 
       galleryEl.appendChild(grid);
 
-      // 画像タップで拡大表示
+      // 画像タップで拡大表示＆保存ボタン連動
       document.querySelectorAll(".img-thumb-wrap").forEach(wrap => {
         wrap.onclick = () => {
+          document.getElementById("zoomTitle").textContent = wrap.dataset.title;
           document.getElementById("zoomImg").src = wrap.dataset.src;
+          const dlBtn = document.getElementById("zoomDlBtn");
+          dlBtn.href = wrap.dataset.src;
+          dlBtn.download = (wrap.dataset.title || "image") + ".jpg";
           document.getElementById("zoomModal").classList.add("open");
         };
       });
