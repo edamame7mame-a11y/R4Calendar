@@ -55,11 +55,13 @@
 
     /* 個別の略奪事件ボックス */
     .incident-box { background: #fff; border: 1px solid #fecaca; border-radius: 8px; padding: 10px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-    .inc-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #f3f4f6; padding-bottom: 6px; margin-bottom: 8px; }
-    .inc-date { font-size: 0.82rem; font-weight: bold; color: #6b7280; }
+    .inc-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #f3f4f6; padding-bottom: 6px; margin-bottom: 6px; flex-wrap: wrap; gap: 4px; }
+    .inc-date { font-size: 0.82rem; font-weight: bold; color: #374151; }
     .inc-types { display: flex; gap: 4px; }
     .type-tag { background: #fee2e2; color: #991b1b; font-size: 0.72rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
     
+    .inc-guild-badge { display: inline-block; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.76rem; font-weight: bold; padding: 2px 8px; border-radius: 6px; margin-bottom: 6px; }
+
     .inc-row { font-size: 0.84rem; margin-bottom: 4px; color: #333; line-height: 1.4; }
     .inc-label { font-weight: bold; color: #6b7280; font-size: 0.78rem; }
     
@@ -181,7 +183,7 @@
         <input type="text" id="offName" placeholder="犯人の名前を入力">
       </div>
       <div class="form-group">
-        <label>現在のギルド名</label>
+        <label>現在のギルド名（1回目の事件の当時ギルドとしても記録されます）</label>
         <input type="text" id="offGuild" placeholder="例: 〇〇ギルド（無所属なら空欄）">
       </div>
       <div class="form-group">
@@ -300,6 +302,10 @@
       <div class="form-group">
         <label>発生日</label>
         <input type="date" id="incDate">
+      </div>
+      <div class="form-group">
+        <label>略奪された当時の所属ギルド（移籍していたら書き換えてください）</label>
+        <input type="text" id="incGuild" placeholder="当時の相手のギルド名">
       </div>
       <div class="form-group">
         <label>略奪内容（複数チェック可）</label>
@@ -552,7 +558,9 @@
       let filtered = offendersData.filter(item => {
         if (filterPendingOnly && !item.hasPending && !item.hasWaitBurn) return false;
         if (!searchQuery) return true;
-        const targetStr = `${item.name} ${item.guild} ${item.guildHistory}`.toLowerCase();
+        // 事件ごとの過去ギルド名も検索対象に含める
+        const incGuilds = item.incidents.map(inc => inc.guildAtTime || "").join(" ");
+        const targetStr = `${item.name} ${item.guild} ${item.guildHistory} ${incGuilds}`.toLowerCase();
         return targetStr.includes(searchQuery);
       });
 
@@ -592,6 +600,9 @@
           item.incidents.forEach((inc) => {
             const types = Array.isArray(inc.types) ? inc.types : [];
             const typeTags = types.map(t => `<span class="type-tag">${escapeHtml(t)}</span>`).join("");
+
+            // 当時のギルド名（未記録の過去データは現在のギルド名を表示）
+            const guildAtTimeStr = inc.guildAtTime !== undefined ? inc.guildAtTime : item.guild;
 
             let statusHtml = "";
             if (inc.pending) statusHtml += `<span class="status-tag status-pending-yes">⏳ 対応中</span>`;
@@ -642,6 +653,9 @@
                 <div class="inc-header">
                   <span class="inc-date">📅 発生: ${escapeHtml(inc.date || "日付不明")}</span>
                   <div class="inc-types">${typeTags}</div>
+                </div>
+                <div>
+                  <span class="inc-guild-badge">🏰 当時ギルド: ${escapeHtml(guildAtTimeStr || "不明・無所属")}</span>
                 </div>
                 <div class="inc-row"><span class="inc-label">被害者:</span> ${escapeHtml(inc.victims || "未記入")}</div>
                 <div class="inc-row">
@@ -842,6 +856,7 @@
           const firstInc = {
             id: "inc_" + Date.now(),
             date: document.getElementById("firstDate").value || getTodayStr(),
+            guildAtTime: guild, // 1回目の当時ギルドとして保存
             types: types,
             victims: document.getElementById("firstVictims").value.trim(),
             offenderContactPerson: document.getElementById("firstOffenderContact").value.trim(),
@@ -908,6 +923,7 @@
         if (!inc) return;
         document.getElementById("incModalTitle").textContent = `✏️ 略奪記録の編集（${targetOff.name}）`;
         document.getElementById("incDate").value = inc.date || getTodayStr();
+        document.getElementById("incGuild").value = inc.guildAtTime !== undefined ? inc.guildAtTime : (targetOff.guild || "");
         const types = Array.isArray(inc.types) ? inc.types : [];
         document.getElementById("incTypeSecret").checked = types.includes("秘密作戦");
         document.getElementById("incTypeCart").checked = types.includes("馬車");
@@ -928,6 +944,7 @@
       } else {
         document.getElementById("incModalTitle").textContent = `＋ 余罪を追加（${targetOff.name}）`;
         document.getElementById("incDate").value = getTodayStr();
+        document.getElementById("incGuild").value = targetOff.guild || ""; // 現在のギルドを初期セット
         document.getElementById("incTypeSecret").checked = false;
         document.getElementById("incTypeCart").checked = false;
         document.getElementById("incVictims").value = "";
@@ -959,9 +976,12 @@
       if (document.getElementById("incTypeSecret").checked) types.push("秘密作戦");
       if (document.getElementById("incTypeCart").checked) types.push("馬車");
 
+      const incGuildVal = document.getElementById("incGuild").value.trim();
+
       const newIncData = {
         id: editingIncidentId || ("inc_" + Date.now()),
         date: document.getElementById("incDate").value || getTodayStr(),
+        guildAtTime: incGuildVal,
         types: types,
         victims: document.getElementById("incVictims").value.trim(),
         offenderContactPerson: document.getElementById("incOffenderContact").value.trim(),
@@ -980,10 +1000,22 @@
       };
 
       let updatedIncidents = [...targetOff.incidents];
+      let newCurrentGuild = targetOff.guild;
+      let newGuildHistory = targetOff.guildHistory || "";
+
       if (editingIncidentId) {
         updatedIncidents = updatedIncidents.map(i => i.id === editingIncidentId ? newIncData : i);
       } else {
         updatedIncidents.push(newIncData);
+        // 新しい余罪を追加した時、もしギルド名が変わっていたら「現ギルド」と「移行履歴」も自動で更新する
+        if (incGuildVal && incGuildVal !== targetOff.guild) {
+          if (targetOff.guild) {
+            newGuildHistory = newGuildHistory 
+              ? `${newGuildHistory} → ${incGuildVal}` 
+              : `${targetOff.guild} → ${incGuildVal}`;
+          }
+          newCurrentGuild = incGuildVal;
+        }
       }
 
       saveIncBtn.disabled = true;
@@ -991,6 +1023,8 @@
 
       try {
         await updateDoc(doc(db, "plunders", editingOffenderId), {
+          guild: newCurrentGuild,
+          guildHistory: newGuildHistory,
           incidents: updatedIncidents,
           updatedAt: new Date().toISOString()
         });
