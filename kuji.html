@@ -9,7 +9,8 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fdf4ff; text-align: center; padding: 16px; color: #333; margin: 0; }
     
     header { display: flex; justify-content: space-between; align-items: center; max-width: 380px; margin: 0 auto 16px auto; }
-    h1 { font-size: 1.3rem; color: #a21caf; margin: 0; }
+    h1 { font-size: 1.3rem; color: #a21caf; margin: 0; display: flex; align-items: center; gap: 6px; }
+    .sync-badge { font-size: 0.68rem; background: #fae8ff; color: #a21caf; border: 1px solid #f0abfc; padding: 2px 7px; border-radius: 10px; font-weight: bold; }
     .btn-edit-list { background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
 
     .settings { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: left; max-width: 380px; margin: 0 auto; }
@@ -83,7 +84,7 @@
 <body>
 
   <header>
-    <h1>🎲 くじ引き</h1>
+    <h1>🎲 くじ引き <span class="sync-badge">🌐 全員同期中</span></h1>
     <button class="btn-edit-list" id="openEditModalBtn">⚙️ 一覧の編集</button>
   </header>
   
@@ -171,6 +172,8 @@
     const db = getFirestore(app);
     const historyRef = collection(db, "kuji_history");
     const settingsDocRef = doc(db, "kuji_settings", "presets");
+    // ★追加：現在の画面の状態（選択中の項目・日付・候補者・現在の結果）を全員で共有する保存先
+    const stateDocRef = doc(db, "kuji_settings", "live_state");
 
     const DEFAULT_TITLES = ["シールドお知らせ", "チーズお知らせ"];
     const DEFAULT_NAMES = ["ジャザ", "豆たん", "しず", "ひな", "シチミ", "いかれた猫"];
@@ -179,16 +182,19 @@
     let presetNames = [...DEFAULT_NAMES];
     let selectedNames = new Set(DEFAULT_NAMES);
     let targetDates = [];
+    let currentTitle = "";
+    let latestResult = null;
+    let isSpinning = false;
+    let spinAnimTimer = null;
+    let lastHandledDrawId = 0;
     let historyDocs = [];
-    let isFirstPresetLoad = true;
 
-    // 初期化（今日の日付をセット）
+    // 初期化（今日の日付をカレンダー入力欄にセット）
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     const todayStr = now.toISOString().slice(0, 10);
     document.getElementById("datePicker").value = todayStr;
     targetDates = [todayStr];
-    renderDateChips();
 
     function escapeHtml(str) {
       return String(str || "").replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -213,38 +219,88 @@
       return `${m}/${day} ${hh}:${mm} 抽選`;
     }
 
+    // ★現在の画面の選択状態をFirebaseに保存して全員に反映する関数
+    async function syncLiveState(extra = {}) {
+      try {
+        await setDoc(stateDocRef, {
+          title: currentTitle,
+          targetDates: targetDates,
+          selectedNames: Array.from(selectedNames),
+          latestResult: latestResult,
+          updatedAt: Date.now(),
+          ...extra
+        }, { merge: true });
+      } catch (e) {
+        console.error("同期エラー:", e);
+      }
+    }
+
     // --- 1. プリセット（候補者・項目一覧）のリアルタイム同期 ---
     onSnapshot(settingsDocRef, (docSnap) => {
       if (docSnap.exists()) {
         const d = docSnap.data();
         if (Array.isArray(d.titles) && d.titles.length > 0) presetTitles = d.titles;
         if (Array.isArray(d.names) && d.names.length > 0) presetNames = d.names;
-      } else {
-        // クラウドにまだ無ければスマホ内の古い設定を引き継ぐ
-        try {
-          const localT = localStorage.getItem('r4_kuji_titles_v1');
-          const localN = localStorage.getItem('r4_kuji_names_v1');
-          if (localT) presetTitles = JSON.parse(localT);
-          if (localN) presetNames = JSON.parse(localN);
-        } catch(e) {}
       }
-
-      if (isFirstPresetLoad) {
-        selectedNames = new Set(presetNames);
-        isFirstPresetLoad = false;
-      } else {
-        // すでに選択中の状態をなるべく維持する
-        const nextSet = new Set();
-        presetNames.forEach(n => { if (selectedNames.has(n)) nextSet.add(n); });
-        if (nextSet.size === 0) presetNames.forEach(n => nextSet.add(n));
-        selectedNames = nextSet;
-      }
-
       renderTitleChips();
       renderNameChips();
     });
 
-    // --- 2. 抽選履歴のリアルタイム同期（全員共有） ---
+    // --- 2. 現在の画面状態（選択中のタイトル・日付・候補者ON/OFF・最新結果）のリアルタイム同期 ---
+    onSnapshot(stateDocRef, (docSnap) => {
+      if (!docSnap.exists()) {
+        // 初回のみ現在の初期状態を書き込む
+        syncLiveState();
+        return;
+      }
+
+      const d = docSnap.data();
+
+      // ① タイトルの同期（自分がタイピング中でなければ入力欄も書き換える）
+      if (typeof d.title === "string") {
+        currentTitle = d.title;
+        const inputEl = document.getElementById("kujiTitle");
+        if (document.activeElement !== inputEl) {
+          inputEl.value = currentTitle;
+        }
+      }
+
+      // ② 日付リストの同期
+      if (Array.isArray(d.targetDates)) {
+        targetDates = d.targetDates;
+      }
+
+      // ③ 選択中の候補者ON/OFFの同期
+      if (Array.isArray(d.selectedNames)) {
+        // プリセットに存在する名前だけを有効にする
+        selectedNames = new Set(d.selectedNames.filter(n => presetNames.includes(n)));
+      }
+
+      // ④ 抽選結果＆ルーレット演出の同期
+      if (d.latestResult !== undefined) {
+        latestResult = d.latestResult;
+      }
+
+      renderTitleChips();
+      renderDateChips();
+      renderNameChips();
+
+      // 誰かがルーレットを回した瞬間なら全員の画面でルーレット演出を回す
+      if (d.drawId && d.drawId !== lastHandledDrawId) {
+        const isRecent = (Date.now() - d.drawId) < 10000;
+        if (lastHandledDrawId !== 0 && isRecent && latestResult) {
+          playSpinAnimationAndShowResult(latestResult);
+        } else {
+          lastHandledDrawId = d.drawId;
+          renderLatestResultBox(latestResult);
+        }
+        lastHandledDrawId = d.drawId;
+      } else if (!isSpinning) {
+        renderLatestResultBox(latestResult);
+      }
+    });
+
+    // --- 3. 抽選履歴のリアルタイム同期（全員共有） ---
     onSnapshot(historyRef, (snapshot) => {
       const items = [];
       snapshot.forEach((docSnap) => {
@@ -257,7 +313,6 @@
           timestamp: d.timestamp || 0
         });
       });
-      // 新しい抽選結果が上に来るように並べる
       items.sort((a, b) => b.timestamp - a.timestamp);
       historyDocs = items;
       renderHistory();
@@ -271,6 +326,7 @@
         targetDates.push(val);
         targetDates.sort();
         renderDateChips();
+        syncLiveState();
       } else {
         alert("その日付はすでに追加されています！");
       }
@@ -279,6 +335,7 @@
     document.getElementById("clearDatesBtn").onclick = () => {
       targetDates = [];
       renderDateChips();
+      syncLiveState();
     };
 
     function renderDateChips() {
@@ -302,6 +359,7 @@
         btn.onclick = () => {
           targetDates = targetDates.filter(d => d !== btn.dataset.date);
           renderDateChips();
+          syncLiveState();
         };
       });
     }
@@ -310,21 +368,31 @@
     function renderTitleChips() {
       const container = document.getElementById('titleChips');
       container.innerHTML = '';
-      const currentVal = document.getElementById('kujiTitle').value;
 
       presetTitles.forEach(title => {
         const btn = document.createElement('div');
-        btn.className = 'chip' + (currentVal === title ? ' active' : '');
+        btn.className = 'chip' + (currentTitle === title ? ' active' : '');
         btn.textContent = title;
         btn.onclick = () => {
+          currentTitle = title;
           document.getElementById('kujiTitle').value = title;
           renderTitleChips();
+          syncLiveState();
         };
         container.appendChild(btn);
       });
     }
 
-    document.getElementById('kujiTitle').addEventListener('input', renderTitleChips);
+    // 手入力したときも全員の画面にリアルタイム反映
+    let titleInputTimer = null;
+    document.getElementById('kujiTitle').addEventListener('input', (e) => {
+      currentTitle = e.target.value;
+      renderTitleChips();
+      clearTimeout(titleInputTimer);
+      titleInputTimer = setTimeout(() => {
+        syncLiveState();
+      }, 250);
+    });
 
     function renderNameChips() {
       const container = document.getElementById('nameChips');
@@ -346,6 +414,7 @@
             selectedNames.add(name);
           }
           renderNameChips();
+          syncLiveState();
         };
         container.appendChild(btn);
       });
@@ -356,11 +425,13 @@
     document.getElementById("allOnBtn").onclick = () => {
       selectedNames = new Set(presetNames);
       renderNameChips();
+      syncLiveState();
     };
 
     document.getElementById("allOffBtn").onclick = () => {
       selectedNames.clear();
       renderNameChips();
+      syncLiveState();
     };
 
     // --- 一覧の編集モーダル処理 ---
@@ -389,7 +460,11 @@
           names: newNames,
           updatedAt: new Date().toISOString()
         });
+        // 新しく追加されたメンバーも含めて全員ON状態にして同期
+        presetTitles = newTitles;
+        presetNames = newNames;
         selectedNames = new Set(newNames);
+        await syncLiveState();
         editModal.classList.remove('open');
       } catch(e) {
         alert("保存エラー: " + e.message);
@@ -406,25 +481,80 @@
       return a;
     }
 
+    // --- 真ん中の抽選結果ボックスを描画する関数 ---
+    function renderLatestResultBox(res) {
+      const resultBox = document.getElementById('result-box');
+      const drawBtn = document.getElementById("drawBtn");
+      if (!res || !res.assignments || res.assignments.length === 0) {
+        resultBox.innerHTML = "";
+        drawBtn.textContent = 'ルーレットを回す！';
+        return;
+      }
+
+      const participants = res.participants || [];
+      const participantsStr = participants.join('、');
+
+      let html = '<div style="font-size: 1.1rem; color: #ec4899; font-weight: bold; margin-bottom: 12px;">🎉 決定 🎉</div>';
+      html += `<div style="background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; width: 100%; max-width: 350px;">`;
+      html += `<div style="color: #6b7280; font-size: 0.95rem; margin-bottom: 10px; border-bottom: 2px dashed #f5d0fe; padding-bottom: 8px;"><b>${escapeHtml(res.title)}</b></div>`;
+      
+      res.assignments.forEach(a => {
+        html += `
+          <div class="result-row">
+            <span class="result-date">${formatDateShort(a.date)}</span>
+            <span class="result-winner">🎉 ${escapeHtml(a.winner)}</span>
+          </div>
+        `;
+      });
+
+      html += `<div style="font-size: 0.75rem; color: #6b7280; background: #fdf4ff; padding: 8px; border-radius: 8px; text-align: left; line-height: 1.4; margin-top: 12px;">👥 <b>参加（${participants.length}名）:</b><br>${escapeHtml(participantsStr)}</div>`;
+      html += `</div>`;
+      
+      resultBox.innerHTML = html;
+      drawBtn.textContent = 'もう一度決める';
+    }
+
+    // --- 全員の画面でルーレット演出を再生してから結果を表示する関数 ---
+    function playSpinAnimationAndShowResult(res) {
+      if (spinAnimTimer) clearInterval(spinAnimTimer);
+      isSpinning = true;
+      const resultBox = document.getElementById('result-box');
+      const drawBtn = document.getElementById("drawBtn");
+      drawBtn.style.opacity = '0.5';
+      drawBtn.textContent = '抽選中...';
+
+      const items = (res.participants && res.participants.length > 0) ? res.participants : presetNames;
+      let spinCount = 0;
+
+      spinAnimTimer = setInterval(() => {
+        const randomName = items[Math.floor(Math.random() * items.length)] || "🎲";
+        resultBox.innerHTML = `<div style="font-size: 1.5rem; font-weight: bold; color: #d946ef; margin-top:20px;">🎲 ${escapeHtml(randomName)} ...</div>`;
+        spinCount++;
+
+        if (spinCount >= 15) {
+          clearInterval(spinAnimTimer);
+          spinAnimTimer = null;
+          isSpinning = false;
+          drawBtn.style.opacity = '1';
+          renderLatestResultBox(res);
+        }
+      }, 60);
+    }
+
     // --- ルーレット実行処理 ---
-    let isSpinning = false;
     const drawBtn = document.getElementById("drawBtn");
 
-    drawBtn.onclick = () => {
+    drawBtn.onclick = async () => {
       if (isSpinning) return;
       
       const kujiTitle = document.getElementById('kujiTitle').value.trim();
-      const items = Array.from(selectedNames);
+      currentTitle = kujiTitle;
+      const items = presetNames.filter(n => selectedNames.has(n));
       
       if (!kujiTitle) { alert('「1. 何を決める？」を選択するか入力してください！'); return; }
       if (targetDates.length === 0) { alert('「2. いつの分？」で日付を1つ以上「＋追加」してください！'); return; }
       if (items.length === 0) { alert('「3. 候補者」を1人以上タップして選んでください！'); return; }
 
-      isSpinning = true;
-      const resultBox = document.getElementById('result-box');
-      drawBtn.style.opacity = '0.5';
-      drawBtn.textContent = '抽選中...';
-      
       let pool = [];
       const assignments = [];
       targetDates.forEach(dStr => {
@@ -437,51 +567,29 @@
         });
       });
 
-      let spinCount = 0;
-      const timer = setInterval(async () => {
-        const randomName = items[Math.floor(Math.random() * items.length)];
-        resultBox.innerHTML = `<div style="font-size: 1.5rem; font-weight: bold; color: #d946ef; margin-top:20px;">🎲 ${escapeHtml(randomName)} ...</div>`;
-        spinCount++;
-        
-        if (spinCount >= 15) {
-          clearInterval(timer);
-          
-          const participantsStr = items.join('、');
-          
-          let html = '<div style="font-size: 1.1rem; color: #ec4899; font-weight: bold; margin-bottom: 12px;">🎉 決定 🎉</div>';
-          html += `<div style="background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; width: 100%; max-width: 350px;">`;
-          html += `<div style="color: #6b7280; font-size: 0.95rem; margin-bottom: 10px; border-bottom: 2px dashed #f5d0fe; padding-bottom: 8px;"><b>${escapeHtml(kujiTitle)}</b></div>`;
-          
-          assignments.forEach(a => {
-            html += `
-              <div class="result-row">
-                <span class="result-date">${formatDateShort(a.date)}</span>
-                <span class="result-winner">🎉 ${escapeHtml(a.winner)}</span>
-              </div>
-            `;
-          });
+      const drawTimestamp = Date.now();
+      const resultObj = {
+        title: kujiTitle,
+        assignments: assignments,
+        participants: items,
+        timestamp: drawTimestamp
+      };
 
-          html += `<div style="font-size: 0.75rem; color: #6b7280; background: #fdf4ff; padding: 8px; border-radius: 8px; text-align: left; line-height: 1.4; margin-top: 12px;">👥 <b>参加（${items.length}名）:</b><br>${escapeHtml(participantsStr)}</div>`;
-          html += `</div>`;
-          
-          resultBox.innerHTML = html;
-          isSpinning = false;
-          drawBtn.style.opacity = '1';
-          drawBtn.textContent = 'もう一度決める';
+      latestResult = resultObj;
+      lastHandledDrawId = drawTimestamp;
 
-          // Firebaseに結果を保存（全員に共有される）
-          try {
-            await addDoc(historyRef, {
-              title: kujiTitle,
-              assignments: assignments,
-              participants: items,
-              timestamp: Date.now()
-            });
-          } catch(e) {
-            alert("結果の共有保存に失敗しました: " + e.message);
-          }
+      // 自分の画面でルーレット演出開始と同時に、Firebaseへ書き込んで全員の画面でもルーレットを回す
+      playSpinAnimationAndShowResult(resultObj);
+      await syncLiveState({ drawId: drawTimestamp });
+
+      // 履歴コレクションにも追加（約0.9秒後のルーレット終了タイミングに合わせて履歴へ追加）
+      setTimeout(async () => {
+        try {
+          await addDoc(historyRef, resultObj);
+        } catch(e) {
+          alert("履歴の共有保存に失敗しました: " + e.message);
         }
-      }, 60); 
+      }, 900);
     };
 
     // --- 履歴の描画と削除処理 ---
@@ -533,14 +641,16 @@
       });
     }
 
-    // 全消去ボタン
+    // 全消去ボタン（下の履歴だけでなく真ん中の最新結果表示も全員の画面からクリアします）
     document.getElementById("clearHistoryBtn").onclick = async () => {
-      if (historyDocs.length === 0) return;
+      if (historyDocs.length === 0 && !latestResult) return;
       if (confirm('みんなの過去の抽選記録をすべて消去しますか？（元に戻せません）')) {
         try {
           for (const item of historyDocs) {
             await deleteDoc(doc(db, "kuji_history", item.id));
           }
+          latestResult = null;
+          await syncLiveState({ drawId: 0 });
         } catch(e) {
           alert("消去エラー: " + e.message);
         }
