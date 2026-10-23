@@ -56,7 +56,14 @@
     .btn-submit { background: #2563eb; color: #fff; }
     .btn-delete { background: #ef4444; color: #fff; }
     .btn-cancel { background: #e5e7eb; color: #4b5563; }
-    .label-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    
+    /* ラベル設定・並び替え用のスタイル */
+    .label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; background: #f9fafb; padding: 4px 6px; border-radius: 8px; border: 1px solid #e5e7eb; }
+    .label-row input[type="text"] { flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.88rem; }
+    .order-btns { display: flex; flex-direction: column; gap: 2px; }
+    .btn-order { background: #e5e7eb; color: #374151; border: none; border-radius: 4px; width: 26px; height: 18px; font-size: 0.65rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0; }
+    .btn-order:active { background: #cbd5e1; }
+    .btn-order:disabled { opacity: 0.3; cursor: default; }
   </style>
 </head>
 <body>
@@ -153,19 +160,22 @@
 
   <div class="modal-overlay" id="settingsOverlay">
     <div class="modal">
-      <h2>色の名前・ラベル設定</h2>
-      <p style="font-size: 0.78rem; color: #666; margin-bottom: 12px;">それぞれの色に付ける名前と<br><b>カラー（左の色をタップして変更）</b>を設定できます</p>
-      <div id="labelInputsContainer" style="max-height: 50vh; overflow-y: auto; padding-right: 4px;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h2 style="margin:0;">ラベル設定・並び替え</h2>
+        <span style="font-size:0.7rem; background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:10px; font-weight:bold;">🌐 全員に同期</span>
+      </div>
+      <p style="font-size: 0.76rem; color: #666; margin-bottom: 10px;">色・名前の変更と、右の<b>「▲」「▼」で順番の並び替え</b>ができます（全員の画面に反映されます）</p>
+      <div id="labelInputsContainer" style="max-height: 52vh; overflow-y: auto; padding-right: 2px;"></div>
       <div class="modal-buttons">
         <button class="btn-cancel" id="closeSettingsBtn">キャンセル</button>
-        <button class="btn-submit" id="saveSettingsBtn">保存</button>
+        <button class="btn-submit" id="saveSettingsBtn">保存して同期</button>
       </div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, setDoc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
     const DEFAULT_COLORS = [
       { id: 0, defaultName: "ジャザ", bg: "#06B6D4" },
@@ -187,31 +197,25 @@
     ];
 
     function getTextColor(hex) {
-      let h = hex.replace("#", "");
+      let h = String(hex || "#06B6D4").replace("#", "");
       if(h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
       const r = parseInt(h.substr(0,2),16), g = parseInt(h.substr(2,2),16), b = parseInt(h.substr(4,2),16);
       return (((r*299)+(g*587)+(b*114))/1000 >= 128) ? '#000000' : '#ffffff';
     }
 
-    function getCustomLabels() {
+    function getLocalCustomLabels() {
       try { const saved = localStorage.getItem("r4_custom_labels_v11"); if (saved) return JSON.parse(saved); } catch(e) {}
-      try { 
-        const oldSaved = localStorage.getItem("r4_custom_labels_v10"); 
-        if (oldSaved) {
-          const parsed = JSON.parse(oldSaved);
-          return DEFAULT_COLORS.map((c, i) => parsed[i] || c.defaultName);
-        }
-      } catch(e) {}
       return DEFAULT_COLORS.map(c => c.defaultName);
     }
     
-    function getCustomColors() {
+    function getLocalCustomColors() {
       try { const saved = localStorage.getItem("r4_custom_colors_v1"); if (saved) return JSON.parse(saved); } catch(e) {}
       return DEFAULT_COLORS.map(c => c.bg);
     }
 
-    let customLabels = getCustomLabels();
-    let customColors = getCustomColors();
+    let customLabels = getLocalCustomLabels();
+    let customColors = getLocalCustomColors();
+    let labelOrder = DEFAULT_COLORS.map(c => c.id); // 表示順を管理する配列
 
     const firebaseConfig = {
       apiKey: "AIzaSyDhHBvpdoIfVkRKbDAMsr811zXeI2AVrwo",
@@ -225,13 +229,23 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const eventsRef = collection(db, "events");
+    const labelSettingsRef = doc(db, "calendar_settings", "labels_v1");
 
+    // プルダウンの選択肢を「並び順（labelOrder）」通りに描画する
     function renderColorOptions() {
       const select = document.getElementById("eventColor");
+      const currentVal = select.value;
       select.innerHTML = "";
-      DEFAULT_COLORS.forEach((c, idx) => {
-        const opt = document.createElement("option"); opt.value = idx; opt.textContent = customLabels[idx] || c.defaultName; select.appendChild(opt);
+      labelOrder.forEach((colorIdx) => {
+        const c = DEFAULT_COLORS[colorIdx] || DEFAULT_COLORS[0];
+        const opt = document.createElement("option");
+        opt.value = colorIdx;
+        opt.textContent = customLabels[colorIdx] || c.defaultName;
+        select.appendChild(opt);
       });
+      if (currentVal !== "" && labelOrder.includes(parseInt(currentVal, 10))) {
+        select.value = currentVal;
+      }
     }
     renderColorOptions();
 
@@ -239,9 +253,63 @@
     let currentEventDocId = null;
     let hasShownTodayAlert = false;
     let showPastInList = false;
+    let rawEventDocs = []; // Firestoreから受け取った生データ
     let firebaseEventsList = [];
     let currentViewType = 'dayGridMonth';
     let calendar; 
+
+    // ラベル設定や予定データが更新されたときにカレンダー表示を再構築する関数
+    function rebuildCalendarEvents() {
+      const evs = [];
+      rawEventDocs.forEach((d) => {
+        if (!d.start) return;
+        const colorIdx = d.colorIdx !== undefined ? d.colorIdx : 0;
+        const colBg = customColors[colorIdx] || DEFAULT_COLORS[0].bg;
+        const colTxt = getTextColor(colBg);
+        evs.push({
+          id: d.id,
+          title: d.title || "名称未設定",
+          start: d.start,
+          end: d.end || null,
+          allDay: d.allDay !== false,
+          backgroundColor: colBg,
+          textColor: colTxt,
+          extendedProps: { desc: d.desc || "", colorIdx: colorIdx }
+        });
+      });
+      firebaseEventsList = evs;
+      if (calendar) calendar.refetchEvents();
+    }
+
+    // --- ラベル設定のリアルタイム同期（全員共有） ---
+    onSnapshot(labelSettingsRef, async (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (Array.isArray(data.labels) && data.labels.length === DEFAULT_COLORS.length) {
+          customLabels = data.labels;
+        }
+        if (Array.isArray(data.colors) && data.colors.length === DEFAULT_COLORS.length) {
+          customColors = data.colors;
+        }
+        if (Array.isArray(data.order) && data.order.length === DEFAULT_COLORS.length) {
+          labelOrder = data.order;
+        } else {
+          labelOrder = DEFAULT_COLORS.map(c => c.id);
+        }
+        renderColorOptions();
+        rebuildCalendarEvents();
+      } else {
+        // クラウドにまだデータがない場合、現在のスマホの設定を初期データとしてクラウドに登録する
+        try {
+          await setDoc(labelSettingsRef, {
+            labels: customLabels,
+            colors: customColors,
+            order: labelOrder,
+            updatedAt: new Date().toISOString()
+          });
+        } catch(e) {}
+      }
+    });
 
     const calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
@@ -338,6 +406,7 @@
         document.getElementById("eventDate").value = info.dateStr;
         document.getElementById("eventStartTime").value = "12:00";
         document.getElementById("eventEndTime").value = "";
+        if (labelOrder.length > 0) document.getElementById("eventColor").value = labelOrder[0];
         
         allDayCheck.checked = true;
         updateTimeInputVisibility();
@@ -363,31 +432,20 @@
       .catch(e => console.log(e));
 
     onSnapshot(eventsRef, (snapshot) => {
-      const evs = [];
+      const docs = [];
       snapshot.forEach((docSnap) => {
-        try {
-          const d = docSnap.data();
-          if (!d.start) return;
-          const colorIdx = d.colorIdx !== undefined ? d.colorIdx : 0;
-          const colBg = customColors[colorIdx] || DEFAULT_COLORS[0].bg;
-          const colTxt = getTextColor(colBg);
-          evs.push({
-            id: docSnap.id, title: d.title || "名称未設定", start: d.start, end: d.end || null, allDay: d.allDay !== false, backgroundColor: colBg, textColor: colTxt, extendedProps: { desc: d.desc || "", colorIdx: colorIdx }
-          });
-        } catch(e) {}
+        const d = docSnap.data();
+        docs.push({ id: docSnap.id, ...d });
       });
-      
-      firebaseEventsList = evs;
-      if (calendar) {
-        calendar.refetchEvents();
-      }
+      rawEventDocs = docs;
+      rebuildCalendarEvents();
 
       if (!hasShownTodayAlert) {
         hasShownTodayAlert = true; 
         const now = new Date();
         const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         
-        const todaysEvents = evs.filter(e => e.start && e.start.startsWith(todayStr));
+        const todaysEvents = firebaseEventsList.filter(e => e.start && e.start.startsWith(todayStr));
 
         if (todaysEvents.length > 0) {
           todaysEvents.sort((a, b) => {
@@ -433,6 +491,7 @@
       document.getElementById("modalTitle").textContent = "予定の追加";
       document.getElementById("eventTitle").value = "";
       document.getElementById("eventDesc").value = "";
+      if (labelOrder.length > 0) document.getElementById("eventColor").value = labelOrder[0];
       
       const now = new Date();
       now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -540,47 +599,119 @@
       }
     };
 
+    // --- ラベル設定・並び替えモーダルの処理 ---
     const settingsModal = document.getElementById("settingsOverlay");
     const labelInputsContainer = document.getElementById("labelInputsContainer");
+    let editingItems = []; // [{ id, name, bg }, ...]
 
-    document.getElementById("openSettingsBtn").onclick = () => {
+    function renderSettingsRows() {
       labelInputsContainer.innerHTML = "";
-      DEFAULT_COLORS.forEach((c, idx) => {
-        const row = document.createElement("div"); row.className = "label-row";
+      editingItems.forEach((item, pos) => {
+        const row = document.createElement("div");
+        row.className = "label-row";
         
         row.innerHTML = `
-          <input type="color" data-color-idx="${idx}" value="${customColors[idx] || c.bg}" style="width:36px; height:36px; border:none; padding:0; cursor:pointer; flex-shrink:0; border-radius:6px; background:none;">
-          <input type="text" data-idx="${idx}" value="${customLabels[idx] || c.defaultName}" placeholder="ラベル名">
+          <input type="color" class="edit-color-input" data-pos="${pos}" value="${item.bg}" style="width:34px; height:34px; border:none; padding:0; cursor:pointer; flex-shrink:0; border-radius:6px; background:none;">
+          <input type="text" class="edit-name-input" data-pos="${pos}" value="${item.name.replace(/"/g, '&quot;')}" placeholder="ラベル名">
+          <div class="order-btns">
+            <button type="button" class="btn-order btn-up" data-pos="${pos}" ${pos === 0 ? "disabled" : ""}>▲</button>
+            <button type="button" class="btn-order btn-down" data-pos="${pos}" ${pos === editingItems.length - 1 ? "disabled" : ""}>▼</button>
+          </div>
         `;
         labelInputsContainer.appendChild(row);
       });
+
+      // 入力中の文字や色をeditingItemsに即時反映させる
+      labelInputsContainer.querySelectorAll(".edit-name-input").forEach(inp => {
+        inp.oninput = (e) => {
+          editingItems[parseInt(inp.dataset.pos, 10)].name = e.target.value;
+        };
+      });
+      labelInputsContainer.querySelectorAll(".edit-color-input").forEach(inp => {
+        inp.oninput = (e) => {
+          editingItems[parseInt(inp.dataset.pos, 10)].bg = e.target.value;
+        };
+      });
+
+      // ▲ボタン（1つ上へ移動）
+      labelInputsContainer.querySelectorAll(".btn-up").forEach(btn => {
+        btn.onclick = () => {
+          const p = parseInt(btn.dataset.pos, 10);
+          if (p > 0) {
+            const tmp = editingItems[p - 1];
+            editingItems[p - 1] = editingItems[p];
+            editingItems[p] = tmp;
+            renderSettingsRows();
+          }
+        };
+      });
+
+      // ▼ボタン（1つ下へ移動）
+      labelInputsContainer.querySelectorAll(".btn-down").forEach(btn => {
+        btn.onclick = () => {
+          const p = parseInt(btn.dataset.pos, 10);
+          if (p < editingItems.length - 1) {
+            const tmp = editingItems[p + 1];
+            editingItems[p + 1] = editingItems[p];
+            editingItems[p] = tmp;
+            renderSettingsRows();
+          }
+        };
+      });
+    }
+
+    document.getElementById("openSettingsBtn").onclick = () => {
+      // 現在の並び順通りに編集用リストを作る
+      editingItems = labelOrder.map(id => {
+        const def = DEFAULT_COLORS[id] || DEFAULT_COLORS[0];
+        return {
+          id: id,
+          name: customLabels[id] || def.defaultName,
+          bg: customColors[id] || def.bg
+        };
+      });
+      renderSettingsRows();
       settingsModal.classList.add("open");
     };
 
     document.getElementById("closeSettingsBtn").onclick = () => settingsModal.classList.remove("open");
 
-    document.getElementById("saveSettingsBtn").onclick = () => {
-      const textInputs = labelInputsContainer.querySelectorAll("input[type='text']");
-      const colorInputs = labelInputsContainer.querySelectorAll("input[type='color']");
-      
-      textInputs.forEach(input => {
-        const idx = parseInt(input.dataset.idx, 10);
-        customLabels[idx] = input.value.trim() || DEFAULT_COLORS[idx].defaultName;
+    document.getElementById("saveSettingsBtn").onclick = async () => {
+      const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+      saveSettingsBtn.disabled = true;
+      saveSettingsBtn.textContent = "同期中...";
+
+      const newLabels = [...customLabels];
+      const newColors = [...customColors];
+      const newOrder = [];
+
+      editingItems.forEach(item => {
+        const def = DEFAULT_COLORS[item.id] || DEFAULT_COLORS[0];
+        newLabels[item.id] = item.name.trim() || def.defaultName;
+        newColors[item.id] = item.bg || def.bg;
+        newOrder.push(item.id);
       });
-      
-      colorInputs.forEach(input => {
-        const idx = parseInt(input.dataset.colorIdx, 10);
-        customColors[idx] = input.value;
-      });
-      
+
+      customLabels = newLabels;
+      customColors = newColors;
+      labelOrder = newOrder;
+
       try { 
         localStorage.setItem("r4_custom_labels_v11", JSON.stringify(customLabels)); 
         localStorage.setItem("r4_custom_colors_v1", JSON.stringify(customColors)); 
-      } catch(e) {}
-      
-      renderColorOptions();
-      if(calendar) calendar.refetchEvents();
-      settingsModal.classList.remove("open");
+        await setDoc(labelSettingsRef, {
+          labels: customLabels,
+          colors: customColors,
+          order: labelOrder,
+          updatedAt: new Date().toISOString()
+        });
+        settingsModal.classList.remove("open");
+      } catch(e) {
+        alert("保存エラー: " + e.message);
+      } finally {
+        saveSettingsBtn.disabled = false;
+        saveSettingsBtn.textContent = "保存して同期";
+      }
     };
   </script>
 </body>
