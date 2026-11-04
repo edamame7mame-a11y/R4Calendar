@@ -2,279 +2,380 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🚨 略奪が起きたときの手順</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>📖 略奪が起きたときの手順</title>
   <style>
     * { box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: #fef2f2;
-      color: #1f2937;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #fef2f2;
+      color: #222;
       margin: 0;
-      padding: 16px;
+      padding: 14px;
       line-height: 1.6;
     }
     .container {
-      max-width: 680px;
-      margin: 0 auto;
+      max-width: 550px;
+      margin: 0 auto 30px auto;
     }
-    .back-btn {
+    .top-nav {
+      margin-bottom: 12px;
+    }
+    .back-link {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: #ffffff;
+      background: #fff;
       color: #991b1b;
       border: 1px solid #fecaca;
       padding: 8px 14px;
-      border-radius: 8px;
+      border-radius: 20px;
       text-decoration: none;
       font-weight: bold;
-      font-size: 0.9rem;
-      margin-bottom: 16px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      font-size: 0.85rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     header {
       background: #991b1b;
-      color: #ffffff;
-      padding: 16px;
+      color: #fff;
+      padding: 14px 16px;
       border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 6px rgba(153, 27, 27, 0.15);
+      margin-bottom: 16px;
+      box-shadow: 0 3px 8px rgba(153, 27, 27, 0.2);
     }
     header h1 {
+      font-size: 1.15rem;
       margin: 0;
-      font-size: 1.25rem;
       display: flex;
       align-items: center;
       gap: 8px;
     }
     .card {
-      background: #ffffff;
+      background: #fff;
       border-radius: 12px;
-      padding: 18px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
       border-left: 5px solid #dc2626;
     }
     .step-list {
       margin: 0;
       padding-left: 20px;
+      font-size: 0.92rem;
     }
     .step-list li {
       margin-bottom: 14px;
-      font-weight: 500;
+      font-weight: bold;
+      color: #1f2937;
     }
     .step-list li:last-child {
       margin-bottom: 0;
     }
     .sub-note {
       display: block;
-      font-size: 0.9rem;
+      font-size: 0.82rem;
       color: #b91c1c;
-      background: #fef2f2;
+      background: #fff5f5;
+      border: 1px solid #fecaca;
       padding: 6px 10px;
       border-radius: 6px;
       margin-top: 6px;
       font-weight: normal;
     }
-    .template-box {
-      background: #ffffff;
+
+    /* テンプレート入力・コピー枠 */
+    .template-card {
+      background: #fff;
       border-radius: 12px;
-      padding: 18px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
       border: 2px solid #fecaca;
+    }
+    .template-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+      gap: 4px;
     }
     .template-title {
       font-weight: bold;
       color: #991b1b;
-      margin: 0 0 8px 0;
-      font-size: 1.05rem;
+      font-size: 0.98rem;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 6px;
     }
-    .template-desc {
-      font-size: 0.85rem;
+    .sync-badge {
+      font-size: 0.72rem;
+      background: #fefce8;
+      color: #a16207;
+      border: 1px solid #fde047;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+    .template-hint {
+      font-size: 0.78rem;
       color: #6b7280;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     textarea {
       width: 100%;
       min-height: 130px;
-      padding: 12px;
+      padding: 10px 12px;
       border: 1px solid #d1d5db;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-family: inherit;
       line-height: 1.5;
       resize: vertical;
       background: #f9fafb;
+      outline: none;
     }
     textarea:focus {
-      outline: none;
       border-color: #dc2626;
-      background: #ffffff;
+      background: #fff;
     }
     .btn-row {
       display: flex;
       justify-content: flex-end;
-      align-items: center;
-      gap: 10px;
+      gap: 8px;
       margin-top: 10px;
+      flex-wrap: wrap;
     }
-    .save-status {
-      font-size: 0.8rem;
-      color: #059669;
-      display: none;
-    }
-    .copy-btn {
-      background: #dc2626;
-      color: #ffffff;
+    .btn-save-tpl {
+      background: #4b5563;
+      color: #fff;
       border: none;
-      padding: 10px 18px;
+      padding: 9px 14px;
       border-radius: 8px;
       font-weight: bold;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
     }
-    .copy-btn:active {
+    .btn-copy-tpl {
+      background: #dc2626;
+      color: #fff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.88rem;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(220, 38, 38, 0.3);
+    }
+    .btn-save-tpl:active, .btn-copy-tpl:active {
       transform: translateY(1px);
     }
-    .alert-box {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-left: 5px solid #f59e0b;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
+
+    .back-wrap {
+      text-align: center;
+      margin-top: 24px;
+      margin-bottom: 20px;
+    }
+    .back-btn-bottom {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #fff;
+      color: #4b5563;
+      text-decoration: none;
+      border-radius: 20px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <a href="plunder.html" class="back-btn">⬅ 略奪犯リスト・被害記録に戻る</a>
+  <div class="container">
+    <div class="top-nav">
+      <a href="plunder.html" class="back-link">← 略奪犯ブラックリストに戻る</a>
+    </div>
 
-  <header>
-    <h1>🚨 略奪が起きたときの手順</h1>
-  </header>
+    <header>
+      <h1>📖 略奪が起きたときの手順</h1>
+    </header>
 
-  <div class="card">
-    <ul class="step-list">
-      <li>
-        略奪されたら、まず誰に略奪されたかをスクショをつけて、R5R4へ報告。
-      </li>
-      <li>
-        略奪犯へは、略奪された本人が連絡。<br>
-        謝罪をしてもらえるように。
-        <span class="sub-note">※時間設定はしないこと</span>
-      </li>
-      <li>
-        R5R4は、略奪報告を受けた時点で、略奪ページへ記入。
-      </li>
-      <li>
-        相手会長へ、即時連絡。<br>
-        <span class="sub-note">連絡事項は下記にあるので、それを使ってください。<br>それ以外の言葉はできるだけ入れないようにお願いします。</span>
-      </li>
-    </ul>
+    <!-- 手順前半 -->
+    <div class="card">
+      <ul class="step-list">
+        <li>
+          略奪されたら、まず誰に略奪されたかをスクショをつけて、R5R4へ報告。
+        </li>
+        <li>
+          略奪犯へは、略奪された本人が連絡。<br>
+          謝罪をしてもらえるように。
+          <span class="sub-note">※時間設定はしないこと</span>
+        </li>
+        <li>
+          R5R4は、略奪報告を受けた時点で、略奪ページへ記入。
+        </li>
+        <li>
+          相手会長へ、即時連絡。
+          <span class="sub-note">連絡事項は下記にあるので、それを使ってください。<br>それ以外の言葉はできるだけ入れないようにお願いします。</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ① 相手会長へ送る内容 -->
+    <div class="template-card">
+      <div class="template-header">
+        <span class="template-title">📩 相手会長へ送る内容</span>
+        <span class="sync-badge" id="statusGeneral">🔄 読み込み中...</span>
+      </div>
+      <div class="template-hint">※内容を書き換えて「変更を全員に保存」を押すと、全メンバーの画面に反映されます。</div>
+      <textarea id="textGeneral" placeholder="ここに相手会長へ送る文章を入力してください..."></textarea>
+      <div class="btn-row">
+        <button class="btn-save-tpl" id="saveGeneralBtn">💾 変更を全員に保存</button>
+        <button class="btn-copy-tpl" id="copyGeneralBtn">📋 コピーする</button>
+      </div>
+    </div>
+
+    <!-- ② チョッパー専用 -->
+    <div class="template-card">
+      <div class="template-header">
+        <span class="template-title">📩 チョッパー専用</span>
+        <span class="sync-badge" id="statusChopper">🔄 読み込み中...</span>
+      </div>
+      <div class="template-hint">※内容を書き換えて「変更を全員に保存」を押すと、全メンバーの画面に反映されます。</div>
+      <textarea id="textChopper" placeholder="ここにチョッパー専用の文章を入力してください..."></textarea>
+      <div class="btn-row">
+        <button class="btn-save-tpl" id="saveChopperBtn">💾 変更を全員に保存</button>
+        <button class="btn-copy-tpl" id="copyChopperBtn">📋 コピーする</button>
+      </div>
+    </div>
+
+    <!-- 手順後半 -->
+    <div class="card">
+      <ul class="step-list">
+        <li>
+          相手会長へは、最初に連絡した方がその後もできるだけ対応してください。
+          <span class="sub-note">もし、問題が発生した場合は、豆たんかジャザへ即知らせてください。対応を交代します。</span>
+        </li>
+        <li>
+          相手会長からの返事次第で、燃やす形になるため、略奪されたメンバーには、その対応が終わるまで待ってもらってください。
+        </li>
+        <li>
+          24時間たっても会長から連絡がない場合は、連絡がないため、ルールに従い燃やします。とDMし、略奪犯を燃やしてください。
+        </li>
+      </ul>
+    </div>
+
+    <div class="back-wrap">
+      <a href="plunder.html" class="back-btn-bottom">← 略奪犯ブラックリストに戻る</a>
+    </div>
   </div>
 
-  <!-- ▼ 相手会長へ送る内容 ▼ -->
-  <div class="template-box">
-    <div class="template-title">
-      <span>📩 相手会長へ送る内容</span>
-    </div>
-    <div class="template-desc">※内容は直接書き換えられます（書き換えると自動保存されます）</div>
-    <textarea id="tpl-general" placeholder="ここに相手会長へ送る定型文を入力してください..."></textarea>
-    <div class="btn-row">
-      <span id="status-general" class="save-status">✔ 保存しました</span>
-      <button class="copy-btn" onclick="copyText('tpl-general', this)">📋 コピーする</button>
-    </div>
-  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-  <!-- ▼ チョッパー専用 ▼ -->
-  <div class="template-box">
-    <div class="template-title">
-      <span>📩 チョッパー専用</span>
-    </div>
-    <div class="template-desc">※内容は直接書き換えられます（書き換えると自動保存されます）</div>
-    <textarea id="tpl-chopper" placeholder="ここにチョッパー専用の定型文を入力してください..."></textarea>
-    <div class="btn-row">
-      <span id="status-chopper" class="save-status">✔ 保存しました</span>
-      <button class="copy-btn" onclick="copyText('tpl-chopper', this)">📋 コピーする</button>
-    </div>
-  </div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDhHBvpdoIfVkRKbDAMsr811zXeI2AVrwo",
+      authDomain: "r4calendar-1cb70.firebaseapp.com",
+      projectId: "r4calendar-1cb70",
+      storageBucket: "r4calendar-1cb70.firebasestorage.app",
+      messagingSenderId: "273656700256",
+      appId: "1:273656700256:web:254da78a155c5c8e3b5205"
+    };
 
-  <div class="card">
-    <ul class="step-list">
-      <li>
-        相手会長へは、最初に連絡した方がその後もできるだけ対応してください。<br>
-        <span class="sub-note">もし、問題が発生した場合は、豆たんかジャザへ即知らせてください。対応を交代します。</span>
-      </li>
-      <li>
-        相手会長からの返事次第で、燃やす形になるため、略奪されたメンバーには、その対応が終わるまで待ってもらってください。
-      </li>
-      <li>
-        24時間たっても会長から連絡がない場合は、「連絡がないため、ルールに従い燃やします。」とDMし、略奪犯を燃やしてください。
-      </li>
-    </ul>
-  </div>
-</div>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    // 略奪犯リスト(plunders)に混ざらないよう、専用の設定ドキュメントに保存します
+    const tplDocRef = doc(db, "plunder_templates", "main");
 
-<script>
-  // 初期文章（必要に応じてここを書き換えると全メンバーの初期値になります）
-  const defaultGeneral = `突然のご連絡失礼いたします。
-貴連盟の【相手の名前】様より、当連盟の【被害メンバー名】が略奪被害を受けました。
-ご確認とご対応をお願いいたします。`;
+    const textGeneral = document.getElementById("textGeneral");
+    const textChopper = document.getElementById("textChopper");
+    const statusGeneral = document.getElementById("statusGeneral");
+    const statusChopper = document.getElementById("statusChopper");
+    const saveGeneralBtn = document.getElementById("saveGeneralBtn");
+    const saveChopperBtn = document.getElementById("saveChopperBtn");
 
-  const defaultChopper = `突然のご連絡失礼いたします。
-貴連盟の【相手の名前】様より、略奪被害を受けました。
-ご確認とご対応をお願いいたします。`;
-
-  const generalEl = document.getElementById('tpl-general');
-  const chopperEl = document.getElementById('tpl-chopper');
-
-  // ページ読み込み時に保存された内容を反映
-  generalEl.value = localStorage.getItem('plunder_tpl_general') || defaultGeneral;
-  chopperEl.value = localStorage.getItem('plunder_tpl_chopper') || defaultChopper;
-
-  // 文字を書き換えたら自動保存
-  generalEl.addEventListener('input', () => {
-    localStorage.setItem('plunder_tpl_general', generalEl.value);
-    showSaved('status-general');
-  });
-
-  chopperEl.addEventListener('input', () => {
-    localStorage.setItem('plunder_tpl_chopper', chopperEl.value);
-    showSaved('status-chopper');
-  });
-
-  function showSaved(id) {
-    const el = document.getElementById(id);
-    el.style.display = 'inline';
-    clearTimeout(el.timer);
-    el.timer = setTimeout(() => { el.style.display = 'none'; }, 1500);
-  }
-
-  // ワンタップコピー機能
-  function copyText(id, btn) {
-    const text = document.getElementById(id).value;
-    navigator.clipboard.writeText(text).then(() => {
-      const original = btn.innerHTML;
-      btn.innerHTML = '✔ コピー完了！';
-      btn.style.background = '#059669';
-      setTimeout(() => {
-        btn.innerHTML = original;
-        btn.style.background = '#dc2626';
-      }, 2000);
+    // リアルタイムで全員の画面に反映
+    onSnapshot(tplDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const d = docSnap.data();
+        if (document.activeElement !== textGeneral) {
+          textGeneral.value = d.generalText || "";
+        }
+        if (document.activeElement !== textChopper) {
+          textChopper.value = d.chopperText || "";
+        }
+      }
+      statusGeneral.textContent = "✔ 全員と同期中";
+      statusChopper.textContent = "✔ 全員と同期中";
+    }, (err) => {
+      console.error(err);
+      statusGeneral.textContent = "⚠️ 読込エラー";
+      statusChopper.textContent = "⚠️ 読込エラー";
     });
-  }
-</script>
 
+    // ① 相手会長へ送る内容の保存
+    saveGeneralBtn.onclick = async () => {
+      saveGeneralBtn.disabled = true;
+      saveGeneralBtn.textContent = "保存中...";
+      try {
+        await setDoc(tplDocRef, {
+          generalText: textGeneral.value,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        statusGeneral.textContent = "💾 保存完了！";
+        setTimeout(() => { statusGeneral.textContent = "✔ 全員と同期中"; }, 2000);
+      } catch (e) {
+        alert("保存エラー: " + e.message);
+      } finally {
+        saveGeneralBtn.disabled = false;
+        saveGeneralBtn.textContent = "💾 変更を全員に保存";
+      }
+    };
+
+    // ② チョッパー専用の保存
+    saveChopperBtn.onclick = async () => {
+      saveChopperBtn.disabled = true;
+      saveChopperBtn.textContent = "保存中...";
+      try {
+        await setDoc(tplDocRef, {
+          chopperText: textChopper.value,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        statusChopper.textContent = "💾 保存完了！";
+        setTimeout(() => { statusChopper.textContent = "✔ 全員と同期中"; }, 2000);
+      } catch (e) {
+        alert("保存エラー: " + e.message);
+      } finally {
+        saveChopperBtn.disabled = false;
+        saveChopperBtn.textContent = "💾 変更を全員に保存";
+      }
+    };
+
+    // コピー機能
+    function copyToClipboard(textareaEl, btnEl) {
+      if (!textareaEl.value) {
+        alert("コピーする文章が空です！");
+        return;
+      }
+      navigator.clipboard.writeText(textareaEl.value).then(() => {
+        const origText = btnEl.textContent;
+        btnEl.textContent = "✔ コピーしました！";
+        btnEl.style.background = "#16a34a";
+        setTimeout(() => {
+          btnEl.textContent = origText;
+          btnEl.style.background = "#dc2626";
+        }, 2000);
+      });
+    }
+
+    document.getElementById("copyGeneralBtn").onclick = function() {
+      copyToClipboard(textGeneral, this);
+    };
+
+    document.getElementById("copyChopperBtn").onclick = function() {
+      copyToClipboard(textChopper, this);
+    };
+  </script>
 </body>
 </html>
