@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isMember() { return signedIn() && request.auth.token.area == 'member'; }
+    function isGeneral() { return signedIn() && request.auth.token.area == 'general'; }
+    function isAdmin() { return signedIn() && request.auth.token.area == 'admin'; }
+
+    // Existing collections become member-only.
+    match /events/{id} { allow read, write: if isMember() || isAdmin(); }
+    match /calendar_settings/{id} { allow read, write: if isMember() || isAdmin(); }
+    match /kuji_history/{id} { allow read, write: if isMember() || isAdmin(); }
+    match /kuji_settings/{id} { allow read, write: if isMember() || isAdmin(); }
+    match /memos/{id} { allow read, write: if isMember() || isAdmin(); }
+    match /memo_images/{id} { allow read, write: if isMember() || isAdmin(); }
+    match /plunders/{id} { allow read, write: if isMember() || isAdmin(); }
+    match /plunder_templates/{id} { allow read, write: if isMember() || isAdmin(); }
+
+    // General-area records are kept in separate collections.
+    match /general_polls/{id} { allow read, write: if isGeneral() || isAdmin(); }
+    match /general_memos/{id} { allow read, write: if isGeneral() || isAdmin(); }
+    match /general_calendar/{id} { allow read, write: if isGeneral() || isAdmin(); }
+
+    // Default deny: every collection not explicitly listed is private.
+    match /{document=**} { allow read, write: if false; }
+  }
+}
