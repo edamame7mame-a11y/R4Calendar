@@ -38,7 +38,7 @@ async function mintCustomToken(uid, role, env) {
     iat: now,
     exp: now + 3600,
     uid,
-    claims: { area: role }
+    area: role
   }));
   const unsigned = header + "." + payload;
   const key = await crypto.subtle.importKey("pkcs8", pemToArrayBuffer(env.FIREBASE_PRIVATE_KEY), { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
