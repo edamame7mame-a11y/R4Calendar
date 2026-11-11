@@ -51,9 +51,10 @@ describe("R4Calendar area isolation candidate rules", () => {
     await assertSucceeds(setDoc(doc(general(), "general_calendar", "g2"), { text: "ok" }));
   });
 
-  it("denies member access to general collections", async () => {
-    await assertFails(getDoc(doc(member(), "general_memos", "g1")));
-    await assertFails(setDoc(doc(member(), "general_polls", "g2"), { text: "no" }));
+  it("allows member read/write to general collections", async () => {
+    await assertSucceeds(setDoc(doc(member(), "general_memos", "g1"), { text: "member edit" }));
+    await assertSucceeds(getDoc(doc(member(), "general_memos", "g1")));
+    await assertSucceeds(setDoc(doc(member(), "general_polls", "g2"), { text: "member edit" }));
   });
 
   it("allows admin access to both areas and admin configuration", async () => {
@@ -67,5 +68,6 @@ describe("R4Calendar area isolation candidate rules", () => {
     await assertFails(setDoc(doc(anonymous(), "general_memos", "g1"), { text: "no" }));
     await assertFails(setDoc(doc(member(), "unknown_collection", "x"), { value: 1 }));
     await assertFails(setDoc(doc(general(), "admin_config", "settings"), { value: 1 }));
+    await assertFails(getDoc(doc(general(), "events", "member-only")));
   });
 });
