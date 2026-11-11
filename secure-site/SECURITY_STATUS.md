@@ -16,7 +16,7 @@ This branch is a development branch only. It is not approved for production depl
 - Role access: member/admin for member; member/general/admin for general; admin only for admin.
 - Logout calls a same-origin endpoint that clears the server session cookie.
 - Configure `SESSION_SIGNING_SECRET` as a Cloudflare secret. It must be randomly generated and at least 32 characters. Never put it in Git or chat.
-- Cookie issuance, expiry, role denial, logout, and direct-URL behavior remain untested in a Cloudflare preview.
+- Automated middleware tests now cover anonymous access, each role's allowed/denied areas, nested paths, tampered cookies, secure cookie attributes, and cache headers. These tests are committed but have not yet been confirmed as passing in GitHub Actions or a Cloudflare preview.
 - Firestore Security Rules remain a separate mandatory data-security boundary.
 
 ## Mandatory blockers before any deployment
