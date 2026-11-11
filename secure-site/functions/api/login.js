@@ -77,7 +77,7 @@ export async function onRequestPost({ request, env }) {
       method: "POST",
       headers: {
         "X-R4-Guard-Secret": env.LOGIN_GUARD_SHARED_SECRET,
-        "CF-Connecting-IP": request.headers.get("CF-Connecting-IP") || "unknown"
+        "X-R4-Client-IP": request.headers.get("CF-Connecting-IP") || "unknown"
       }
     });
   } catch {
