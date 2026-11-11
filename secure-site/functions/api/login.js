@@ -64,13 +64,27 @@ async function mintCustomToken(uid, role, env) {
 export async function onRequestPost({ request, env }) {
   const origin = request.headers.get("Origin");
   if (!origin || origin !== new URL(request.url).origin) return jsonError("Forbidden", 403);
-  if (!env.LOGIN_RATE_LIMITER || !env.FIREBASE_CLIENT_EMAIL || !env.FIREBASE_PRIVATE_KEY || !env.SESSION_SIGNING_SECRET) {
+  if (!env.LOGIN_GUARD || !env.LOGIN_GUARD_SHARED_SECRET ||
+      !env.FIREBASE_CLIENT_EMAIL || !env.FIREBASE_PRIVATE_KEY || !env.SESSION_SIGNING_SECRET) {
     return jsonError("Authentication service is not configured", 503);
   }
 
-  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  const limit = await env.LOGIN_RATE_LIMITER.limit({ key: ip });
-  if (!limit.success) return jsonError("Too many attempts. Try again later.", 429);
+  // The dedicated private Worker owns the rate-limit binding.
+  // Service-binding failures fail closed; login is never allowed without the guard.
+  let guardResponse;
+  try {
+    guardResponse = await env.LOGIN_GUARD.fetch("https://login-guard.internal/check", {
+      method: "POST",
+      headers: {
+        "X-R4-Guard-Secret": env.LOGIN_GUARD_SHARED_SECRET,
+        "CF-Connecting-IP": request.headers.get("CF-Connecting-IP") || "unknown"
+      }
+    });
+  } catch {
+    return jsonError("Authentication service is not configured", 503);
+  }
+  if (guardResponse.status === 429) return jsonError("Too many attempts. Try again later.", 429);
+  if (!guardResponse.ok) return jsonError("Authentication service is not configured", 503);
 
   if (!(request.headers.get("Content-Type") || "").toLowerCase().includes("application/json")) {
     return jsonError("Bad request", 400);
