@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>📝 お知らせ要点＆素材</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0fdf4; color: #222; margin: 0; padding: 14px; }
+    
+    /* 上部の切り替えタブ */
+    .tab-bar { display: flex; gap: 8px; max-width: 500px; margin: 0 auto 16px auto; background: #dcfce7; padding: 5px; border-radius: 14px; }
+    .tab-btn { flex: 1; padding: 10px 6px; border: none; border-radius: 10px; font-weight: bold; font-size: 0.9rem; cursor: pointer; background: transparent; color: #166534; transition: 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .tab-btn.active { background: #fff; color: #15803d; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+    .tab-btn.tab-img.active { color: #0369a1; }
+    .badge-num { background: rgba(0,0,0,0.08); padding: 1px 7px; border-radius: 10px; font-size: 0.75rem; }
+
+    .section-header { display: flex; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto 12px auto; }
+    h1, h2.sec-title { font-size: 1.1rem; color: #166534; margin: 0; display: flex; align-items: center; gap: 6px; }
+    .btn-add { background: #16a34a; color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: bold; font-size: 0.82rem; cursor: pointer; box-shadow: 0 2px 5px rgba(22, 163, 74, 0.3); }
+    .btn-add-img { background: #0284c7; box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3); }
+
+    .container { max-width: 500px; margin: 0 auto 24px auto; }
+    
+    /* アコーディオン（折りたたみ）カードのデザイン */
+    .card { background: #fff; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left: 5px solid #16a34a; overflow: hidden; }
+    .card-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; background: #fff; transition: background 0.15s; }
+    .card-header:active { background: #f9fafb; }
+    .card-title-wrap { display: flex; flex-direction: column; gap: 3px; padding-right: 8px; }
+    .card-title { font-size: 1rem; font-weight: bold; color: #166534; margin: 0; word-break: break-all; }
+    .card-date { font-size: 0.72rem; color: #6b7280; }
+    .toggle-icon { font-size: 0.8rem; color: #16a34a; transition: transform 0.2s; flex-shrink: 0; font-weight: bold; }
+    
+    .card.open .toggle-icon { transform: rotate(180deg); }
+    .card-detail { display: none; padding: 0 16px 16px 16px; border-top: 1px dashed #e5e7eb; }
+    .card.open .card-detail { display: block; }
+
+    .card-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; margin-bottom: 8px; }
+    .btn-action { border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-copy { background: #dcfce7; color: #15803d; }
+    .btn-edit { background: #f3f4f6; color: #4b5563; }
+    
+    .card-body { font-size: 0.9rem; color: #374151; white-space: pre-wrap; word-break: break-all; background: #f9fafb; padding: 12px; border-radius: 8px; line-height: 1.5; border: 1px solid #f3f4f6; }
+
+    /* イラスト置き場（3列コンパクト＆スクロール枠）のデザイン */
+    .img-search-input { width: 100%; padding: 9px 12px; border: 2px solid #bae6fd; border-radius: 10px; font-size: 0.88rem; outline: none; margin-bottom: 10px; background: #fff; }
+    .img-search-input:focus { border-color: #0284c7; }
+    
+    .gallery-scroll-box { max-height: 62vh; overflow-y: auto; background: #fff; padding: 10px; border-radius: 12px; box-shadow: inset 0 1px 4px rgba(0,0,0,0.05); border: 1px solid #e0f2fe; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    
+    .img-card { background: #f8fafc; border-radius: 8px; padding: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; }
+    .img-thumb-wrap { width: 100%; height: 95px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 5px; border: 1px solid #f1f5f9; cursor: pointer; }
+    .img-thumb { max-width: 100%; max-height: 100%; object-fit: cover; width: 100%; height: 100%; }
+    .img-label { font-size: 0.72rem; font-weight: bold; color: #333; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+    .img-card-btns { display: flex; gap: 4px; }
+    .btn-dl-full { flex: 1; background: #e0f2fe; color: #0369a1; border: none; padding: 5px 0; border-radius: 5px; font-size: 0.7rem; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
+    .btn-del-mini { background: #fee2e2; color: #dc2626; border: none; padding: 5px 6px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; cursor: pointer; }
+
+    .back-wrap { text-align: center; margin-top: 24px; margin-bottom: 20px; }
+    .back-btn { display: inline-block; padding: 10px 20px; background: #fff; color: #4b5563; text-decoration: none; border-radius: 20px; border: 1px solid #d1d5db; font-size: 0.9rem; font-weight: bold; }
+
+    /* モーダル */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 14px; padding: 18px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal h2 { font-size: 1.05rem; color: #166534; margin-top: 0; margin-bottom: 12px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: bold; color: #444; margin-bottom: 4px; }
+    .form-group input[type="text"], .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; outline: none; }
+    .form-group textarea { height: 150px; resize: none; line-height: 1.5; }
+    .form-group input:focus, .form-group textarea:focus { border-color: #16a34a; }
+    
+    .file-input-wrap { background: #f8fafc; border: 2px dashed #bae6fd; padding: 14px 10px; border-radius: 8px; text-align: center; }
+    .file-input-wrap input[type="file"] { font-size: 0.82rem; width: 100%; }
+    #imgPreviewWrap { margin-top: 10px; display: none; }
+    #imgPreview { max-width: 100%; max-height: 180px; border-radius: 6px; border: 1px solid #ddd; }
+
+    .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
+    .modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 0.9rem; }
+    .btn-save { background: #16a34a; color: #fff; }
+    .btn-save-img { background: #0284c7; color: #fff; }
+    .btn-delete { background: #ef4444; color: #fff; }
+    .btn-cancel { background: #e5e7eb; color: #4b5563; }
+
+    /* 画像拡大プレビュー用モーダル */
+    .zoom-modal { background: transparent; box-shadow: none; max-width: 95vw; max-height: 95vh; text-align: center; padding: 0; }
+    .zoom-title { color: #fff; font-weight: bold; font-size: 0.95rem; margin-bottom: 8px; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+    .zoom-img { max-width: 100%; max-height: 75vh; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+    .zoom-btns { display: flex; justify-content: center; gap: 12px; margin-top: 12px; }
+    .zoom-dl { background: #0284c7; color: #fff; text-decoration: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
+    .zoom-close { background: #fff; color: #333; border: none; padding: 8px 24px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <!-- 切り替えタブ -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabMemoBtn">📝 お知らせ要点 <span class="badge-num" id="memoCountBadge">0</span></button>
+    <button class="tab-btn tab-img" id="tabImgBtn">🖼️ イラスト素材 <span class="badge-num" id="imgCountBadge">0</span></button>
+  </div>
+
+  <!-- 1. お知らせの要点セクション -->
+  <div id="memoSection">
+    <div class="section-header">
+      <h1>📝 お知らせの要点一覧</h1>
+      <button class="btn-add" id="openAddBtn">＋ 要点を追加</button>
+    </div>
+
+    <div class="container" id="memoList">
+      <div style="text-align: center; color: #6b7280; padding: 20px; font-size: 0.9rem;">読み込み中...</div>
+    </div>
+  </div>
+
+  <!-- 2. お知らせ用イラスト置き場セクション（初期は非表示・タブで切り替え） -->
+  <div id="imgSection" style="display: none;">
+    <div class="section-header">
+      <h2 class="sec-title" style="color: #0369a1;">🖼️ イラスト置き場</h2>
+      <button class="btn-add btn-add-img" id="openAddImgBtn">＋ 画像を投稿</button>
+    </div>
+    
+    <div class="container">
+      <input type="text" id="imgSearchInput" class="img-search-input" placeholder="🔍 イラストの名前で検索...">
+      <p style="margin: 0 0 8px 0; font-size: 0.72rem; color: #6b7280;">※画像をタップすると大きく表示されます</p>
+      
+      <div class="gallery-scroll-box" id="galleryList">
+        <div style="text-align: center; color: #6b7280; padding: 20px; font-size: 0.9rem;">読み込み中...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="back-wrap">
+    <a href="index.html" class="back-btn">← カレンダーに戻る</a>
+    <button id="logoutBtn" class="back-btn" type="button" style="margin-left:8px;">ログアウト</button>
+  </div>
+
+  <!-- ① 要点の追加・編集モーダル -->
+  <div class="modal-overlay" id="memoModal">
+    <div class="modal">
+      <h2 id="modalTitle">要点の追加</h2>
+      <div class="form-group">
+        <label>イベント名</label>
+        <input type="text" id="memoTitle" placeholder="例: 🧀チーズ、わらわら、シールド">
+      </div>
+      <div class="form-group">
+        <label>お知らせに絶対入れて欲しい内容</label>
+        <textarea id="memoContent"></textarea>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-delete" id="deleteBtn" style="display: none;">削除</button>
+        <button class="btn-cancel" id="closeBtn">キャンセル</button>
+        <button class="btn-save" id="saveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② イラスト投稿モーダル -->
+  <div class="modal-overlay" id="imgModal">
+    <div class="modal">
+      <h2 style="color: #0369a1;">🖼️ イラスト・画像の投稿</h2>
+      <div class="form-group">
+        <label>イラストの名前・用途（検索しやすくなります）</label>
+        <input type="text" id="imgTitleInput" placeholder="例: わらわら1組、チーズ用">
+      </div>
+      <div class="form-group">
+        <label>画像を選ぶ（細かい文字も高画質で保存されます）</label>
+        <div class="file-input-wrap">
+          <input type="file" id="imgFileInput" accept="image/*">
+          <div id="imgPreviewWrap">
+            <img id="imgPreview" src="">
+          </div>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="closeImgBtn">キャンセル</button>
+        <button class="btn-save-img" id="saveImgBtn">投稿する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 画像拡大プレビューモーダル -->
+  <div class="modal-overlay" id="zoomModal" onclick="this.classList.remove('open')">
+    <div class="modal zoom-modal" onclick="event.stopPropagation()">
+      <div id="zoomTitle" class="zoom-title"></div>
+      <img id="zoomImg" class="zoom-img" src="">
+      <div class="zoom-btns">
+        <a id="zoomDlBtn" class="zoom-dl" href="" download="">📥 この画像を保存</a>
+        <button class="zoom-close" onclick="document.getElementById('zoomModal').classList.remove('open')">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { firebaseConfig } from "../firebase-config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.replace("/login.html"); return; }
+      try {
+        const token = await user.getIdTokenResult();
+        if (!["member", "admin"].includes(token.claims.area)) {
+          await signOut(auth); location.replace("/login.html"); return;
+        }
+      } catch {
+        await signOut(auth); location.replace("/login.html"); return;
+      }
+    const db = getFirestore(app);
+    document.getElementById("logoutBtn").onclick = async () => {
+      try {
+        await fetch("/api/logout", { method: "POST", credentials: "same-origin" });
+      } finally {
+        await signOut(auth);
+        location.replace("/login.html");
+      }
+    };
+    const memosRef = collection(db, "memos");
+    const imagesRef = collection(db, "memo_images");
+
+    // --- タブ切り替え処理 ---
+    const tabMemoBtn = document.getElementById("tabMemoBtn");
+    const tabImgBtn = document.getElementById("tabImgBtn");
+    const memoSection = document.getElementById("memoSection");
+    const imgSection = document.getElementById("imgSection");
+
+    tabMemoBtn.onclick = () => {
+      tabMemoBtn.classList.add("active");
+      tabImgBtn.classList.remove("active");
+      memoSection.style.display = "block";
+      imgSection.style.display = "none";
+      document.body.style.background = "#f0fdf4";
+    };
+
+    tabImgBtn.onclick = () => {
+      tabImgBtn.classList.add("active");
+      tabMemoBtn.classList.remove("active");
+      imgSection.style.display = "block";
+      memoSection.style.display = "none";
+      document.body.style.background = "#f0f9ff";
+    };
+
+    // --- 1. 要点（テキスト）の処理 ---
+    let currentDocId = null;
+    let memosData = [];
+    let openCardIds = new Set();
+
+    const listEl = document.getElementById("memoList");
+    const modal = document.getElementById("memoModal");
+    const titleInput = document.getElementById("memoTitle");
+    const contentInput = document.getElementById("memoContent");
+    const deleteBtn = document.getElementById("deleteBtn");
+    const saveBtn = document.getElementById("saveBtn");
+
+    function formatUpdateDate(isoStr) {
+      if (!isoStr) return "";
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return "";
+      return `🔄 ${d.getMonth() + 1}/${d.getDate()} 更新`;
+    }
+
+    onSnapshot(memosRef, (snapshot) => {
+      const items = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+        items.push({
+          id: docSnap.id,
+          title: d.title || "名称未設定",
+          content: d.content || "",
+          createdAt: d.createdAt || "",
+          updatedAt: d.updatedAt || d.createdAt || ""
+        });
+      });
+      items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      memosData = items;
+      document.getElementById("memoCountBadge").textContent = items.length;
+      renderList();
+    });
+
+    function renderList() {
+      listEl.innerHTML = "";
+      if (memosData.length === 0) {
+        listEl.innerHTML = `<div style="text-align: center; color: #6b7280; padding: 30px 10px; background: #fff; border-radius: 12px; font-size: 0.85rem;">まだ登録されていません。<br>右上の「＋ 要点を追加」から作成できます！</div>`;
+        return;
+      }
+
+      memosData.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card" + (openCardIds.has(item.id) ? " open" : "");
+
+        const safeTitle = String(item.title).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const safeContent = String(item.content).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const dateText = formatUpdateDate(item.updatedAt);
+
+        card.innerHTML = `
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <h3 class="card-title">${safeTitle}</h3>
+              ${dateText ? `<span class="card-date">${dateText}</span>` : ''}
+            </div>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="card-detail">
+            <div class="card-actions">
+              <button class="btn-action btn-copy" data-id="${item.id}">📋 コピー</button>
+              <button class="btn-action btn-edit" data-id="${item.id}">✏️ 編集</button>
+            </div>
+            <div class="card-body">${safeContent}</div>
+          </div>
+        `;
+
+        const header = card.querySelector(".card-header");
+        header.onclick = () => {
+          if (card.classList.contains("open")) {
+            card.classList.remove("open");
+            openCardIds.delete(item.id);
+          } else {
+            card.classList.add("open");
+            openCardIds.add(item.id);
+          }
+        };
+
+        listEl.appendChild(card);
+      });
+
+      document.querySelectorAll(".btn-copy").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const target = memosData.find(m => m.id === btn.dataset.id);
+          if (target) {
+            navigator.clipboard.writeText(target.content).then(() => {
+              const originalText = btn.textContent;
+              btn.textContent = "✔ コピー完了";
+              setTimeout(() => { btn.textContent = originalText; }, 1500);
+            }).catch(() => { alert("コピーに失敗しました"); });
+          }
+        };
+      });
+
+      document.querySelectorAll(".btn-edit").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const target = memosData.find(m => m.id === btn.dataset.id);
+          if (target) openEditModal(target);
+        };
+      });
+    }
+
+    document.getElementById("openAddBtn").onclick = () => {
+      currentDocId = null;
+      document.getElementById("modalTitle").textContent = "イベント要点を追加";
+      titleInput.value = "";
+      contentInput.value = "";
+      deleteBtn.style.display = "none";
+      modal.classList.add("open");
+    };
+
+    function openEditModal(item) {
+      currentDocId = item.id;
+      document.getElementById("modalTitle").textContent = "内容の編集";
+      titleInput.value = item.title;
+      contentInput.value = item.content;
+      deleteBtn.style.display = "block";
+      modal.classList.add("open");
+    }
+
+    document.getElementById("closeBtn").onclick = () => modal.classList.remove("open");
+
+    saveBtn.onclick = async () => {
+      const title = titleInput.value.trim();
+      const content = contentInput.value.trim();
+      if (!title || !content) {
+        alert("イベント名と内容の両方を入力してください！");
+        return;
+      }
+      const nowIso = new Date().toISOString();
+      try {
+        if (currentDocId) {
+          await updateDoc(doc(db, "memos", currentDocId), { title, content, updatedAt: nowIso });
+        } else {
+          const docRef = await addDoc(memosRef, { title, content, createdAt: nowIso, updatedAt: nowIso });
+          openCardIds.add(docRef.id);
+        }
+        modal.classList.remove("open");
+      } catch(e) { alert("保存エラー: " + e.message); }
+    };
+
+    deleteBtn.onclick = async () => {
+      if (!currentDocId) return;
+      if (confirm("この要点を削除しますか？")) {
+        try {
+          await deleteDoc(doc(db, "memos", currentDocId));
+          openCardIds.delete(currentDocId);
+          modal.classList.remove("open");
+        } catch(e) { alert("削除エラー: " + e.message); }
+      }
+    };
+
+    // --- 2. イラスト置き場（3列コンパクト＆高画質ギャラリー）の処理 ---
+    let imagesData = [];
+    let selectedImgBase64 = null;
+    let imgSearchQuery = "";
+
+    const galleryEl = document.getElementById("galleryList");
+    const imgModal = document.getElementById("imgModal");
+    const imgTitleInput = document.getElementById("imgTitleInput");
+    const imgFileInput = document.getElementById("imgFileInput");
+    const imgPreviewWrap = document.getElementById("imgPreviewWrap");
+    const imgPreview = document.getElementById("imgPreview");
+    const saveImgBtn = document.getElementById("saveImgBtn");
+
+    document.getElementById("imgSearchInput").addEventListener("input", (e) => {
+      imgSearchQuery = e.target.value.trim().toLowerCase();
+      renderGallery();
+    });
+
+    function compressImageHighQuality(file, callback) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxSize = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxSize) { height = Math.round(height * (maxSize / width)); width = maxSize; }
+          } else {
+            if (height > maxSize) { width = Math.round(width * (maxSize / height)); height = maxSize; }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          let quality = 0.85;
+          let dataUrl = canvas.toDataURL('image/jpeg', quality);
+          while (dataUrl.length > 900000 && quality > 0.4) {
+            quality -= 0.1;
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+          callback(dataUrl);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    imgFileInput.addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      saveImgBtn.textContent = "高画質処理中...";
+      saveImgBtn.disabled = true;
+      compressImageHighQuality(file, (compressedUrl) => {
+        selectedImgBase64 = compressedUrl;
+        imgPreview.src = selectedImgBase64;
+        imgPreviewWrap.style.display = "block";
+        saveImgBtn.textContent = "投稿する";
+        saveImgBtn.disabled = false;
+      });
+    });
+
+    onSnapshot(imagesRef, (snapshot) => {
+      const items = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+        if (d.imageData) {
+          items.push({
+            id: docSnap.id,
+            title: d.title || "イラスト",
+            imageData: d.imageData,
+            createdAt: d.createdAt || ""
+          });
+        }
+      });
+      items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      imagesData = items;
+      document.getElementById("imgCountBadge").textContent = items.length;
+      renderGallery();
+    });
+
+    function renderGallery() {
+      galleryEl.innerHTML = "";
+      
+      const filtered = imagesData.filter(item => {
+        if (!imgSearchQuery) return true;
+        return item.title.toLowerCase().includes(imgSearchQuery);
+      });
+
+      if (filtered.length === 0) {
+        galleryEl.innerHTML = `<div style="text-align: center; color: #6b7280; padding: 30px 10px; font-size: 0.85rem;">該当するイラストがありません。</div>`;
+        return;
+      }
+
+      const grid = document.createElement("div");
+      grid.className = "gallery-grid";
+
+      filtered.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "img-card";
+        const safeTitle = String(item.title).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        card.innerHTML = `
+          <div>
+            <div class="img-thumb-wrap" data-src="${item.imageData}" data-title="${safeTitle}">
+              <img class="img-thumb" src="${item.imageData}" alt="${safeTitle}">
+            </div>
+            <div class="img-label" title="${safeTitle}">${safeTitle}</div>
+          </div>
+          <div class="img-card-btns">
+            <a class="btn-dl-full" href="${item.imageData}" download="${safeTitle}.jpg">📥保存</a>
+            <button class="btn-del-mini" data-id="${item.id}">🗑️</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      galleryEl.appendChild(grid);
+
+      // 画像タップで拡大表示＆保存ボタン連動
+      document.querySelectorAll(".img-thumb-wrap").forEach(wrap => {
+        wrap.onclick = () => {
+          document.getElementById("zoomTitle").textContent = wrap.dataset.title;
+          document.getElementById("zoomImg").src = wrap.dataset.src;
+          const dlBtn = document.getElementById("zoomDlBtn");
+          dlBtn.href = wrap.dataset.src;
+          dlBtn.download = (wrap.dataset.title || "image") + ".jpg";
+          document.getElementById("zoomModal").classList.add("open");
+        };
+      });
+
+      // イラスト削除ボタン
+      document.querySelectorAll(".btn-del-mini").forEach(btn => {
+        btn.onclick = async () => {
+          if (confirm("このイラストを削除しますか？")) {
+            try {
+              await deleteDoc(doc(db, "memo_images", btn.dataset.id));
+            } catch(e) { alert("削除エラー: " + e.message); }
+          }
+        };
+      });
+    }
+
+    document.getElementById("openAddImgBtn").onclick = () => {
+      imgTitleInput.value = "";
+      imgFileInput.value = "";
+      selectedImgBase64 = null;
+      imgPreviewWrap.style.display = "none";
+      imgModal.classList.add("open");
+    };
+
+    document.getElementById("closeImgBtn").onclick = () => imgModal.classList.remove("open");
+
+    saveImgBtn.onclick = async () => {
+      if (!selectedImgBase64) {
+        alert("画像を選択してください！");
+        return;
+      }
+      const title = imgTitleInput.value.trim() || "イラスト";
+      saveImgBtn.disabled = true;
+      saveImgBtn.textContent = "投稿中...";
+
+      try {
+        await addDoc(imagesRef, {
+          title: title,
+          imageData: selectedImgBase64,
+          createdAt: new Date().toISOString()
+        });
+        imgModal.classList.remove("open");
+      } catch(e) {
+        alert("投稿エラー: " + e.message);
+      } finally {
+        saveImgBtn.disabled = false;
+        saveImgBtn.textContent = "投稿する";
+      }
+    };
+    });
+  </script>
+</body>
+</html>
