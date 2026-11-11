@@ -46,6 +46,7 @@ export function protectArea(expectedArea) {
   logout.addEventListener("click", async () => {
     logout.disabled = true;
     try {
+      await fetch("/api/logout", { method: "POST", credentials: "same-origin", cache: "no-store" });
       await signOut(auth);
     } finally {
       location.replace("/login.html");
