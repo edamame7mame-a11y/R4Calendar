@@ -10,7 +10,7 @@ function jsonError(message, status) {
 function base64url(bytes) {
   let binary = "";
   for (const b of bytes) binary += String.fromCharCode(b);
-  return btoa(binary).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
+  return btoa(binary).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 function utf8b64url(value) { return base64url(encoder.encode(value)); }
 function hexToBytes(hex) {
