@@ -60,6 +60,32 @@ describe("server-side protected route middleware", () => {
     expect(response.headers.get("Pragma")).toBe("no-cache");
   });
 
+  it("rejects a tampered session cookie", async () => {
+    const valid = await createSessionCookie("member", env);
+    const pair = valid.split(";")[0];
+    const [name, value] = pair.split("=");
+    const [payload, signature] = value.split(".");
+    const changed = signature[0] === "A" ? "B" : "A";
+    const request = new Request("https://calendar.example/member/index.html", {
+      headers: { Cookie: name + "=" + payload + "." + changed + "; Path=/" }
+    });
+    const response = await onRequest({
+      request, env,
+      next: async () => new Response("protected content", { status: 200 })
+    });
+    expect(response.status).toBe(302);
+  });
+
+  it("sets a Secure, HttpOnly, SameSite=Strict host cookie", async () => {
+    const cookie = await createSessionCookie("member", env);
+    expect(cookie).toContain("__Host-r4_session=");
+    expect(cookie).toContain("HttpOnly");
+    expect(cookie).toContain("Secure");
+    expect(cookie).toContain("SameSite=Strict");
+    expect(cookie).toContain("Path=/");
+    expect(cookie).toContain("Max-Age=3600");
+  });
+
   it("does not intercept public paths", async () => {
     const { response, continued } = await run("/login.html", null);
     expect(response.status).toBe(200);
