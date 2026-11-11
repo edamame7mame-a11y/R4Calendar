@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Secure-by-default placeholder.
+    // Do not loosen until the server-issued Firebase identity and role claims
+    // have been implemented and tested.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
