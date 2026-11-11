@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>R4カレンダー ログイン</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f4f5f7;color:#292929;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:18px}
+main{width:min(100%,420px);background:#fff;border-radius:18px;padding:24px;box-shadow:0 5px 24px #00000012}
+h1{font-size:1.35rem;margin:0 0 8px}p{color:#666;font-size:.92rem;line-height:1.6}
+label{display:block;font-weight:600;margin:18px 0 7px}select,input,button{width:100%;font:inherit;border-radius:10px;padding:12px;border:1px solid #d1d5db}
+button{margin-top:18px;border:0;background:#166534;color:white;font-weight:700;cursor:pointer}button:disabled{opacity:.6;cursor:wait}
+#status{min-height:1.5em;margin-top:12px;color:#991b1b;font-size:.9rem}
+small{display:block;color:#777;margin-top:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<main>
+<h1>R4カレンダー</h1>
+<p>利用するエリアを選び、共通パスワードを入力してください。</p>
+<form id="loginForm">
+<label for="role">ログイン先</label>
+<select id="role" required>
+<option value="member">メンバー用</option>
+<option value="general">一般用</option>
+<option value="admin">管理者用</option>
+</select>
+<label for="password">共通パスワード</label>
+<input id="password" type="password" autocomplete="current-password" maxlength="256" required>
+<button id="submit" type="submit">ログイン</button>
+<div id="status" role="status" aria-live="polite"></div>
+</form>
+<small>パスワードは他の人と共有するため、知っている人は同じ権限を使えます。</small>
+</main>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+import { getAuth, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+import { firebaseConfig } from "./firebase-config.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const form = document.getElementById("loginForm");
+const button = document.getElementById("submit");
+const status = document.getElementById("status");
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  button.disabled = true;
+  status.textContent = "確認しています…";
+  try {
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      cache: "no-store",
+      body: JSON.stringify({
+        role: document.getElementById("role").value,
+        password: document.getElementById("password").value
+      })
+    });
+    if (!response.ok) throw new Error("ログインできませんでした。入力内容を確認してください。");
+    const data = await response.json();
+    if (!data.customToken || !["member","general","admin"].includes(data.role)) throw new Error("認証応答が正しくありません。");
+    await signInWithCustomToken(auth, data.customToken);
+    const destinations = {
+      member: "/member/index.html",
+      general: "/general/index.html",
+      admin: "/admin/index.html"
+    };
+    location.replace(destinations[data.role]);
+  } catch (error) {
+    status.textContent = error.message || "ログインに失敗しました。";
+    button.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
