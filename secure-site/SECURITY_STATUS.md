@@ -21,7 +21,7 @@ This branch is a development branch only. It is not approved for production depl
 
 ## Mandatory blockers before any deployment
 1. **Do not deploy the current branch yet.** The login endpoint is a prototype and has not been integration-tested against Firebase.
-2. Add and test a real Cloudflare Rate Limiting binding named `LOGIN_RATE_LIMITER`, and configure `SESSION_SIGNING_SECRET` (random, at least 32 characters).
+2. Deploy and test the separate private `rate-limit-worker`, configure the Pages `LOGIN_GUARD` service binding and matching `LOGIN_GUARD_SHARED_SECRET`, and configure `SESSION_SIGNING_SECRET` (random, at least 32 characters). The rate-limit Worker owns `LOGIN_RATE_LIMITER`; Pages does not.
 3. Add server-only secrets: `SESSION_SIGNING_SECRET`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, and PBKDF2 hash/salt pairs for each role:
    - `MEMBER_PASSWORD_HASH`, `MEMBER_PASSWORD_SALT`
    - `GENERAL_PASSWORD_HASH`, `GENERAL_PASSWORD_SALT`
@@ -43,3 +43,9 @@ This branch is a development branch only. It is not approved for production depl
 - Never click Cloudflare "Save and Deploy" for the current prototype.
 - Do not place passwords, hashes, service-account keys, or other secrets in GitHub files, browser JavaScript, screenshots, or chat.
 - Only announce cutover after end-to-end tests pass and the owner approves it.
+
+## Login rate-limit architecture (not yet deployed)
+- `rate-limit-worker/` is a separate private Worker, with `workers_dev = false`; it exposes only an internal `/check` endpoint intended for the Pages service binding.
+- The Pages login Function calls it through `env.LOGIN_GUARD` and fails closed if the binding, shared secret, or guard response is unavailable.
+- The Worker checks the shared secret and then applies a per-IP Cloudflare rate limit (currently 5 requests per 60 seconds per Cloudflare location). Cloudflare documents these limits as approximate, not globally strict.
+- Required Preview setup: deploy the guard Worker, set `GUARD_SHARED_SECRET` on that Worker, bind it in Pages as `LOGIN_GUARD`, and set the same random value as Pages secret `LOGIN_GUARD_SHARED_SECRET`. Never reuse the session-signing secret.
