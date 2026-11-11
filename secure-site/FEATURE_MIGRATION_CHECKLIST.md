@@ -7,6 +7,7 @@
 - [x] Gate calendar Firestore initialization behind Firebase Auth state and the `member` / `admin` role claim.
 - [x] Add a server-session logout call and Firebase sign-out action to the calendar page.
 - [x] Copy the existing shared lottery UI, presets, live state, spin animation, and history into `secure-site/member/kuji.html`.
+- [x] Copy shared notes and image gallery UI, CRUD, search, compression, and live listeners into `secure-site/member/memo.html` behind member/admin authentication.
 - [ ] Validate JavaScript syntax and run automated tests; no successful test result has been confirmed yet.
 - [ ] Configure and test new-project Firestore rules; the deployed rules remain deny-all.
 - [ ] Import or copy any calendar data; no documents have been imported.
@@ -58,6 +59,9 @@ Status: analysis only. The original five HTML files and the supplied Firestore e
 - Preserve result history and deletion behavior.
 
 ## 3. Shared notes and image gallery — `memo.html`
+
+**Port status**
+- Copied to `secure-site/member/memo.html` on `secure-site-build` with Firebase Auth role gate (`member` / `admin`) before Firestore setup and a logout action. This is code migration only; no runtime test or data import has been completed.
 
 **Data**
 - Firestore: `memos`
