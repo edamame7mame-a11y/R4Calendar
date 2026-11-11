@@ -25,6 +25,8 @@ This endpoint is not production-ready until tested in a Cloudflare Pages preview
 ## Cloudflare Pages requirements (configure only after implementation review)
 
 - Use a separate Pages project connected to this repository.
+- Set the Pages **Root directory** to `secure-site` and the build output directory to `.` (static files in that folder). Do not use the repository root.
+- The Pages Functions endpoint is located at `secure-site/functions/api/login.js`, matching that root directory.
 - Do not deploy the current root pages as-is: they still point to the old Firebase project.
 - Configure the output directory to the folder containing the reviewed secure-site pages.
 - Functions directory: `functions`.
