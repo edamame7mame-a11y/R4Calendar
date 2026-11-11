@@ -1,0 +1,12 @@
+name = "r4calendar-login-guard"
+main = "src/index.js"
+compatibility_date = "2026-11-11"
+workers_dev = false
+
+[[ratelimits]]
+name = "LOGIN_RATE_LIMITER"
+namespace_id = "741902"
+
+[ratelimits.simple]
+limit = 5
+period = 60
