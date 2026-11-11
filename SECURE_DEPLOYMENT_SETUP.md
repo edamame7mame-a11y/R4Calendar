@@ -40,6 +40,16 @@ This endpoint is not production-ready until tested in a Cloudflare Pages preview
 - Configure a Cloudflare Rate Limiting binding named `LOGIN_RATE_LIMITER`. The endpoint fails closed if it is absent.
 - Hashes must be generated locally with cryptographically random salts. Never send plaintext passwords or private keys in chat or store them in Git.
 
+## Preparing the route-session secret (do not share it)
+
+Generate the secret on your own computer; do not paste the result into chat or commit it to GitHub. For example, with OpenSSL:
+
+```sh
+openssl rand -base64 48
+```
+
+Copy the generated value directly into the Cloudflare Pages project's **Settings → Variables and Secrets** as a secret named `SESSION_SIGNING_SECRET`. Use the same value for the Preview environment while testing. Do not put it in a plain-text variable, source file, GitHub Actions variable, or screenshot. If the value is lost or rotated, existing route-session cookies become invalid and users must log in again.
+
 ## Protected area routes
 
 Cloudflare Pages middleware at `secure-site/functions/_middleware.js` protects all paths under `/member/`, `/general/`, and `/admin/` using a signed HttpOnly session cookie. Login sets the cookie after the shared password is verified; logout clears it. The cookie expires after one hour. This middleware must be included in the Pages deployment with root directory `secure-site`. Test direct URLs for each role in a Cloudflare preview before any public rollout. Firestore Rules remain independently mandatory.
