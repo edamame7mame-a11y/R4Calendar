@@ -1,0 +1,30 @@
+{
+  "projectId": "r4calendar-1cb70",
+  "createdAt": "2026-11-11T00:00:00.000Z",
+  "collections": {
+    "restore_test_records": [
+      {
+        "id": "sample-nested",
+        "data": {
+          "title": "Synthetic restore test",
+          "active": true,
+          "count": 3,
+          "tags": ["calendar", "restore"],
+          "details": {
+            "nullable": null,
+            "ratio": 1.5
+          }
+        }
+      }
+    ],
+    "restore_test_images": [
+      {
+        "id": "sample-image",
+        "data": {
+          "imageData": "data:image/png;base64,iVBORw0KGgo=",
+          "createdAt": "2026-11-11T00:00:00.000Z"
+        }
+      }
+    ]
+  }
+}
