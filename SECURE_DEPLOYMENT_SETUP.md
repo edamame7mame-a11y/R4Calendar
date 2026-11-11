@@ -15,6 +15,7 @@ Status: prototype only. This branch is not safe to deploy or use with real users
 `secure-site/functions/api/login.js` currently:
 - Requires an exact same-origin POST.
 - Requires an explicitly selected role: `member`, `general`, or `admin`.
+- Requires JSON content type and enforces a 2 KiB request-body limit even when `Content-Length` is absent.
 - Checks a PBKDF2-HMAC-SHA256 password hash (310,000 iterations, 32-byte output) using a per-role random salt.
 - Applies a Cloudflare Rate Limiting binding named `LOGIN_RATE_LIMITER`.
 - Mints a Firebase custom token with `claims: { area: role }`.
