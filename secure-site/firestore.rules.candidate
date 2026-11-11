@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isMember() {
+      return signedIn() && request.auth.token.area == "member";
+    }
+    function isGeneral() {
+      return signedIn() && request.auth.token.area == "general";
+    }
+    function isAdmin() {
+      return signedIn() && request.auth.token.area == "admin";
+    }
+
+    // Existing R4Calendar collections are member-area data.
+    // Keep collection names and document shapes unchanged during first migration.
+    match /events/{id} {
+      allow read, write: if isMember() || isAdmin();
+    }
+    match /calendar_settings/{id} {
+      allow read, write: if isMember() || isAdmin();
+    }
+    match /kuji_history/{id} {
+      allow read, write: if isMember() || isAdmin();
+    }
+    match /kuji_settings/{id} {
+      allow read, write: if isMember() || isAdmin();
+    }
+    match /memos/{id} {
+      allow read, write: if isMember() || isAdmin();
+    }
+    match /memo_images/{id} {
+      allow read, write: if isMember() || isAdmin();
+    }
+    match /plunders/{id} {
+      allow read, write: if isMember() || isAdmin();
+    }
+    match /plunder_templates/{id} {
+      allow read, write: if isMember() || isAdmin();
+    }
+
+    // Reserved general-area collections. Add only after the general features
+    // and their data model are agreed and tested.
+    match /general_polls/{id} {
+      allow read, write: if isGeneral() || isAdmin();
+    }
+    match /general_memos/{id} {
+      allow read, write: if isGeneral() || isAdmin();
+    }
+    match /general_calendar/{id} {
+      allow read, write: if isGeneral() || isAdmin();
+    }
+
+    // Admin-only configuration namespace; do not store secrets in Firestore.
+    match /admin_config/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // Default deny for every unlisted collection.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
