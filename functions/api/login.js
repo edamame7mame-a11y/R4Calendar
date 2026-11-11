@@ -1,3 +1,5 @@
+import { createSessionCookie } from "../_shared/session.js";
+
 const encoder = new TextEncoder();
 const AUDIENCE = "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit";
 
@@ -21,7 +23,7 @@ async function verifyPassword(password, encoded, salt) {
   if (!encoded || !salt) return false;
   const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits({
-    name: "PBKDF2", hash: "SHA-256", salt: encoder.encode(salt), iterations: 310000
+    name: "PBKDF2", hash: "SHA-256", salt: encoder.encode(salt), iterations: 100000
   }, key, 256);
   const actual = new Uint8Array(bits);
   const expected = hexToBytes(encoded);
@@ -62,19 +64,39 @@ async function mintCustomToken(uid, role, env) {
 export async function onRequestPost({ request, env }) {
   const origin = request.headers.get("Origin");
   if (!origin || origin !== new URL(request.url).origin) return jsonError("Forbidden", 403);
-  if (!env.LOGIN_RATE_LIMITER || !env.FIREBASE_CLIENT_EMAIL || !env.FIREBASE_PRIVATE_KEY) {
+  if (!env.LOGIN_GUARD || !env.LOGIN_GUARD_SHARED_SECRET ||
+      !env.FIREBASE_CLIENT_EMAIL || !env.FIREBASE_PRIVATE_KEY || !env.SESSION_SIGNING_SECRET) {
     return jsonError("Authentication service is not configured", 503);
   }
 
-  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  const limit = await env.LOGIN_RATE_LIMITER.limit({ key: ip });
-  if (!limit.success) return jsonError("Too many attempts. Try again later.", 429);
+  // The dedicated private Worker owns the rate-limit binding.
+  // Service-binding failures fail closed; login is never allowed without the guard.
+  let guardResponse;
+  try {
+    guardResponse = await env.LOGIN_GUARD.fetch("https://login-guard.internal/check", {
+      method: "POST",
+      headers: {
+        "X-R4-Guard-Secret": env.LOGIN_GUARD_SHARED_SECRET,
+        "X-R4-Client-IP": request.headers.get("CF-Connecting-IP") || "unknown"
+      }
+    });
+  } catch {
+    return jsonError("Authentication service is not configured", 503);
+  }
+  if (guardResponse.status === 429) return jsonError("Too many attempts. Try again later.", 429);
+  if (!guardResponse.ok) return jsonError("Authentication service is not configured", 503);
 
-  const contentLength = Number(request.headers.get("Content-Length") || 0);
-  if (contentLength > 2048) return jsonError("Bad request", 400);
+  if (!(request.headers.get("Content-Type") || "").toLowerCase().includes("application/json")) {
+    return jsonError("Bad request", 400);
+  }
+
+  // Enforce the limit even when Content-Length is absent or untrusted.
+  let rawBody;
+  try { rawBody = await request.text(); } catch { return jsonError("Bad request", 400); }
+  if (encoder.encode(rawBody).byteLength > 2048) return jsonError("Bad request", 400);
 
   let body;
-  try { body = await request.json(); } catch { return jsonError("Bad request", 400); }
+  try { body = JSON.parse(rawBody); } catch { return jsonError("Bad request", 400); }
   if (!body || typeof body.password !== "string" || body.password.length < 1 || body.password.length > 256) {
     return jsonError("Invalid credentials", 401);
   }
@@ -90,8 +112,9 @@ export async function onRequestPost({ request, env }) {
     const [hash, salt, uid] = roleConfig[role];
     if (!await verifyPassword(body.password, hash, salt)) return jsonError("Invalid credentials", 401);
     const customToken = await mintCustomToken(uid, role, env);
+    const sessionCookie = await createSessionCookie(role, env);
     return Response.json({ customToken, role }, {
-      headers: { "Cache-Control": "no-store", "Pragma": "no-cache" }
+      headers: { "Cache-Control": "no-store", "Pragma": "no-cache", "Set-Cookie": sessionCookie }
     });
   } catch {
     return jsonError("Authentication service error", 503);
