@@ -1,5 +1,19 @@
 # Feature-by-feature migration checklist
 
+## Current migration progress (2026-11-11)
+
+- [x] Copy the existing calendar UI and behavior into `secure-site/member/index.html` on the development branch.
+- [x] Replace the old Firebase project configuration with the new project's shared client config import.
+- [x] Gate calendar Firestore initialization behind Firebase Auth state and the `member` / `admin` role claim.
+- [x] Add a server-session logout call and Firebase sign-out action to the calendar page.
+- [ ] Validate JavaScript syntax and run automated tests; no successful test result has been confirmed yet.
+- [ ] Configure and test new-project Firestore rules; the deployed rules remain deny-all.
+- [ ] Import or copy any calendar data; no documents have been imported.
+- [ ] Export/import browser-local label and color settings from browsers that need to retain them.
+- [ ] Test calendar CRUD, repeat events, labels, live sync, and rendering in a preview environment.
+
+The calendar port is a development-only integration step. It is not yet a working replacement: Firestore is intentionally deny-all in the new project, and no preview deployment or data import has occurred.
+
 Status: analysis only. The original five HTML files and the supplied Firestore export were inspected from branch `secure-site-build`. No old production files, old Firebase settings, or production data were changed.
 
 ## 1. Shared calendar — `index.html`
