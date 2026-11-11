@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { createSessionCookie } from "../functions/_shared/session.js";
 import { onRequest } from "../functions/_middleware.js";
 
@@ -74,6 +74,25 @@ describe("server-side protected route middleware", () => {
       next: async () => new Response("protected content", { status: 200 })
     });
     expect(response.status).toBe(302);
+  });
+
+  it("rejects an expired session cookie", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-11-11T00:00:00Z"));
+      const cookie = await createSessionCookie("member", env);
+      vi.setSystemTime(new Date("2026-11-11T01:00:01Z"));
+      const request = new Request("https://calendar.example/member/index.html", {
+        headers: { Cookie: cookie.split(";")[0] }
+      });
+      const response = await onRequest({
+        request, env,
+        next: async () => new Response("protected content", { status: 200 })
+      });
+      expect(response.status).toBe(302);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("sets a Secure, HttpOnly, SameSite=Strict host cookie", async () => {
