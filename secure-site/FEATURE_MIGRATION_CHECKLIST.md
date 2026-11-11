@@ -10,9 +10,10 @@
 - [x] Copy shared notes and image gallery UI, CRUD, search, compression, and live listeners into `secure-site/member/memo.html` behind member/admin authentication.
 - [x] Copy plunder records, search/filter/sort, offender CRUD, nested incident CRUD, image handling, and guide link into `secure-site/member/plunder.html` behind member/admin authentication.
 - [x] Copy the shared plunder response guide, general/chopper templates, live sync, local cache fallback, edit/save/copy actions into `secure-site/member/plunder_guide.html` behind member/admin authentication.
-- [ ] Validate JavaScript syntax and run automated tests; no successful test result has been confirmed yet.
+- [x] Validate migrated inline JavaScript syntax and run automated Firestore Rules, route middleware, and synthetic restore tests in GitHub Actions (all passed).
 - [ ] Configure and test new-project Firestore rules; the deployed rules remain deny-all.
-- [ ] Import or copy any calendar data; no documents have been imported.
+- [x] Restore-test the 190-document backup in a local-only Firestore Emulator and verify all 190 documents by read-back (8 collections); no hosted Firebase project was modified.
+- [ ] Import or copy data into a disposable hosted test project only after rules and application behavior are approved.
 - [ ] Export/import browser-local label and color settings from browsers that need to retain them.
 - [ ] Test calendar CRUD, repeat events, labels, live sync, and rendering in a preview environment.
 
@@ -130,7 +131,8 @@ Status: analysis only. The original five HTML files and the supplied Firestore e
 - [ ] Automated rules tests prove member can read/write both areas, general can read/write only general collections, and admin can read/write both areas.
 - [ ] Admin-only settings cannot be read or changed by member/general accounts.
 - [ ] Custom-token login endpoint, role claims, rate limiter, password rotation and logout/revocation are implemented and tested.
-- [ ] Restore the 190-document backup into a disposable test target and compare counts and sample fields.
+- [x] Restore the 190-document backup into the local Firestore Emulator and compare every document on read-back (190/190, 8 collections; user-confirmed local run).
+- [ ] If needed, repeat in a disposable hosted test project only after rules and application behavior are approved.
 - [ ] Browser-local calendar and guide settings are exported from every browser whose values matter.
 - [ ] All image payloads render and all CRUD operations pass on mobile and desktop.
 - [ ] Owner explicitly approves final production import and cutover.
