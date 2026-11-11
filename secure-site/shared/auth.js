@@ -5,13 +5,23 @@ import { firebaseConfig } from "../firebase-config.js";
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// A member login is allowed into both the member and general areas.
+// A general-only login stays isolated from member pages.
+// Admin can enter either area; the admin console itself is admin-only.
+const AREA_ROLES = {
+  member: ["member", "admin"],
+  general: ["member", "general", "admin"],
+  admin: ["admin"]
+};
+
 /**
- * Protect a placeholder area page. This is a UI guard only; Firestore Rules
- * remain the actual data-security boundary.
+ * UI navigation guard only. Firestore Security Rules remain the real
+ * data-security boundary and must independently enforce the same policy.
  */
 export function protectArea(expectedArea) {
   const state = document.getElementById("state");
   const logout = document.getElementById("logout");
+  const allowedRoles = AREA_ROLES[expectedArea] || [];
 
   onAuthStateChanged(auth, async user => {
     if (!user) {
@@ -20,7 +30,7 @@ export function protectArea(expectedArea) {
     }
     try {
       const token = await user.getIdTokenResult();
-      if (token.claims.area !== expectedArea) {
+      if (!allowedRoles.includes(token.claims.area)) {
         await signOut(auth);
         location.replace("/login.html");
         return;
