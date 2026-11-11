@@ -17,11 +17,11 @@ Status: prototype only. This branch is not safe to deploy or use with real users
 - Requires an explicitly selected role: `member`, `general`, or `admin`.
 - Requires JSON content type and enforces a 2 KiB request-body limit even when `Content-Length` is absent.
 - Checks a PBKDF2-HMAC-SHA256 password hash (310,000 iterations, 32-byte output) using a per-role random salt.
-- Applies a Cloudflare Rate Limiting binding named `LOGIN_RATE_LIMITER`.
+- Calls a separate private Worker through the Pages service binding `LOGIN_GUARD`; the guard Worker applies the Cloudflare Rate Limiting binding `LOGIN_RATE_LIMITER`.
 - Mints a Firebase custom token with `claims: { area: role }`.
 - Returns no-store responses and generic credential errors.
 
-This endpoint is not production-ready until tested in a Cloudflare Pages preview with real secrets and a working rate-limit binding. A signed HttpOnly route-session cookie and logout endpoint have since been added as prototypes. They are not yet preview-tested. Session revocation beyond cookie deletion, password rotation, and complete client-side login integration remain unfinished.
+This endpoint is not production-ready until the private guard Worker is deployed, the Pages service binding and shared secret are configured in Preview, and the full login flow is tested. A signed HttpOnly route-session cookie and logout endpoint have since been added as prototypes. They are not yet preview-tested. Session revocation beyond cookie deletion, password rotation, and complete client-side login integration remain unfinished.
 
 ## Cloudflare Pages requirements (configure only after implementation review)
 
@@ -37,7 +37,9 @@ This endpoint is not production-ready until tested in a Cloudflare Pages preview
   - `MEMBER_PASSWORD_HASH`, `MEMBER_PASSWORD_SALT`
   - `GENERAL_PASSWORD_HASH`, `GENERAL_PASSWORD_SALT`
   - `ADMIN_PASSWORD_HASH`, `ADMIN_PASSWORD_SALT`
-- Configure a Cloudflare Rate Limiting binding named `LOGIN_RATE_LIMITER`. The endpoint fails closed if it is absent.
+- Deploy the separate `rate-limit-worker` first. From that folder run `npm exec wrangler -- deploy`, then set its secret with `npm exec wrangler -- secret put GUARD_SHARED_SECRET`. Use a newly generated random value of at least 32 characters; do not share it or reuse `SESSION_SIGNING_SECRET`.
+- In the Pages project's **Preview → Settings → Bindings → Add → Service binding**, set Variable name to `LOGIN_GUARD` and Service to `r4calendar-login-guard`. Add `LOGIN_GUARD_SHARED_SECRET` as a Preview Secret in Pages with the exact same value as the guard Worker's `GUARD_SHARED_SECRET`.
+- The guard Worker's rate limit is currently 5 requests per 60 seconds per IP, approximate and scoped per Cloudflare location. It fails closed at the Pages login endpoint if the service binding or shared secret is unavailable. Do not create a `LOGIN_RATE_LIMITER` binding in Pages; that binding belongs to the separate Worker.
 - Hashes must be generated locally with cryptographically random salts. Never send plaintext passwords or private keys in chat or store them in Git.
 
 ## Preparing the route-session secret (do not share it)
@@ -85,3 +87,7 @@ Cloudflare Pages middleware at `secure-site/functions/_middleware.js` protects a
 
 The existing site and old Firebase project are intentionally left untouched during development. The old Firestore rules were previously found to allow unauthenticated read/write access; keeping the old site running is not the same as keeping its data private. Do not put new sensitive data in the old project. Before public cutover, plan how to close old database access without interrupting the migration.
 
+
+## Private login-guard Worker
+
+The repository folder `rate-limit-worker/` contains a separate Worker that has no public `workers.dev` endpoint. Pages calls it through the `LOGIN_GUARD` service binding. Its internal endpoint checks a shared secret before using its `LOGIN_RATE_LIMITER` binding. The rate-limit namespace ID in `rate-limit-worker/wrangler.toml` must be unique within the Cloudflare account; change it to another unused positive integer if it is already used by another Worker. Cloudflare's rate limits are approximate and counters are maintained per Cloudflare location, so they are an abuse-control layer rather than a globally strict lockout. See [Cloudflare Rate Limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/) and [Pages service bindings](https://developers.cloudflare.com/pages/functions/bindings/).
