@@ -46,10 +46,18 @@ export function protectArea(expectedArea) {
   logout.addEventListener("click", async () => {
     logout.disabled = true;
     try {
-      await fetch("/api/logout", { method: "POST", credentials: "same-origin", cache: "no-store" });
+      const response = await fetch("/api/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store"
+      });
+      if (!response.ok) throw new Error("サーバー側のログアウトに失敗しました。通信を確認して、もう一度お試しください。");
       await signOut(auth);
-    } finally {
       location.replace("/login.html");
+    } catch (error) {
+      // Keep the page in place so the user can retry clearing the server session.
+      logout.disabled = false;
+      if (state) state.textContent = error.message || "ログアウトに失敗しました。もう一度お試しください。";
     }
   });
 }
