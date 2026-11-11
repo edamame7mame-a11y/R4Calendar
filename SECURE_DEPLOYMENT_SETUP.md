@@ -37,7 +37,7 @@ This endpoint is not production-ready until the private guard Worker is deployed
   - `MEMBER_PASSWORD_HASH`, `MEMBER_PASSWORD_SALT`
   - `GENERAL_PASSWORD_HASH`, `GENERAL_PASSWORD_SALT`
   - `ADMIN_PASSWORD_HASH`, `ADMIN_PASSWORD_SALT`
-- Deploy the separate `rate-limit-worker` first. From that folder run `npm exec wrangler -- deploy`, then set its secret with `npm exec wrangler -- secret put GUARD_SHARED_SECRET`. Use a newly generated random value of at least 32 characters; do not share it or reuse `SESSION_SIGNING_SECRET`.
+- Deploy the separate `rate-limit-worker` first. From that folder run `npx wrangler deploy`, then set its secret with `npx wrangler secret put GUARD_SHARED_SECRET`. Use a newly generated random value of at least 32 characters; do not share it or reuse `SESSION_SIGNING_SECRET`.
 - In the Pages project's **Preview → Settings → Bindings → Add → Service binding**, set Variable name to `LOGIN_GUARD` and Service to `r4calendar-login-guard`. Add `LOGIN_GUARD_SHARED_SECRET` as a Preview Secret in Pages with the exact same value as the guard Worker's `GUARD_SHARED_SECRET`.
 - The guard Worker's rate limit is currently 5 requests per 60 seconds per IP, approximate and scoped per Cloudflare location. It fails closed at the Pages login endpoint if the service binding or shared secret is unavailable. Do not create a `LOGIN_RATE_LIMITER` binding in Pages; that binding belongs to the separate Worker.
 - Hashes must be generated locally with cryptographically random salts. Never send plaintext passwords or private keys in chat or store them in Git.
