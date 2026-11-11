@@ -31,6 +31,7 @@ This endpoint is not production-ready until tested in a Cloudflare Pages preview
 - Do not deploy the current root pages as-is: they still point to the old Firebase project.
 - Functions directory: `functions`.
 - Configure the following as Cloudflare secrets (never commit them):
+  - `SESSION_SIGNING_SECRET` (random secret of at least 32 characters for signed HttpOnly route-session cookies)
   - `FIREBASE_CLIENT_EMAIL`
   - `FIREBASE_PRIVATE_KEY` (PEM; keep the private key only in Cloudflare Secrets)
   - `MEMBER_PASSWORD_HASH`, `MEMBER_PASSWORD_SALT`
@@ -38,6 +39,10 @@ This endpoint is not production-ready until tested in a Cloudflare Pages preview
   - `ADMIN_PASSWORD_HASH`, `ADMIN_PASSWORD_SALT`
 - Configure a Cloudflare Rate Limiting binding named `LOGIN_RATE_LIMITER`. The endpoint fails closed if it is absent.
 - Hashes must be generated locally with cryptographically random salts. Never send plaintext passwords or private keys in chat or store them in Git.
+
+## Protected area routes
+
+Cloudflare Pages middleware at `secure-site/functions/_middleware.js` protects all paths under `/member/`, `/general/`, and `/admin/` using a signed HttpOnly session cookie. Login sets the cookie after the shared password is verified; logout clears it. The cookie expires after one hour. This middleware must be included in the Pages deployment with root directory `secure-site`. Test direct URLs for each role in a Cloudflare preview before any public rollout. Firestore Rules remain independently mandatory.
 
 ## Firebase requirements
 
