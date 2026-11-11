@@ -21,7 +21,7 @@ Status: prototype only. This branch is not safe to deploy or use with real users
 - Mints a Firebase custom token with `claims: { area: role }`.
 - Returns no-store responses and generic credential errors.
 
-This endpoint is not production-ready until tested in a Cloudflare Pages preview with real secrets and a working rate-limit binding. It does not yet provide session cookies, logout/session revocation, password rotation, or complete client-side login integration.
+This endpoint is not production-ready until tested in a Cloudflare Pages preview with real secrets and a working rate-limit binding. A signed HttpOnly route-session cookie and logout endpoint have since been added as prototypes. They are not yet preview-tested. Session revocation beyond cookie deletion, password rotation, and complete client-side login integration remain unfinished.
 
 ## Cloudflare Pages requirements (configure only after implementation review)
 
