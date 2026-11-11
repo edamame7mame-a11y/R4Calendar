@@ -38,7 +38,7 @@ export async function readSession(request, env) {
     if (!await crypto.subtle.verify("HMAC", key, signature, encoder.encode(parts[0]))) return null;
     const payload = JSON.parse(new TextDecoder().decode(decodeBase64url(parts[0])));
     const now = Math.floor(Date.now() / 1000);
-    if (!["member", "general", "admin"].includes(payload.role) || !Number.isInteger(payload.exp) || payload.exp <= now || payload.iat > now + 60) return null;
+    if (!["member", "general", "admin"].includes(payload.role) || !Number.isInteger(payload.iat) || !Number.isInteger(payload.exp) || payload.exp <= now || payload.iat > now + 60 || payload.exp <= payload.iat || payload.exp - payload.iat > SESSION_SECONDS) return null;
     return payload;
   } catch { return null; }
 }
