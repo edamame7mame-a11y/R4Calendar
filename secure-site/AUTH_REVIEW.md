@@ -30,6 +30,12 @@ The candidate rules file is not deployed and is not yet tested. The production r
 9. **Rules and client paths must agree.** Before deploying candidate rules, enumerate every collection and document path used by the migrated app and ensure no collection is accidentally omitted or over-permitted.
 10. **No production deployment yet.** Do not click Save and Deploy, import the backup, loosen deny-all rules, merge to `main`, or change the old Firebase project during this review.
 
+
+11. **Static page URLs are not private.** The current Pages HTML files can be requested directly by URL; `noindex` and client-side route guards do not hide static assets. This is acceptable only if every protected data operation is enforced by Firestore Rules and every server endpoint checks the authenticated role. Do not place sensitive data in static HTML or JavaScript.
+12. **The login page has not yet been exercised end-to-end.** The current browser flow calls `/api/login` and then `signInWithCustomToken()`, but no preview deployment, real credential test, token-claim inspection, or negative-role test has been performed.
+13. **Shared-password endpoint hardening remains incomplete.** Confirm the rate-limiter binding's deployed behavior, password-hash generation format, and request throttling across repeated attempts. Consider applying limits per role as well as per IP without exposing which role/password pair is valid.
+14. **No protected feature data is connected yet.** The current area pages are placeholders. Before migrating each feature, ensure auth state and claims are resolved before starting any Firestore listener or write, and test every query path against the final rules.
+
 ## Candidate rules scope
 
 - Member role: existing calendar, lottery, memo/image, plunder, and plunder-template collections.
