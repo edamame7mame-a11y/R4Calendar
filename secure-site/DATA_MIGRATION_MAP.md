@@ -48,3 +48,15 @@ These values are per-browser and are not included in the 190-document JSON expor
 5. Validate all three image data URLs and test rendering in the new memo UI.
 6. Test member/general/admin access boundaries with authenticated test users.
 7. Only after owner approval, import into the new production Firebase project.
+
+## Backup integrity check (2026-11-11)
+
+A read-only validation was run against the owner-provided 2026-11-10 JSON export in the working environment. No data was uploaded or imported.
+
+- Top-level project ID matches the old project: `r4calendar-1cb70`.
+- Export declares 190 documents across the eight collections listed above.
+- All embedded image data URLs were Base64-decoded and opened with an image decoder: 34 images passed, 0 failed.
+- Decoded image payload total: 2,321,364 bytes (about 2.21 MiB).
+- This verifies that the embedded image bytes are readable image files. It does not prove that every image is displayed correctly in the migrated UI or that Firestore can accept every document under production limits.
+- A full emulator restore and read-back comparison is still pending. No production import is authorized by this check.
+
