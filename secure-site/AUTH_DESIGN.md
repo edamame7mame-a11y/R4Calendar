@@ -29,9 +29,9 @@ Do not create general-area collections until their purpose and data shape are de
 The current prototype at `functions/api/login.js` expects the service-account email and PEM private key as two separate secrets (`FIREBASE_CLIENT_EMAIL` and `FIREBASE_PRIVATE_KEY`). It does not parse a full service-account JSON secret.
 
 Secrets to configure later in the Cloudflare Pages project:
-- `MEMBER_PASSWORD_HASH`
-- `GENERAL_PASSWORD_HASH`
-- `ADMIN_PASSWORD_HASH`
+- `MEMBER_PASSWORD_HASH`, `MEMBER_PASSWORD_SALT`
+- `GENERAL_PASSWORD_HASH`, `GENERAL_PASSWORD_SALT`
+- `ADMIN_PASSWORD_HASH`, `ADMIN_PASSWORD_SALT`
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY` (PEM private key)
 
@@ -63,7 +63,7 @@ A shared password grants the same role to everyone who knows it. It cannot ident
 ## Implementation / verification gates
 
 - [x] Create a Firebase web app in the new Firebase project and add its public web config to `firebase-config.js` (the API key is public client configuration, not a private key).
-- [ ] Create a dedicated service account for token signing; store its JSON only as a Cloudflare secret.
+- [ ] Create a dedicated service account for token signing; store its email and PEM private key separately as Cloudflare secrets (never commit or share the JSON key).
 - [ ] Implement and review the token-signing Function.
 - [ ] Implement login, logout, session refresh, and admin password-change endpoints.
 - [ ] Implement deny-by-default Firestore rules using the claims above.
