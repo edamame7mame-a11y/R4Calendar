@@ -6,6 +6,7 @@
 - [x] Replace the old Firebase project configuration with the new project's shared client config import.
 - [x] Gate calendar Firestore initialization behind Firebase Auth state and the `member` / `admin` role claim.
 - [x] Add a server-session logout call and Firebase sign-out action to the calendar page.
+- [x] Copy the existing shared lottery UI, presets, live state, spin animation, and history into `secure-site/member/kuji.html`.
 - [ ] Validate JavaScript syntax and run automated tests; no successful test result has been confirmed yet.
 - [ ] Configure and test new-project Firestore rules; the deployed rules remain deny-all.
 - [ ] Import or copy any calendar data; no documents have been imported.
