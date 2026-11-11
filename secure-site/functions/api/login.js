@@ -1,3 +1,5 @@
+import { createSessionCookie } from "../_shared/session.js";
+
 const encoder = new TextEncoder();
 const AUDIENCE = "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit";
 
@@ -62,7 +64,7 @@ async function mintCustomToken(uid, role, env) {
 export async function onRequestPost({ request, env }) {
   const origin = request.headers.get("Origin");
   if (!origin || origin !== new URL(request.url).origin) return jsonError("Forbidden", 403);
-  if (!env.LOGIN_RATE_LIMITER || !env.FIREBASE_CLIENT_EMAIL || !env.FIREBASE_PRIVATE_KEY) {
+  if (!env.LOGIN_RATE_LIMITER || !env.FIREBASE_CLIENT_EMAIL || !env.FIREBASE_PRIVATE_KEY || !env.SESSION_SIGNING_SECRET) {
     return jsonError("Authentication service is not configured", 503);
   }
 
@@ -96,8 +98,9 @@ export async function onRequestPost({ request, env }) {
     const [hash, salt, uid] = roleConfig[role];
     if (!await verifyPassword(body.password, hash, salt)) return jsonError("Invalid credentials", 401);
     const customToken = await mintCustomToken(uid, role, env);
+    const sessionCookie = await createSessionCookie(role, env);
     return Response.json({ customToken, role }, {
-      headers: { "Cache-Control": "no-store", "Pragma": "no-cache" }
+      headers: { "Cache-Control": "no-store", "Pragma": "no-cache", "Set-Cookie": sessionCookie }
     });
   } catch {
     return jsonError("Authentication service error", 503);
