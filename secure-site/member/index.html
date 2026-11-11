@@ -711,7 +711,16 @@
           colors: customColors,
           order: labelOrder,
           updatedAt: new Date().toISOString()
-        document.getElementById("logoutBtn").addEventListener("click", async () => {
+        });
+        settingsModal.classList.remove("open");
+      } catch(e) {
+        alert("保存エラー: " + e.message);
+      } finally {
+        saveSettingsBtn.disabled = false;
+        saveSettingsBtn.textContent = "保存して同期";
+      }
+    };
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
       const button = document.getElementById("logoutBtn");
       button.disabled = true;
       try {
@@ -725,15 +734,6 @@
       }
     });
     });
-        settingsModal.classList.remove("open");
-      } catch(e) {
-        alert("保存エラー: " + e.message);
-      } finally {
-        saveSettingsBtn.disabled = false;
-        saveSettingsBtn.textContent = "保存して同期";
-      }
-    };
-      });
-  </script>
+</script>
 </body>
 </html>
