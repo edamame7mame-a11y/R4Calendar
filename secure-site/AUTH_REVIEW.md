@@ -26,14 +26,14 @@ The candidate rules file is not deployed and is not yet tested. The production r
 5. **Logout is not immediate token revocation.** Browser `signOut` clears that browser's Firebase session; already-issued ID tokens may remain valid until expiry. A tested revocation/short-session design is still needed if immediate invalidation is required.
 6. **Password rotation is not implemented.** Updating Cloudflare secrets requires a secure owner-controlled process. Do not claim that the admin page can change passwords until that process exists and is tested.
 7. **Do not trust a role value from the browser.** The server must continue to select the hash, salt and UID from its own fixed allowlist and mint the claim itself. The browser's selected role is only a request.
-8. **Firestore rules need positive and negative tests.** Test member→member collections allowed; member→general denied; general→general allowed; general→member denied; admin access to both allowed; unauthenticated access denied; unknown collections denied.
+8. **Firestore rules need positive and negative tests.** Test member→member and member→general allowed; general→general allowed; general→member denied; admin access to both allowed; unauthenticated access denied; unknown collections denied.
 9. **Rules and client paths must agree.** Before deploying candidate rules, enumerate every collection and document path used by the migrated app and ensure no collection is accidentally omitted or over-permitted.
 10. **No production deployment yet.** Do not click Save and Deploy, import the backup, loosen deny-all rules, merge to `main`, or change the old Firebase project during this review.
 
 ## Candidate rules scope
 
 - Member role: existing calendar, lottery, memo/image, plunder, and plunder-template collections.
-- General role: no existing data collections identified. Proposed general collection names remain placeholders until the owner defines the general area's features.
+- General role: may access general-area collections only. Member role may also read/write general-area collections. Proposed general collection names remain placeholders until the owner defines the general area's features.
 - Admin role: intended to administer both areas, with a separate admin-only namespace for non-secret settings.
 - All unlisted collections: denied.
 
