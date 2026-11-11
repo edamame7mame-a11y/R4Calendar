@@ -12,7 +12,7 @@ Status: prototype only. This branch is not safe to deploy or use with real users
 
 ## Login endpoint prototype
 
-`functions/api/login.js` currently:
+`secure-site/functions/api/login.js` currently:
 - Requires an exact same-origin POST.
 - Requires an explicitly selected role: `member`, `general`, or `admin`.
 - Checks a PBKDF2-HMAC-SHA256 password hash (310,000 iterations, 32-byte output) using a per-role random salt.
@@ -28,11 +28,10 @@ This endpoint is not production-ready until tested in a Cloudflare Pages preview
 - Set the Pages **Root directory** to `secure-site` and the build output directory to `.` (static files in that folder). Do not use the repository root.
 - The Pages Functions endpoint is located at `secure-site/functions/api/login.js`, matching that root directory.
 - Do not deploy the current root pages as-is: they still point to the old Firebase project.
-- Configure the output directory to the folder containing the reviewed secure-site pages.
 - Functions directory: `functions`.
 - Configure the following as Cloudflare secrets (never commit them):
   - `FIREBASE_CLIENT_EMAIL`
-  - `FIREBASE_PRIVATE_KEY` (PEM; if stored with escaped newlines, the function normalizes `\\n`)
+  - `FIREBASE_PRIVATE_KEY` (PEM; keep the private key only in Cloudflare Secrets)
   - `MEMBER_PASSWORD_HASH`, `MEMBER_PASSWORD_SALT`
   - `GENERAL_PASSWORD_HASH`, `GENERAL_PASSWORD_SALT`
   - `ADMIN_PASSWORD_HASH`, `ADMIN_PASSWORD_SALT`
