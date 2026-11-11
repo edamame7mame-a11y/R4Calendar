@@ -32,42 +32,57 @@ const general = () => testEnv.authenticatedContext("general-test", { area: "gene
 const admin = () => testEnv.authenticatedContext("admin-test", { area: "admin" }).firestore();
 const anonymous = () => testEnv.unauthenticatedContext().firestore();
 
-describe("R4Calendar area isolation candidate rules", () => {
-  it("allows member read/write to member collections", async () => {
-    await assertSucceeds(setDoc(doc(member(), "events", "e1"), { title: "test" }));
-    await assertSucceeds(getDoc(doc(member(), "events", "e1")));
-    await assertSucceeds(setDoc(doc(member(), "memo_images", "m1"), { imageData: "test" }));
+describe("R4Calendar current data access candidate rules", () => {
+  it("allows member read/write to every migrated member collection", async () => {
+    const db = member();
+    const collections = [
+      "events", "calendar_settings", "kuji_history", "kuji_settings",
+      "memos", "memo_images", "plunders", "plunder_templates"
+    ];
+    for (const name of collections) {
+      await assertSucceeds(setDoc(doc(db, name, "test-doc"), { test: true }));
+      await assertSucceeds(getDoc(doc(db, name, "test-doc")));
+    }
   });
 
-  it("denies general access to member collections", async () => {
-    await assertFails(getDoc(doc(general(), "events", "e1")));
-    await assertFails(setDoc(doc(general(), "memos", "m1"), { title: "no" }));
-    await assertFails(getDoc(doc(general(), "plunders", "p1")));
+  it("denies general-only access to all existing member collections", async () => {
+    const db = general();
+    const collections = [
+      "events", "calendar_settings", "kuji_history", "kuji_settings",
+      "memos", "memo_images", "plunders", "plunder_templates"
+    ];
+    for (const name of collections) {
+      await assertFails(getDoc(doc(db, name, "member-only")));
+      await assertFails(setDoc(doc(db, name, "new-doc"), { test: true }));
+    }
   });
 
-  it("allows general read/write only to general collections", async () => {
-    await assertSucceeds(setDoc(doc(general(), "general_memos", "g1"), { text: "ok" }));
-    await assertSucceeds(getDoc(doc(general(), "general_memos", "g1")));
-    await assertSucceeds(setDoc(doc(general(), "general_calendar", "g2"), { text: "ok" }));
+  it("does not grant access to undefined general-area collections yet", async () => {
+    const db = general();
+    for (const name of ["general_polls", "general_memos", "general_calendar"]) {
+      await assertFails(getDoc(doc(db, name, "test-doc")));
+      await assertFails(setDoc(doc(db, name, "test-doc"), { test: true }));
+    }
   });
 
-  it("allows member read/write to general collections", async () => {
-    await assertSucceeds(setDoc(doc(member(), "general_memos", "g1"), { text: "member edit" }));
-    await assertSucceeds(getDoc(doc(member(), "general_memos", "g1")));
-    await assertSucceeds(setDoc(doc(member(), "general_polls", "g2"), { text: "member edit" }));
+  it("allows admin read/write to member collections and admin configuration", async () => {
+    const db = admin();
+    await assertSucceeds(setDoc(doc(db, "events", "e1"), { title: "admin" }));
+    await assertSucceeds(getDoc(doc(db, "events", "e1")));
+    await assertSucceeds(setDoc(doc(db, "admin_config", "settings"), { theme: "plain" }));
   });
 
-  it("allows admin access to both areas and admin configuration", async () => {
-    await assertSucceeds(setDoc(doc(admin(), "events", "e1"), { title: "admin" }));
-    await assertSucceeds(setDoc(doc(admin(), "general_memos", "g1"), { text: "admin" }));
-    await assertSucceeds(setDoc(doc(admin(), "admin_config", "settings"), { theme: "plain" }));
-  });
-
-  it("denies unauthenticated access and unknown collections", async () => {
-    await assertFails(getDoc(doc(anonymous(), "events", "e1")));
-    await assertFails(setDoc(doc(anonymous(), "general_memos", "g1"), { text: "no" }));
-    await assertFails(setDoc(doc(member(), "unknown_collection", "x"), { value: 1 }));
+  it("denies member and general access to admin configuration", async () => {
+    await assertFails(getDoc(doc(member(), "admin_config", "settings")));
+    await assertFails(setDoc(doc(member(), "admin_config", "settings"), { value: 1 }));
+    await assertFails(getDoc(doc(general(), "admin_config", "settings")));
     await assertFails(setDoc(doc(general(), "admin_config", "settings"), { value: 1 }));
-    await assertFails(getDoc(doc(general(), "events", "member-only")));
+  });
+
+  it("denies anonymous access and every unlisted collection", async () => {
+    await assertFails(getDoc(doc(anonymous(), "events", "e1")));
+    await assertFails(setDoc(doc(anonymous(), "memos", "m1"), { title: "no" }));
+    await assertFails(setDoc(doc(member(), "unknown_collection", "x"), { value: 1 }));
+    await assertFails(getDoc(doc(general(), "unknown_collection", "x")));
   });
 });
