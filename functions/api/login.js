@@ -31,8 +31,8 @@ async function verifyPassword(password, encoded, salt) {
   return diff === 0;
 }
 function pemToArrayBuffer(pem) {
-  const normalized = pem.replace(/\\\\n/g, "\\n");
-  const body = normalized.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\\s/g, "");
+  // Cloudflare secrets should contain the PEM with real line breaks.
+  const body = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g, "");
   const binary = atob(body);
   const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
   return bytes.buffer;
