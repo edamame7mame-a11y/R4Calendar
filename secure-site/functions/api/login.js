@@ -70,11 +70,17 @@ export async function onRequestPost({ request, env }) {
   const limit = await env.LOGIN_RATE_LIMITER.limit({ key: ip });
   if (!limit.success) return jsonError("Too many attempts. Try again later.", 429);
 
-  const contentLength = Number(request.headers.get("Content-Length") || 0);
-  if (contentLength > 2048) return jsonError("Bad request", 400);
+  if (!(request.headers.get("Content-Type") || "").toLowerCase().includes("application/json")) {
+    return jsonError("Bad request", 400);
+  }
+
+  // Enforce the limit even when Content-Length is absent or untrusted.
+  let rawBody;
+  try { rawBody = await request.text(); } catch { return jsonError("Bad request", 400); }
+  if (encoder.encode(rawBody).byteLength > 2048) return jsonError("Bad request", 400);
 
   let body;
-  try { body = await request.json(); } catch { return jsonError("Bad request", 400); }
+  try { body = JSON.parse(rawBody); } catch { return jsonError("Bad request", 400); }
   if (!body || typeof body.password !== "string" || body.password.length < 1 || body.password.length > 256) {
     return jsonError("Invalid credentials", 401);
   }
