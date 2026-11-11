@@ -10,6 +10,15 @@ This branch is a development branch only. It is not approved for production depl
 - Placeholder member/general/admin routes check the Firebase claim for display routing.
 - Firestore rules are deny-all by default.
 
+## New server-side route gate (prototype; not deployed or tested)
+- Cloudflare Pages middleware gates requests under `/member/*`, `/general/*`, and `/admin/*`.
+- Successful shared-password login issues a signed, HttpOnly, Secure, SameSite=Strict session cookie with a one-hour expiry.
+- Role access: member/admin for member; member/general/admin for general; admin only for admin.
+- Logout calls a same-origin endpoint that clears the server session cookie.
+- Configure `SESSION_SIGNING_SECRET` as a Cloudflare secret. It must be randomly generated and at least 32 characters. Never put it in Git or chat.
+- Cookie issuance, expiry, role denial, logout, and direct-URL behavior remain untested in a Cloudflare preview.
+- Firestore Security Rules remain a separate mandatory data-security boundary.
+
 ## Mandatory blockers before any deployment
 1. **Do not deploy the current branch yet.** The login endpoint is a prototype and has not been integration-tested against Firebase.
 2. Add and test a real Cloudflare Rate Limiting binding named `LOGIN_RATE_LIMITER`.
