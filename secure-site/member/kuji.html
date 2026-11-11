@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>🎲 くじ引き（メンバー）</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fdf4ff; text-align: center; padding: 16px; color: #333; margin: 0; }
+    
+    header { display: flex; justify-content: space-between; align-items: center; max-width: 380px; margin: 0 auto 16px auto; }
+    h1 { font-size: 1.3rem; color: #a21caf; margin: 0; display: flex; align-items: center; gap: 6px; }
+    .sync-badge { font-size: 0.68rem; background: #fae8ff; color: #a21caf; border: 1px solid #f0abfc; padding: 2px 7px; border-radius: 10px; font-weight: bold; }
+    .btn-edit-list { background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+
+    .settings { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: left; max-width: 380px; margin: 0 auto; }
+    .section-title { font-weight: bold; font-size: 0.85rem; color: #a21caf; margin-top: 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .section-title:first-child { margin-top: 0; }
+    
+    input[type="date"], input[type="text"], textarea { width: 100%; padding: 10px; border: 2px solid #f5d0fe; border-radius: 8px; font-size: 0.95rem; outline: none; }
+    input:focus, textarea:focus { border-color: #d946ef; }
+
+    /* タップで選ぶチップ（ボタン）のデザイン */
+    .chip-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .chip { padding: 6px 12px; border-radius: 20px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; font-size: 0.85rem; font-weight: 600; cursor: pointer; user-select: none; transition: 0.15s; }
+    .chip.active { background: #d946ef; color: #fff; border-color: #d946ef; box-shadow: 0 2px 5px rgba(217, 70, 239, 0.3); }
+
+    /* 日付追加エリアのデザイン */
+    .date-add-row { display: flex; gap: 6px; margin-bottom: 10px; }
+    .date-add-row input[type="date"] { flex: 1; }
+    .btn-add-date { background: #a21caf; color: #fff; border: none; padding: 0 14px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
+    .btn-add-date:active { transform: scale(0.96); }
+    
+    .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fae8ff; color: #86198f; border: 1px solid #f0abfc; padding: 5px 10px; border-radius: 16px; font-size: 0.85rem; font-weight: bold; }
+    .date-chip-remove { background: #e879f9; color: #fff; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; justify-content: center; align-items: center; font-size: 0.7rem; cursor: pointer; line-height: 1; }
+
+    .mini-btns { display: flex; gap: 6px; }
+    .btn-mini { background: #f3f4f6; color: #4b5563; border: none; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; font-weight: bold; }
+
+    .btn-draw { background: #d946ef; color: white; border: none; padding: 14px 32px; font-size: 1.1rem; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(217,70,239,0.3); margin-top: 20px; width: 100%; max-width: 380px; }
+    .btn-draw:active { transform: scale(0.96); }
+    
+    #result-box { margin-top: 24px; min-height: 80px; }
+    
+    /* 結果のリスト表示 */
+    .result-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px; border-bottom: 1px solid #fdf4ff; font-size: 1.05rem; }
+    .result-date { font-weight: bold; color: #a21caf; font-size: 0.95rem; }
+    .result-winner { font-weight: bold; color: #222; font-size: 1.2rem; }
+
+    /* 履歴エリア（全員共有） */
+    .history-box { margin-top: 32px; background: #fff; padding: 16px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); max-width: 380px; margin-left: auto; margin-right: auto; text-align: left; }
+    .history-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f5d0fe; padding-bottom: 8px; margin-bottom: 10px; }
+    .history-box h3 { font-size: 1rem; color: #a21caf; margin: 0; }
+    .shared-badge { font-size: 0.7rem; background: #fae8ff; color: #a21caf; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+    
+    #history-list { list-style: none; padding: 0; margin: 0; max-height: 350px; overflow-y: auto; }
+    #history-list li { padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; position: relative; }
+    .history-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .history-date-title { font-size: 0.82rem; color: #a21caf; font-weight: bold; }
+    .history-time { font-size: 0.7rem; color: #9ca3af; }
+    .history-assign { font-weight: bold; color: #333; font-size: 0.95rem; margin: 3px 0; padding-left: 8px; border-left: 3px solid #f0abfc; }
+    .history-members { font-size: 0.75rem; color: #6b7280; line-height: 1.3; margin-top: 6px; background: #fdf4ff; padding: 4px 8px; border-radius: 6px; }
+    
+    .history-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+    .btn-clear { background: #e5e7eb; color: #4b5563; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+    .btn-del-item { background: none; border: none; color: #d1d5db; font-size: 0.8rem; cursor: pointer; padding: 2px 6px; }
+    .btn-del-item:hover { color: #ef4444; }
+
+    .back-btn { display: inline-block; margin-top: 30px; margin-bottom: 20px; padding: 10px 20px; background: #fff; color: #4b5563; text-decoration: none; border-radius: 20px; border: 1px solid #d1d5db; font-size: 0.9rem; font-weight: bold; }
+
+    /* 一覧編集モーダル */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 14px; padding: 18px; width: 100%; max-width: 360px; max-height: 90vh; overflow-y: auto; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal h2 { font-size: 1.05rem; color: #a21caf; margin-top: 0; margin-bottom: 12px; }
+    .modal label { display: block; font-size: 0.8rem; font-weight: bold; color: #444; margin-top: 12px; margin-bottom: 4px; }
+    .modal textarea { height: 110px; line-height: 1.4; font-size: 0.9rem; }
+    .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
+    .modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 0.9rem; }
+    .btn-save { background: #d946ef; color: #fff; }
+    .btn-cancel { background: #e5e7eb; color: #4b5563; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎲 くじ引き <span class="sync-badge">🌐 全員同期中</span></h1>
+    <div style="display:flex;gap:6px;align-items:center;"><button class="btn-edit-list" id="openEditModalBtn">⚙️ 一覧の編集</button><button class="btn-edit-list" id="logoutBtn" type="button">ログアウト</button></div>
+  </header>
+  
+  <div class="settings">
+    <div class="section-title">
+      <span>1. 何を決める？（タップで選択）</span>
+    </div>
+    <div class="chip-container" id="titleChips"></div>
+    <input type="text" id="kujiTitle" placeholder="一覧から選ぶか、ここに入力">
+
+    <div class="section-title">
+      <span>2. いつの分？（複数追加OK！）</span>
+      <button class="btn-mini" id="clearDatesBtn">日付クリア</button>
+    </div>
+    <div class="date-add-row">
+      <input type="date" id="datePicker">
+      <button class="btn-add-date" id="addDateBtn">＋ 追加</button>
+    </div>
+    <div class="chip-container" id="dateChips"></div>
+
+    <div class="section-title">
+      <span>3. 候補者を選ぶ（タップでON/OFF）</span>
+      <div class="mini-btns">
+        <button class="btn-mini" id="allOnBtn">全員ON</button>
+        <button class="btn-mini" id="allOffBtn">全解除</button>
+      </div>
+    </div>
+    <div class="chip-container" id="nameChips"></div>
+    <div id="selectedCount" style="font-size: 0.78rem; color: #6b7280; text-align: right; margin-top: 4px;">選択中: 0人</div>
+  </div>
+  
+  <button class="btn-draw" id="drawBtn">ルーレットを回す！</button>
+  
+  <div id="result-box"></div>
+
+  <!-- 記録エリア（全員にリアルタイム共有） -->
+  <div class="history-box">
+    <div class="history-header">
+      <h3>📜 みんなの抽選結果・記録</h3>
+      <span class="shared-badge">🌐 全員に共有中</span>
+    </div>
+    <ul id="history-list">
+      <li style="font-size: 0.85rem; color: #9ca3af; border: none; text-align: center;">読み込み中...</li>
+    </ul>
+    <div class="history-footer">
+      <button class="btn-clear" id="clearHistoryBtn">過去の記録をすべて消去</button>
+    </div>
+  </div>
+
+  <a href="index.html" class="back-btn">← カレンダーに戻る</a>
+
+  <!-- 一覧編集用の画面（モーダル） -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <h2>⚙️ 一覧の編集・登録（全員共有）</h2>
+      <p style="font-size: 0.78rem; color: #666; margin: 0 0 10px 0;">ここで保存した内容はメンバー全員の画面にも反映されます。</p>
+      
+      <label>「何を決める？」の一覧（改行で区切る）</label>
+      <textarea id="editTitlesInput" placeholder="シールドお知らせ&#10;チーズお知らせ"></textarea>
+
+      <label>「候補者の名前」の一覧（改行で区切る）</label>
+      <textarea id="editNamesInput" placeholder="ジャザ&#10;豆たん&#10;しず"></textarea>
+
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="closeEditModalBtn">キャンセル</button>
+        <button class="btn-save" id="savePresetsBtn">保存する</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { firebaseConfig } from "../firebase-config.js";
+
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.replace("/login.html"); return; }
+      try {
+        const token = await user.getIdTokenResult();
+        if (!["member", "admin"].includes(token.claims.area)) {
+          await signOut(auth); location.replace("/login.html"); return;
+        }
+      } catch {
+        await signOut(auth); location.replace("/login.html"); return;
+      }
+    const db = getFirestore(app);
+    const historyRef = collection(db, "kuji_history");
+    const settingsDocRef = doc(db, "kuji_settings", "presets");
+    // ★追加：現在の画面の状態（選択中の項目・日付・候補者・現在の結果）を全員で共有する保存先
+    const stateDocRef = doc(db, "kuji_settings", "live_state");
+
+    const DEFAULT_TITLES = ["シールドお知らせ", "チーズお知らせ"];
+    const DEFAULT_NAMES = ["ジャザ", "豆たん", "しず", "ひな", "シチミ", "いかれた猫"];
+
+    let presetTitles = [...DEFAULT_TITLES];
+    let presetNames = [...DEFAULT_NAMES];
+    let selectedNames = new Set(DEFAULT_NAMES);
+    let targetDates = [];
+    let currentTitle = "";
+    let latestResult = null;
+    let isSpinning = false;
+    let spinAnimTimer = null;
+    let lastHandledDrawId = 0;
+    let historyDocs = [];
+
+    // 初期化（今日の日付をカレンダー入力欄にセット）
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const todayStr = now.toISOString().slice(0, 10);
+    document.getElementById("datePicker").value = todayStr;
+    targetDates = [todayStr];
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function formatDateShort(dateStr) {
+      if (!dateStr) return "";
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
+      return `${d.getMonth() + 1}/${d.getDate()}(${weekDays[d.getDay()]})`;
+    }
+
+    function formatDrawTime(ts) {
+      if (!ts) return "";
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return "";
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      return `${m}/${day} ${hh}:${mm} 抽選`;
+    }
+
+    // ★現在の画面の選択状態をFirebaseに保存して全員に反映する関数
+    async function syncLiveState(extra = {}) {
+      try {
+        await setDoc(stateDocRef, {
+          title: currentTitle,
+          targetDates: targetDates,
+          selectedNames: Array.from(selectedNames),
+          latestResult: latestResult,
+          updatedAt: Date.now(),
+          ...extra
+        }, { merge: true });
+      } catch (e) {
+        console.error("同期エラー:", e);
+      }
+    }
+
+    // --- 1. プリセット（候補者・項目一覧）のリアルタイム同期 ---
+    onSnapshot(settingsDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const d = docSnap.data();
+        if (Array.isArray(d.titles) && d.titles.length > 0) presetTitles = d.titles;
+        if (Array.isArray(d.names) && d.names.length > 0) presetNames = d.names;
+      }
+      renderTitleChips();
+      renderNameChips();
+    });
+
+    // --- 2. 現在の画面状態（選択中のタイトル・日付・候補者ON/OFF・最新結果）のリアルタイム同期 ---
+    onSnapshot(stateDocRef, (docSnap) => {
+      if (!docSnap.exists()) {
+        // 初回のみ現在の初期状態を書き込む
+        syncLiveState();
+        return;
+      }
+
+      const d = docSnap.data();
+
+      // ① タイトルの同期（自分がタイピング中でなければ入力欄も書き換える）
+      if (typeof d.title === "string") {
+        currentTitle = d.title;
+        const inputEl = document.getElementById("kujiTitle");
+        if (document.activeElement !== inputEl) {
+          inputEl.value = currentTitle;
+        }
+      }
+
+      // ② 日付リストの同期
+      if (Array.isArray(d.targetDates)) {
+        targetDates = d.targetDates;
+      }
+
+      // ③ 選択中の候補者ON/OFFの同期
+      if (Array.isArray(d.selectedNames)) {
+        // プリセットに存在する名前だけを有効にする
+        selectedNames = new Set(d.selectedNames.filter(n => presetNames.includes(n)));
+      }
+
+      // ④ 抽選結果＆ルーレット演出の同期
+      if (d.latestResult !== undefined) {
+        latestResult = d.latestResult;
+      }
+
+      renderTitleChips();
+      renderDateChips();
+      renderNameChips();
+
+      // 誰かがルーレットを回した瞬間なら全員の画面でルーレット演出を回す
+      if (d.drawId && d.drawId !== lastHandledDrawId) {
+        const isRecent = (Date.now() - d.drawId) < 10000;
+        if (lastHandledDrawId !== 0 && isRecent && latestResult) {
+          playSpinAnimationAndShowResult(latestResult);
+        } else {
+          lastHandledDrawId = d.drawId;
+          renderLatestResultBox(latestResult);
+        }
+        lastHandledDrawId = d.drawId;
+      } else if (!isSpinning) {
+        renderLatestResultBox(latestResult);
+      }
+    });
+
+    // --- 3. 抽選履歴のリアルタイム同期（全員共有） ---
+    onSnapshot(historyRef, (snapshot) => {
+      const items = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+        items.push({
+          id: docSnap.id,
+          title: d.title || "名称未設定",
+          assignments: d.assignments || [],
+          participants: d.participants || [],
+          timestamp: d.timestamp || 0
+        });
+      });
+      items.sort((a, b) => b.timestamp - a.timestamp);
+      historyDocs = items;
+      renderHistory();
+    });
+
+    // --- 日付の追加・削除処理 ---
+    document.getElementById("addDateBtn").onclick = () => {
+      const val = document.getElementById("datePicker").value;
+      if (!val) return;
+      if (!targetDates.includes(val)) {
+        targetDates.push(val);
+        targetDates.sort();
+        renderDateChips();
+        syncLiveState();
+      } else {
+        alert("その日付はすでに追加されています！");
+      }
+    };
+
+    document.getElementById("clearDatesBtn").onclick = () => {
+      targetDates = [];
+      renderDateChips();
+      syncLiveState();
+    };
+
+    function renderDateChips() {
+      const container = document.getElementById("dateChips");
+      container.innerHTML = "";
+      if (targetDates.length === 0) {
+        container.innerHTML = '<span style="font-size:0.8rem; color:#999;">上のカレンダーから日付を選んで「＋追加」を押してね</span>';
+        return;
+      }
+      targetDates.forEach(dStr => {
+        const chip = document.createElement("div");
+        chip.className = "date-chip";
+        chip.innerHTML = `
+          <span>${formatDateShort(dStr)}</span>
+          <span class="date-chip-remove" data-date="${dStr}">×</span>
+        `;
+        container.appendChild(chip);
+      });
+
+      container.querySelectorAll(".date-chip-remove").forEach(btn => {
+        btn.onclick = () => {
+          targetDates = targetDates.filter(d => d !== btn.dataset.date);
+          renderDateChips();
+          syncLiveState();
+        };
+      });
+    }
+
+    // --- チップ描画処理 ---
+    function renderTitleChips() {
+      const container = document.getElementById('titleChips');
+      container.innerHTML = '';
+
+      presetTitles.forEach(title => {
+        const btn = document.createElement('div');
+        btn.className = 'chip' + (currentTitle === title ? ' active' : '');
+        btn.textContent = title;
+        btn.onclick = () => {
+          currentTitle = title;
+          document.getElementById('kujiTitle').value = title;
+          renderTitleChips();
+          syncLiveState();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    // 手入力したときも全員の画面にリアルタイム反映
+    let titleInputTimer = null;
+    document.getElementById('kujiTitle').addEventListener('input', (e) => {
+      currentTitle = e.target.value;
+      renderTitleChips();
+      clearTimeout(titleInputTimer);
+      titleInputTimer = setTimeout(() => {
+        syncLiveState();
+      }, 250);
+    });
+
+    function renderNameChips() {
+      const container = document.getElementById('nameChips');
+      container.innerHTML = '';
+
+      if (presetNames.length === 0) {
+        container.innerHTML = '<span style="font-size:0.8rem; color:#999;">右上の「⚙️ 一覧の編集」から名前を登録してね</span>';
+      }
+
+      presetNames.forEach(name => {
+        const isSelected = selectedNames.has(name);
+        const btn = document.createElement('div');
+        btn.className = 'chip' + (isSelected ? ' active' : '');
+        btn.textContent = name;
+        btn.onclick = () => {
+          if (selectedNames.has(name)) {
+            selectedNames.delete(name);
+          } else {
+            selectedNames.add(name);
+          }
+          renderNameChips();
+          syncLiveState();
+        };
+        container.appendChild(btn);
+      });
+
+      document.getElementById('selectedCount').textContent = `選択中: ${selectedNames.size}人`;
+    }
+
+    document.getElementById("allOnBtn").onclick = () => {
+      selectedNames = new Set(presetNames);
+      renderNameChips();
+      syncLiveState();
+    };
+
+    document.getElementById("allOffBtn").onclick = () => {
+      selectedNames.clear();
+      renderNameChips();
+      syncLiveState();
+    };
+
+    // --- 一覧の編集モーダル処理 ---
+    const editModal = document.getElementById('editModal');
+
+    document.getElementById("openEditModalBtn").onclick = () => {
+      document.getElementById('editTitlesInput').value = presetTitles.join('\n');
+      document.getElementById('editNamesInput').value = presetNames.join('\n');
+      editModal.classList.add('open');
+    };
+
+    document.getElementById("closeEditModalBtn").onclick = () => {
+      editModal.classList.remove('open');
+    };
+
+    document.getElementById("savePresetsBtn").onclick = async () => {
+      const tText = document.getElementById('editTitlesInput').value;
+      const nText = document.getElementById('editNamesInput').value;
+
+      const newTitles = tText.split('\n').map(s => s.trim()).filter(s => s !== '');
+      const newNames = nText.split('\n').map(s => s.trim()).filter(s => s !== '');
+
+      try {
+        await setDoc(settingsDocRef, {
+          titles: newTitles,
+          names: newNames,
+          updatedAt: new Date().toISOString()
+        });
+        // 新しく追加されたメンバーも含めて全員ON状態にして同期
+        presetTitles = newTitles;
+        presetNames = newNames;
+        selectedNames = new Set(newNames);
+        await syncLiveState();
+        editModal.classList.remove('open');
+      } catch(e) {
+        alert("保存エラー: " + e.message);
+      }
+    };
+
+    // 配列をランダムにシャッフルする関数
+    function shuffleArray(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // --- 真ん中の抽選結果ボックスを描画する関数 ---
+    function renderLatestResultBox(res) {
+      const resultBox = document.getElementById('result-box');
+      const drawBtn = document.getElementById("drawBtn");
+      if (!res || !res.assignments || res.assignments.length === 0) {
+        resultBox.innerHTML = "";
+        drawBtn.textContent = 'ルーレットを回す！';
+        return;
+      }
+
+      const participants = res.participants || [];
+      const participantsStr = participants.join('、');
+
+      let html = '<div style="font-size: 1.1rem; color: #ec4899; font-weight: bold; margin-bottom: 12px;">🎉 決定 🎉</div>';
+      html += `<div style="background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; width: 100%; max-width: 350px;">`;
+      html += `<div style="color: #6b7280; font-size: 0.95rem; margin-bottom: 10px; border-bottom: 2px dashed #f5d0fe; padding-bottom: 8px;"><b>${escapeHtml(res.title)}</b></div>`;
+      
+      res.assignments.forEach(a => {
+        html += `
+          <div class="result-row">
+            <span class="result-date">${formatDateShort(a.date)}</span>
+            <span class="result-winner">🎉 ${escapeHtml(a.winner)}</span>
+          </div>
+        `;
+      });
+
+      html += `<div style="font-size: 0.75rem; color: #6b7280; background: #fdf4ff; padding: 8px; border-radius: 8px; text-align: left; line-height: 1.4; margin-top: 12px;">👥 <b>参加（${participants.length}名）:</b><br>${escapeHtml(participantsStr)}</div>`;
+      html += `</div>`;
+      
+      resultBox.innerHTML = html;
+      drawBtn.textContent = 'もう一度決める';
+    }
+
+    // --- 全員の画面でルーレット演出を再生してから結果を表示する関数 ---
+    function playSpinAnimationAndShowResult(res) {
+      if (spinAnimTimer) clearInterval(spinAnimTimer);
+      isSpinning = true;
+      const resultBox = document.getElementById('result-box');
+      const drawBtn = document.getElementById("drawBtn");
+      drawBtn.style.opacity = '0.5';
+      drawBtn.textContent = '抽選中...';
+
+      const items = (res.participants && res.participants.length > 0) ? res.participants : presetNames;
+      let spinCount = 0;
+
+      spinAnimTimer = setInterval(() => {
+        const randomName = items[Math.floor(Math.random() * items.length)] || "🎲";
+        resultBox.innerHTML = `<div style="font-size: 1.5rem; font-weight: bold; color: #d946ef; margin-top:20px;">🎲 ${escapeHtml(randomName)} ...</div>`;
+        spinCount++;
+
+        if (spinCount >= 15) {
+          clearInterval(spinAnimTimer);
+          spinAnimTimer = null;
+          isSpinning = false;
+          drawBtn.style.opacity = '1';
+          renderLatestResultBox(res);
+        }
+      }, 60);
+    }
+
+    // --- ルーレット実行処理 ---
+    const drawBtn = document.getElementById("drawBtn");
+
+    drawBtn.onclick = async () => {
+      if (isSpinning) return;
+      
+      const kujiTitle = document.getElementById('kujiTitle').value.trim();
+      currentTitle = kujiTitle;
+      const items = presetNames.filter(n => selectedNames.has(n));
+      
+      if (!kujiTitle) { alert('「1. 何を決める？」を選択するか入力してください！'); return; }
+      if (targetDates.length === 0) { alert('「2. いつの分？」で日付を1つ以上「＋追加」してください！'); return; }
+      if (items.length === 0) { alert('「3. 候補者」を1人以上タップして選んでください！'); return; }
+
+      let pool = [];
+      const assignments = [];
+      targetDates.forEach(dStr => {
+        if (pool.length === 0) {
+          pool = shuffleArray(items);
+        }
+        assignments.push({
+          date: dStr,
+          winner: pool.pop()
+        });
+      });
+
+      const drawTimestamp = Date.now();
+      const resultObj = {
+        title: kujiTitle,
+        assignments: assignments,
+        participants: items,
+        timestamp: drawTimestamp
+      };
+
+      latestResult = resultObj;
+      lastHandledDrawId = drawTimestamp;
+
+      // 自分の画面でルーレット演出開始と同時に、Firebaseへ書き込んで全員の画面でもルーレットを回す
+      playSpinAnimationAndShowResult(resultObj);
+      await syncLiveState({ drawId: drawTimestamp });
+
+      // 履歴コレクションにも追加（約0.9秒後のルーレット終了タイミングに合わせて履歴へ追加）
+      setTimeout(async () => {
+        try {
+          await addDoc(historyRef, resultObj);
+        } catch(e) {
+          alert("履歴の共有保存に失敗しました: " + e.message);
+        }
+      }, 900);
+    };
+
+    // --- 履歴の描画と削除処理 ---
+    function renderHistory() {
+      const listEl = document.getElementById('history-list');
+      listEl.innerHTML = '';
+
+      if (historyDocs.length === 0) {
+        listEl.innerHTML = '<li style="font-size: 0.85rem; color: #9ca3af; border: none; text-align: center;">まだ記録がありません</li>';
+        return;
+      }
+
+      historyDocs.forEach(item => {
+        const li = document.createElement('li');
+        
+        let membersHtml = '';
+        if (item.participants && item.participants.length > 0) {
+          membersHtml = `<div class="history-members">👥 参加（${item.participants.length}名）: ${escapeHtml(item.participants.join('、'))}</div>`;
+        }
+
+        let rowsHtml = '';
+        if (item.assignments && Array.isArray(item.assignments)) {
+          rowsHtml = item.assignments.map(a => `<div class="history-assign">${formatDateShort(a.date)} ➔ 🎉 ${escapeHtml(a.winner)}</div>`).join('');
+        }
+
+        li.innerHTML = `
+          <div class="history-top-row">
+            <span class="history-date-title">📌 ${escapeHtml(item.title)}</span>
+            <div>
+              <span class="history-time">${formatDrawTime(item.timestamp)}</span>
+              <button class="btn-del-item" data-id="${item.id}" title="この記録を削除">×</button>
+            </div>
+          </div>
+          ${rowsHtml}
+          ${membersHtml}
+        `;
+        listEl.appendChild(li);
+      });
+
+      // 個別削除ボタン
+      listEl.querySelectorAll(".btn-del-item").forEach(btn => {
+        btn.onclick = async () => {
+          if (confirm("この抽選記録を削除しますか？")) {
+            try {
+              await deleteDoc(doc(db, "kuji_history", btn.dataset.id));
+            } catch(e) { alert("削除エラー: " + e.message); }
+          }
+        };
+      });
+    }
+
+    // 全消去ボタン（下の履歴だけでなく真ん中の最新結果表示も全員の画面からクリアします）
+    document.getElementById("clearHistoryBtn").onclick = async () => {
+      if (historyDocs.length === 0 && !latestResult) return;
+      if (confirm('みんなの過去の抽選記録をすべて消去しますか？（元に戻せません）')) {
+        try {
+          for (const item of historyDocs) {
+            await deleteDoc(doc(db, "kuji_history", item.id));
+          }
+          latestResult = null;
+          await syncLiveState({ drawId: 0 });
+        } catch(e) {
+          alert("消去エラー: " + e.message);
+        }
+      }
+    };
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+      const button = document.getElementById("logoutBtn");
+      button.disabled = true;
+      try {
+        const response = await fetch("/api/logout", { method: "POST", credentials: "same-origin", cache: "no-store" });
+        if (!response.ok) throw new Error("サーバー側のログアウトに失敗しました。もう一度お試しください。");
+        await signOut(auth);
+        location.replace("/login.html");
+      } catch (error) {
+        button.disabled = false;
+        alert(error.message || "ログアウトに失敗しました。");
+      }
+    });
+    });
+  </script>
+</body>
+</html>
