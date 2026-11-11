@@ -16,7 +16,7 @@ export default {
     }
     if (mismatch !== 0) return new Response("Forbidden", { status: 403 });
 
-    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const ip = request.headers.get("X-R4-Client-IP") || "unknown";
     const result = await env.LOGIN_RATE_LIMITER.limit({ key: ip });
     return Response.json(
       { allowed: Boolean(result.success) },
