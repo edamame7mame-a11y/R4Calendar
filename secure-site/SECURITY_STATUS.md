@@ -7,7 +7,7 @@ This branch is a development branch only. It is not approved for production depl
 - Login page sends the selected role and password to the server endpoint.
 - Server-side password verification uses PBKDF2-HMAC-SHA256 (310,000 iterations).
 - Server endpoint mints a Firebase custom token with an `area` claim.
-- Placeholder member/general/admin routes check the Firebase claim for display routing.
+- Placeholder member/general/admin pages check the Firebase claim for client-side display routing; Cloudflare middleware separately gates the page requests using the signed HttpOnly session cookie.
 - Firestore rules are deny-all by default.
 
 ## New server-side route gate (prototype; not deployed or tested)
