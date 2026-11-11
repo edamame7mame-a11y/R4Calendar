@@ -14,7 +14,14 @@ export async function onRequest({ request, next, env }) {
   const session = await readSession(request, env);
   if (!session || !ACCESS[area].includes(session.role)) {
     const target = new URL("/login.html", url.origin);
-    return Response.redirect(target.toString(), 302);
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: target.toString(),
+        "Cache-Control": "no-store",
+        "Pragma": "no-cache"
+      }
+    });
   }
   const response = await next();
   const headers = new Headers(response.headers);
