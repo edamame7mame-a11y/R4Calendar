@@ -16,5 +16,9 @@ export async function onRequest({ request, next, env }) {
     const target = new URL("/login.html", url.origin);
     return Response.redirect(target.toString(), 302);
   }
-  return next();
+  const response = await next();
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "private, no-store");
+  headers.set("Pragma", "no-cache");
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
