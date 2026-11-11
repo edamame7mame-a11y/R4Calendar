@@ -86,6 +86,13 @@ describe("server-side protected route middleware", () => {
     expect(cookie).toContain("Max-Age=3600");
   });
 
+  it("protects area roots and nested routes, not just index pages", async () => {
+    expect((await run("/member/", null)).response.status).toBe(302);
+    expect((await run("/general/settings/password.html", null)).response.status).toBe(302);
+    expect((await run("/admin/config/", "general")).response.status).toBe(302);
+    expect((await run("/admin/config/", "admin")).response.status).toBe(200);
+  });
+
   it("does not intercept public paths", async () => {
     const { response, continued } = await run("/login.html", null);
     expect(response.status).toBe(200);
