@@ -45,5 +45,7 @@ jobs:
       - name: Run Firestore rules tests in emulator
         run: npx firebase emulators:exec --project r4calendar-2c6f8 --only firestore "npx vitest run tests/firestore.rules.test.js"
 
+      - name: Check migrated page inline JavaScript syntax
+        run: python tests/check-inline-scripts.py
       - name: Run protected route middleware tests
         run: npx vitest run tests/route-middleware.test.js
