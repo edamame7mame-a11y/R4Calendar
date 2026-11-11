@@ -21,7 +21,7 @@ This branch is a development branch only. It is not approved for production depl
 
 ## Mandatory blockers before any deployment
 1. **Do not deploy the current branch yet.** The login endpoint is a prototype and has not been integration-tested against Firebase.
-2. Add and test a real Cloudflare Rate Limiting binding named `LOGIN_RATE_LIMITER`.
+2. Add and test a real Cloudflare Rate Limiting binding named `LOGIN_RATE_LIMITER`, and configure `SESSION_SIGNING_SECRET` (random, at least 32 characters).
 3. Add server-only secrets: `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, and PBKDF2 hash/salt pairs for each role:
    - `MEMBER_PASSWORD_HASH`, `MEMBER_PASSWORD_SALT`
    - `GENERAL_PASSWORD_HASH`, `GENERAL_PASSWORD_SALT`
