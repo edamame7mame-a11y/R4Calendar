@@ -19,10 +19,10 @@ Use Firebase Authentication custom tokens minted only by a Cloudflare Pages Func
 | Area | member claim | general claim | admin claim |
 |---|---:|---:|---:|
 | Member collections | read/write | deny | read/write |
-| General collections | deny | read/write | read/write |
+| General collections | read/write | read/write | read/write |
 | Admin configuration | deny | deny | read/write |
 
-Do not create general-area collections until their purpose and data shape are defined. The admin claim is only issued after checking the owner-only admin password.
+Do not create general-area collections until their purpose and data shape are defined. The admin claim is only issued after checking the owner-only admin password. A member login may also enter the general area; a general-only login remains isolated from member collections.
 
 ## Cloudflare secrets / variables (names only)
 
@@ -67,7 +67,7 @@ A shared password grants the same role to everyone who knows it. It cannot ident
 - [ ] Implement and review the token-signing Function.
 - [ ] Implement login, logout, session refresh, and admin password-change endpoints.
 - [ ] Implement deny-by-default Firestore rules using the claims above.
-- [ ] Test member cannot read/write general data.
+- [ ] Test member can read/write general data.
 - [ ] Test general cannot read/write member data.
 - [ ] Test neither shared role can access admin configuration or change passwords.
 - [ ] Test admin can manage both areas and passwords.
