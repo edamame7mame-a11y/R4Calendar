@@ -22,7 +22,7 @@ This branch is a development branch only. It is not approved for production depl
 ## Mandatory blockers before any deployment
 1. **Do not deploy the current branch yet.** The login endpoint is a prototype and has not been integration-tested against Firebase.
 2. Add and test a real Cloudflare Rate Limiting binding named `LOGIN_RATE_LIMITER`, and configure `SESSION_SIGNING_SECRET` (random, at least 32 characters).
-3. Add server-only secrets: `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, and PBKDF2 hash/salt pairs for each role:
+3. Add server-only secrets: `SESSION_SIGNING_SECRET`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, and PBKDF2 hash/salt pairs for each role:
    - `MEMBER_PASSWORD_HASH`, `MEMBER_PASSWORD_SALT`
    - `GENERAL_PASSWORD_HASH`, `GENERAL_PASSWORD_SALT`
    - `ADMIN_PASSWORD_HASH`, `ADMIN_PASSWORD_SALT`
@@ -33,6 +33,9 @@ This branch is a development branch only. It is not approved for production depl
 8. Migrate and validate all five existing page features and all 190 backup documents into the new project. Migrate browser-local settings separately. Do not import until rules and app behavior are verified.
 9. Confirm direct access to every route, API, static asset, and Firestore document is denied without the correct role.
 10. The old GitHub Pages site and old Firebase project remain separate. The old Firestore rules were previously observed to allow unauthenticated read/write. This has not been changed; old data therefore remains exposed until the owner explicitly secures that project.
+
+## Preview acceptance test
+- Follow `ROUTE_ACCESS_TEST_PLAN.md` to test direct URLs for all roles in a Cloudflare Preview environment. Do not use production deployment for initial verification.
 
 ## Safe operating procedure
 - Keep the old site running during development, but do not treat it as private.
