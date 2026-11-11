@@ -3,6 +3,7 @@
 This folder is the isolated front-end staging area. It is not deployable yet.
 
 - `login.html`: shared-password role selection and Firebase custom-token exchange.
+- `functions/api/login.js`: Pages Function login endpoint, relative to this folder as the Pages root directory.
 - `firebase-config.js`: public Firebase web config placeholders. Fill only from the new project's registered Web app.
 - `member/index.html`, `general/index.html`, `admin/index.html`: role-checked staging destinations only; existing application features are not integrated yet.
 
