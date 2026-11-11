@@ -98,9 +98,9 @@ Status: analysis only. The original five HTML files and the supplied Firestore e
 ## Security and rollout gates (must all pass before cutover)
 
 - [ ] All five feature pages require member-area authentication.
-- [ ] General-area routes require general-area authentication and are not linked from member navigation.
+- [ ] General-area routes accept member, general, and admin roles; member and admin can use both areas, while general-only remains isolated from member pages.
 - [ ] Firestore rules enforce area claims on every collection; UI route guards alone are not security.
-- [ ] Automated rules tests prove member cannot read/write general collections and general cannot read/write member collections.
+- [ ] Automated rules tests prove member can read/write both areas, general can read/write only general collections, and admin can read/write both areas.
 - [ ] Admin-only settings cannot be read or changed by member/general accounts.
 - [ ] Custom-token login endpoint, role claims, rate limiter, password rotation and logout/revocation are implemented and tested.
 - [ ] Restore the 190-document backup into a disposable test target and compare counts and sample fields.
