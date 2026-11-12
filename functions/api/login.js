@@ -34,7 +34,7 @@ async function verifyPassword(password, encoded, salt) {
 }
 function pemToArrayBuffer(pem) {
   // Cloudflare secrets should contain the PEM with real line breaks.
-  const body = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\\n|\s|"/g, "");
+  const body = String(pem).replace(/\\r|\\n/g, "").replace(/-----BEGIN [^-]+-----|-----END [^-]+-----/g, "").replace(/[^A-Za-z0-9+/=]/g, "");
   const binary = atob(body);
   const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
   return bytes.buffer;
@@ -80,7 +80,7 @@ export async function onRequestPost({ request, env }) {
         "X-R4-Client-IP": request.headers.get("CF-Connecting-IP") || "unknown"
       }
     });
-  } catch {
+  } catch (e) { return jsonError("AuthError: " + (e && e.message ? e.message : String(e)), 503); } /*
     return jsonError("Authentication service is not configured", 503);
   }
   if (guardResponse.status === 429) return jsonError("Too many attempts. Try again later.", 429);
@@ -92,11 +92,11 @@ export async function onRequestPost({ request, env }) {
 
   // Enforce the limit even when Content-Length is absent or untrusted.
   let rawBody;
-  try { rawBody = await request.text(); } catch { return jsonError("Bad request", 400); }
+  try { rawBody = await request.text(); } catch (e) { return jsonError("AuthError: " + (e && e.message ? e.message : String(e)), 503); } /* return jsonError("Bad request", 400); }
   if (encoder.encode(rawBody).byteLength > 2048) return jsonError("Bad request", 400);
 
   let body;
-  try { body = JSON.parse(rawBody); } catch { return jsonError("Bad request", 400); }
+  try { body = JSON.parse(rawBody); } catch (e) { return jsonError("AuthError: " + (e && e.message ? e.message : String(e)), 503); } /* return jsonError("Bad request", 400); }
   if (!body || typeof body.password !== "string" || body.password.length < 1 || body.password.length > 256) {
     return jsonError("Invalid credentials", 401);
   }
@@ -116,7 +116,7 @@ export async function onRequestPost({ request, env }) {
     return Response.json({ customToken, role }, {
       headers: { "Cache-Control": "no-store", "Pragma": "no-cache", "Set-Cookie": sessionCookie }
     });
-  } catch {
-    return jsonError("Authentication service error", 503);
+  } catch (e) { return jsonError("AuthError: " + (e && e.message ? e.message : String(e)), 503); } /*
+  */
   }
 }
