@@ -1,6 +1,6 @@
 const encoder = new TextEncoder();
 const COOKIE_NAME = "__Host-r4_session";
-const SESSION_SECONDS = 60 * 60;
+const SESSION_SECONDS = 400 * 24 * 60 * 60;
 
 function base64url(bytes) {
   let binary = "";
@@ -17,9 +17,9 @@ async function getKey(secret) {
   if (!secret || secret.length < 32) throw new Error("Session signing secret must be at least 32 characters");
   return crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
-export async function createSessionCookie(role, env) {
+function getRoleHash(r, env) { return r === "member" ? (env.MEMBER_PASSWORD_HASH || "") : r === "general" ? (env.GENERAL_PASSWORD_HASH || "") : r === "admin" ? (env.ADMIN_PASSWORD_HASH || "") : ""; } async function getPasswordVersion(r, env) { const h = getRoleHash(r, env); if (!h) return ""; const d = new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(h.trim().toLowerCase()))); return base64url(d.slice(0, 8)); } export async function createSessionCookie(role, env) {
   const now = Math.floor(Date.now() / 1000);
-  const payload = base64url(encoder.encode(JSON.stringify({ role, iat: now, exp: now + SESSION_SECONDS })));
+  const ver = await getPasswordVersion(role, env); const payload = base64url(encoder.encode(JSON.stringify({ role, ver, iat: now, exp: now + SESSION_SECONDS })));
   const key = await getKey(env.SESSION_SIGNING_SECRET);
   const signature = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(payload)));
   const value = payload + "." + base64url(signature);
@@ -39,7 +39,7 @@ export async function readSession(request, env) {
     const payload = JSON.parse(new TextDecoder().decode(decodeBase64url(parts[0])));
     const now = Math.floor(Date.now() / 1000);
     if (!["member", "general", "admin"].includes(payload.role) || !Number.isInteger(payload.iat) || !Number.isInteger(payload.exp) || payload.exp <= now || payload.iat > now + 60 || payload.exp <= payload.iat || payload.exp - payload.iat > SESSION_SECONDS) return null;
-    return payload;
+    const expectedVer = await getPasswordVersion(payload.role, env); if (!expectedVer || payload.ver !== expectedVer) return null; return payload;
   } catch { return null; }
 }
 export function clearSessionCookie() {
