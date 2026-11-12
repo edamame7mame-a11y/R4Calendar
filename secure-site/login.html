@@ -54,6 +54,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const form = document.getElementById("loginForm");
+    const roleSelect = document.getElementById("role");
     const button = document.getElementById("submit");
     const status = document.getElementById("status");
     const dest = {
@@ -61,6 +62,25 @@
       general: "/general/index.html",
       admin: "/admin/index.html"
     };
+
+    const params = new URLSearchParams(location.search);
+    const nextParam = params.get("next") || "";
+
+    if (nextParam.startsWith("/general/")) {
+      roleSelect.value = "general";
+    } else if (nextParam.startsWith("/admin/")) {
+      roleSelect.value = "admin";
+    }
+
+    function resolveTarget(role) {
+      if (nextParam.startsWith("/") && !nextParam.startsWith("//")) {
+        if (role === "admin") return nextParam;
+        if (role === "member" && (nextParam.startsWith("/member/") || nextParam.startsWith("/general/"))) return nextParam;
+        if (role === "general" && nextParam.startsWith("/general/")) return nextParam;
+      }
+      return dest[role];
+    }
+
     let busy = false;
     const waitUser = new Promise((r) => {
       const u = onAuthStateChanged(auth, (user) => {
@@ -84,10 +104,11 @@
           if (s.authenticated && dest[s.role]) {
             button.disabled = true;
             status.textContent = "ログイン状態を確認しています…";
+            const targetUrl = resolveTarget(s.role);
             if (user) {
               const t = await user.getIdTokenResult();
               if (t.claims.area === s.role) {
-                location.replace(dest[s.role]);
+                location.replace(targetUrl);
                 return;
               }
             }
@@ -100,7 +121,7 @@
               if (d2.customToken) {
                 await setPersistence(auth, browserLocalPersistence);
                 await signInWithCustomToken(auth, d2.customToken);
-                location.replace(dest[s.role]);
+                location.replace(targetUrl);
                 return;
               }
             }
@@ -124,7 +145,7 @@
           credentials: "same-origin",
           cache: "no-store",
           body: JSON.stringify({
-            role: document.getElementById("role").value,
+            role: roleSelect.value,
             password: document.getElementById("password").value
           })
         });
@@ -137,7 +158,7 @@
         }
         await setPersistence(auth, browserLocalPersistence);
         await signInWithCustomToken(auth, data.customToken);
-        location.replace(dest[data.role]);
+        location.replace(resolveTarget(data.role));
       } catch (err) {
         busy = false;
         try {
