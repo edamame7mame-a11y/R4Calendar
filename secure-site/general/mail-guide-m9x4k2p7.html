@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>メールアドレス変更手順ガイド</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #f3f4f6; color: #111827; padding: 20px 14px 48px; }
+    main { max-width: 740px; margin: 0 auto; display: grid; gap: 18px; }
+    .card { background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; background: #fef3c7; color: #92400e; font-size: 0.8rem; font-weight: 700; padding: 5px 10px; border-radius: 999px; }
+    h1 { margin: 0 0 8px; font-size: 1.35rem; color: #111827; line-height: 1.4; }
+    .updated { font-size: 0.82rem; color: #6b7280; margin-bottom: 18px; }
+    .guide-body { font-size: 0.96rem; line-height: 1.8; color: #1f2937; white-space: pre-wrap; word-break: break-word; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; border: none; cursor: pointer; text-decoration: none; box-sizing: border-box; }
+    .btn-edit { background: #14532d; color: #ffffff; }
+    .btn-save { background: #14532d; color: #ffffff; padding: 12px 20px; font-size: 0.95rem; }
+    .btn-cancel { background: #e5e7eb; color: #374151; }
+    .btn-danger { background: #fee2e2; color: #991b1b; padding: 6px 12px; font-size: 0.82rem; }
+    .btn:disabled { opacity: 0.6; cursor: wait; }
+    .edit-box { display: none; margin-top: 16px; padding-top: 16px; border-top: 2px dashed #e5e7eb; gap: 12px; }
+    .edit-box.open { display: grid; }
+    label { font-size: 0.88rem; font-weight: 700; color: #374151; }
+    input[type="text"], textarea { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid #d1d5db; font-size: 0.95rem; font-family: inherit; box-sizing: border-box; line-height: 1.6; }
+    textarea { min-height: 240px; resize: vertical; }
+    .edit-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+    h2 { margin: 0 0 12px; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .img-list { display: grid; gap: 18px; }
+    .img-item { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; background: #fafafa; display: grid; gap: 10px; }
+    .img-item img { width: 100%; max-height: 520px; object-fit: contain; border-radius: 8px; background: #111827; cursor: zoom-in; }
+    .img-caption { font-size: 0.92rem; color: #374151; font-weight: 600; white-space: pre-wrap; }
+    .img-footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .upload-panel { display: none; background: #f0fdf4; border: 1px dashed #16a34a; border-radius: 12px; padding: 16px; margin-bottom: 16px; gap: 10px; }
+    .upload-panel.open { display: grid; }
+    .status-msg { font-size: 0.86rem; color: #15803d; font-weight: 600; min-height: 1.3em; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; place-items: center; padding: 16px; z-index: 999; cursor: zoom-out; }
+    .modal.open { display: grid; }
+    .modal img { max-width: 96vw; max-height: 92vh; border-radius: 8px; object-fit: contain; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <div class="top-bar">
+        <span class="badge">🔒 個別案内ページ</span>
+        <div id="adminControls" hidden>
+          <a href="/admin/index.html" class="btn btn-cancel" style="margin-right:6px;">⚙️ 管理者画面へ戻る</a>
+          <button id="toggleEditBtn" class="btn btn-edit" type="button">✏️ 内容を編集する</button>
+        </div>
+      </div>
+
+      <h1 id="viewTitle">ゲーム登録メールアドレスの変更手順</h1>
+      <div id="viewUpdated" class="updated">読み込み中…</div>
+      <div id="viewContent" class="guide-body">手順を読み込んでいます…</div>
+
+      <div id="editBox" class="edit-box">
+        <div>
+          <label for="inputTitle">ページタイトル</label>
+          <input id="inputTitle" type="text" maxlength="100">
+        </div>
+        <div>
+          <label for="inputContent">手順・説明文（改行もそのまま反映されます）</label>
+          <textarea id="inputContent" placeholder="ここにメールアドレス変更のやり方や注意点を入力してください"></textarea>
+        </div>
+        <div class="edit-actions">
+          <span id="saveStatus" class="status-msg"></span>
+          <button id="cancelEditBtn" class="btn btn-cancel" type="button">閉じる</button>
+          <button id="saveBtn" class="btn btn-save" type="button">💾 この内容で保存する</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>
+        <span>📸 スクリーンショット・参考画像</span>
+        <span style="font-size:0.8rem; font-weight:normal; color:#6b7280;">※画像をクリックすると拡大できます</span>
+      </h2>
+
+      <div id="uploadPanel" class="upload-panel">
+        <label for="imgFile">新しい画像を追加（自動で読みやすい画質に圧縮されます）</label>
+        <input id="imgFile" type="file" accept="image/*">
+        <input id="imgCaption" type="text" placeholder="画像の説明ひとこと（例：① 設定画面のここをタップ）" maxlength="140">
+        <div class="edit-actions">
+          <span id="imgStatus" class="status-msg"></span>
+          <button id="uploadBtn" class="btn btn-save" type="button">📤 画像を追加する</button>
+        </div>
+      </div>
+
+      <div id="imgList" class="img-list"></div>
+    </section>
+  </main>
+
+  <div id="zoomModal" class="modal">
+    <img id="zoomImg" src="" alt="拡大画像">
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import {
+      getFirestore, doc, collection, onSnapshot, setDoc, addDoc, deleteDoc
+    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { firebaseConfig } from "../firebase-config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const guideDocRef = doc(db, "general", "mail_change_guide_m9x4k2p7");
+    const imagesColRef = collection(db, "general", "mail_change_guide_m9x4k2p7", "images");
+
+    const adminControls = document.getElementById("adminControls");
+    const toggleEditBtn = document.getElementById("toggleEditBtn");
+    const editBox = document.getElementById("editBox");
+    const uploadPanel = document.getElementById("uploadPanel");
+    const viewTitle = document.getElementById("viewTitle");
+    const viewUpdated = document.getElementById("viewUpdated");
+    const viewContent = document.getElementById("viewContent");
+    const inputTitle = document.getElementById("inputTitle");
+    const inputContent = document.getElementById("inputContent");
+    const saveBtn = document.getElementById("saveBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const saveStatus = document.getElementById("saveStatus");
+    const imgFile = document.getElementById("imgFile");
+    const imgCaption = document.getElementById("imgCaption");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const imgStatus = document.getElementById("imgStatus");
+    const imgList = document.getElementById("imgList");
+    const zoomModal = document.getElementById("zoomModal");
+    const zoomImg = document.getElementById("zoomImg");
+
+    let canEdit = false;
+    let isEditing = false;
+    let currentData = {
+      title: "ゲーム登録メールアドレスの変更手順",
+      content: "ここに手順を入力してください。\n（右上の「✏️ 内容を編集する」ボタンからいつでも文章の書き換えやスクリーンショット画像の追加ができます）"
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        location.replace("/login.html");
+        return;
+      }
+      try {
+        const token = await user.getIdTokenResult();
+        const area = token.claims.area;
+        if (!["member", "general", "admin"].includes(area)) {
+          await signOut(auth);
+          location.replace("/login.html");
+          return;
+        }
+        canEdit = area === "member" || area === "admin";
+        if (canEdit) {
+          adminControls.hidden = false;
+        }
+        startListeners();
+      } catch {
+        location.replace("/login.html");
+      }
+    });
+
+    function startListeners() {
+      onSnapshot(guideDocRef, (snap) => {
+        if (snap.exists()) {
+          const d = snap.data();
+          currentData = {
+            title: d.title || "ゲーム登録メールアドレスの変更手順",
+            content: d.content || ""
+          };
+          viewTitle.textContent = currentData.title;
+          viewContent.textContent = currentData.content;
+          viewUpdated.textContent = d.updatedAt ? `最終更新: ${new Date(d.updatedAt).toLocaleString("ja-JP")}` : "";
+        } else {
+          viewTitle.textContent = currentData.title;
+          viewContent.textContent = currentData.content;
+          viewUpdated.textContent = canEdit ? "※右上の「✏️ 内容を編集する」から手順を作成できます" : "";
+        }
+        if (!isEditing) {
+          inputTitle.value = currentData.title;
+          inputContent.value = currentData.content;
+        }
+      });
+
+      onSnapshot(imagesColRef, (snap) => {
+        const items = [];
+        snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+        items.sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+        renderImages(items);
+      });
+    }
+
+    function renderImages(items) {
+      imgList.innerHTML = "";
+      if (items.length === 0) {
+        const empty = document.createElement("p");
+        empty.style.color = "#6b7280";
+        empty.style.fontSize = "0.9rem";
+        empty.textContent = "まだ画像は登録されていません。";
+        imgList.appendChild(empty);
+        return;
+      }
+      for (const item of items) {
+        const box = document.createElement("div");
+        box.className = "img-item";
+
+        const img = document.createElement("img");
+        img.src = item.dataUrl;
+        img.alt = item.caption || "手順画像";
+        img.addEventListener("click", () => {
+          zoomImg.src = item.dataUrl;
+          zoomModal.classList.add("open");
+        });
+        box.appendChild(img);
+
+        if (item.caption || (canEdit && isEditing)) {
+          const footer = document.createElement("div");
+          footer.className = "img-footer";
+
+          const cap = document.createElement("div");
+          cap.className = "img-caption";
+          cap.textContent = item.caption || "";
+          footer.appendChild(cap);
+
+          if (canEdit && isEditing) {
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "btn btn-danger";
+            delBtn.textContent = "🗑️ 画像を削除";
+            delBtn.addEventListener("click", async () => {
+              if (!confirm("この画像を削除しますか？")) return;
+              await deleteDoc(doc(db, "general", "mail_change_guide_m9x4k2p7", "images", item.id));
+            });
+            footer.appendChild(delBtn);
+          }
+          box.appendChild(footer);
+        }
+        imgList.appendChild(box);
+      }
+    }
+
+    toggleEditBtn.addEventListener("click", () => {
+      isEditing = !isEditing;
+      editBox.classList.toggle("open", isEditing);
+      uploadPanel.classList.toggle("open", isEditing);
+      toggleEditBtn.textContent = isEditing ? "✖ 編集を終了する" : "✏️ 内容を編集する";
+      if (isEditing) {
+        inputTitle.value = currentData.title;
+        inputContent.value = currentData.content;
+      }
+    });
+
+    cancelEditBtn.addEventListener("click", () => {
+      isEditing = false;
+      editBox.classList.remove("open");
+      uploadPanel.classList.remove("open");
+      toggleEditBtn.textContent = "✏️ 内容を編集する";
+    });
+
+    saveBtn.addEventListener("click", async () => {
+      saveBtn.disabled = true;
+      saveStatus.textContent = "保存しています…";
+      try {
+        await setDoc(guideDocRef, {
+          title: inputTitle.value.trim() || "ゲーム登録メールアドレスの変更手順",
+          content: inputContent.value,
+          updatedAt: new Date().toISOString()
+        });
+        saveStatus.textContent = "✅ 保存しました！";
+        setTimeout(() => { saveStatus.textContent = ""; }, 2500);
+      } catch (err) {
+        saveStatus.textContent = "❌ 保存エラー: " + (err.message || err);
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
+
+    function compressImage(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const maxW = 1200;
+            const scale = img.width > maxW ? maxW / img.width : 1;
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", 0.82));
+          };
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    uploadBtn.addEventListener("click", async () => {
+      const file = imgFile.files[0];
+      if (!file) {
+        alert("追加する画像ファイルを選択してください。");
+        return;
+      }
+      uploadBtn.disabled = true;
+      imgStatus.textContent = "画像を圧縮してアップロード中…";
+      try {
+        const dataUrl = await compressImage(file);
+        await addDoc(imagesColRef, {
+          dataUrl,
+          caption: imgCaption.value.trim(),
+          createdAt: new Date().toISOString()
+        });
+        imgFile.value = "";
+        imgCaption.value = "";
+        imgStatus.textContent = "✅ 画像を追加しました！";
+        setTimeout(() => { imgStatus.textContent = ""; }, 2500);
+      } catch (err) {
+        imgStatus.textContent = "❌ 画像追加エラー: " + (err.message || err);
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    });
+
+    zoomModal.addEventListener("click", () => {
+      zoomModal.classList.remove("open");
+    });
+  </script>
+</body>
+</html>
