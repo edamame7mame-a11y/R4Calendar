@@ -6,26 +6,36 @@ const ACCESS = {
   "/admin": ["admin"]
 };
 
-export async function onRequest({ request, next, env }) {
-  const url = new URL(request.url);
-  const area = Object.keys(ACCESS).find(prefix => url.pathname === prefix || url.pathname.startsWith(prefix + "/"));
-  if (!area) return next();
-
-  const session = await readSession(request, env);
-  if (!session || !ACCESS[area].includes(session.role)) {
-    const target = new URL("/login.html", url.origin);
-    return new Response(null, {
-      status: 302,
-      headers: {
-        Location: target.toString(),
-        "Cache-Control": "no-store",
-        "Pragma": "no-cache"
-      }
-    });
+function requiredRoles(pathname) {
+  for (const [prefix, roles] of Object.entries(ACCESS)) {
+    if (pathname === prefix || pathname.startsWith(prefix + "/")) return roles;
   }
+  return null;
+}
+
+export async function onRequest(context) {
+  const { request, env, next } = context;
+  const url = new URL(request.url);
+  const roles = requiredRoles(url.pathname);
+
+  if (roles) {
+    const session = await readSession(request, env);
+    if (!session || !roles.includes(session.role)) {
+      const loginUrl = new URL("/login.html", url.origin);
+      loginUrl.searchParams.set("next", url.pathname + url.search);
+      return Response.redirect(loginUrl.toString(), 302);
+    }
+  }
+
   const response = await next();
   const headers = new Headers(response.headers);
-  headers.set("Cache-Control", "private, no-store");
-  headers.set("Pragma", "no-cache");
-  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  if (roles) {
+    headers.set("Cache-Control", "no-store");
+    headers.set("Pragma", "no-cache");
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
 }
