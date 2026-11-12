@@ -36,46 +36,15 @@ small{display:block;color:#777;margin-top:14px;line-height:1.5}
 </main>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-import { getAuth, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+import { browserLocalPersistence, getAuth, onAuthStateChanged, setPersistence, signInWithCustomToken, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const form = document.getElementById("loginForm");
-const button = document.getElementById("submit");
-const status = document.getElementById("status");
-
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  button.disabled = true;
-  status.textContent = "確認しています…";
-  try {
-    const response = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      cache: "no-store",
-      body: JSON.stringify({
-        role: document.getElementById("role").value,
-        password: document.getElementById("password").value
-      })
-    });
-    if (!response.ok) throw new Error("ログインできませんでした。入力内容を確認してください。");
-    const data = await response.json();
-    if (!data.customToken || !["member","general","admin"].includes(data.role)) throw new Error("認証応答が正しくありません。");
-    await signInWithCustomToken(auth, data.customToken);
-    const destinations = {
-      member: "/member/index.html",
-      general: "/general/index.html",
-      admin: "/admin/index.html"
-    };
-    location.replace(destinations[data.role]);
-  } catch (error) {
-    try { await fetch("/api/logout", { method: "POST", credentials: "same-origin", cache: "no-store" }); } catch {}
-    status.textContent = error.message || "ログインに失敗しました。";
-    button.disabled = false;
-  }
-});
+const app = initializeApp(firebaseConfig), auth = getAuth(app);
+const form = document.getElementById("loginForm"), button = document.getElementById("submit"), status = document.getElementById("status");
+const dest = { member: "/member/index.html", general: "/general/index.html", admin: "/admin/index.html" };
+let busy = false;
+const waitUser = new Promise(r => { const u = onAuthStateChanged(auth, user => { u(); r(user); }); });
+(async () => { try { const [user, res] = await Promise.all([waitUser, fetch("/api/login", { credentials: "same-origin", cache: "no-store" })]); if (busy) return; if (res.ok) { const s = await res.json(); if (s.authenticated && dest[s.role]) { button.disabled = true; status.textContent = "ログイン状態を確認しています…"; if (user && (await user.getIdTokenResult()).claims.area === s.role) { location.replace(dest[s.role]); return; } const r2 = await fetch("/api/login?token=1", { credentials: "same-origin", cache: "no-store" }); if (r2.ok) { const d2 = await r2.json(); if (d2.customToken) { await setPersistence(auth, browserLocalPersistence); await signInWithCustomToken(auth, d2.customToken); location.replace(dest[s.role]); return; } } button.disabled = false; status.textContent = ""; } } if (user && !busy) await signOut(auth); } catch {} })();
+form.addEventListener("submit", async (e) => { e.preventDefault(); busy = true; button.disabled = true; status.textContent = "確認しています…"; try { const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", cache: "no-store", body: JSON.stringify({ role: document.getElementById("role").value, password: document.getElementById("password").value }) }); if (!res.ok) throw new Error("ログインできませんでした。入力内容を確認してください。"); const data = await res.json(); if (!data.customToken || !dest[data.role]) throw new Error("認証応答が正しくありません。"); await setPersistence(auth, browserLocalPersistence); await signInWithCustomToken(auth, data.customToken); location.replace(dest[data.role]); } catch (err) { busy = false; try { await fetch("/api/logout", { method: "POST", credentials: "same-origin", cache: "no-store" }); } catch {} status.textContent = err.message || "ログインに失敗しました。"; button.disabled = false; } });
 </script>
 </body>
 </html>
