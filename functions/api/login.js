@@ -120,3 +120,4 @@ export async function onRequestPost({ request, env }) {
     return jsonError("Authentication service error", 503);
   }
 }
+
