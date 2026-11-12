@@ -1,50 +1,156 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
-<title>R4カレンダー ログイン</title>
-<style>
-*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f4f5f7;color:#292929;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:18px}
-main{width:min(100%,420px);background:#fff;border-radius:18px;padding:24px;box-shadow:0 5px 24px #00000012}
-h1{font-size:1.35rem;margin:0 0 8px}p{color:#666;font-size:.92rem;line-height:1.6}
-label{display:block;font-weight:600;margin:18px 0 7px}select,input,button{width:100%;font:inherit;border-radius:10px;padding:12px;border:1px solid #d1d5db}
-button{margin-top:18px;border:0;background:#166534;color:white;font-weight:700;cursor:pointer}button:disabled{opacity:.6;cursor:wait}
-#status{min-height:1.5em;margin-top:12px;color:#991b1b;font-size:.9rem}
-small{display:block;color:#777;margin-top:14px;line-height:1.5}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>R4カレンダー ログイン</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f3f4f6; color: #111827; padding: 16px; box-sizing: border-box; }
+    main { width: 100%; max-width: 400px; background: #ffffff; border-radius: 16px; padding: 28px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06); box-sizing: border-box; }
+    h1 { margin: 0 0 12px; font-size: 1.35rem; }
+    p { margin: 0 0 12px; font-size: 0.9rem; color: #4b5563; line-height: 1.6; }
+    form { display: grid; gap: 12px; margin-top: 16px; }
+    label { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    select, input, button { width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.95rem; box-sizing: border-box; }
+    button { background: #14532d; color: #ffffff; border: none; font-weight: 700; cursor: pointer; margin-top: 4px; }
+    button:disabled { opacity: 0.6; cursor: wait; }
+    #status { min-height: 1.4em; font-size: 0.88rem; color: #b91c1c; }
+    small { display: block; margin-top: 16px; font-size: 0.8rem; color: #6b7280; line-height: 1.5; }
+  </style>
 </head>
 <body>
-<main>
-<h1>R4カレンダー</h1>
-<p>利用するエリアを選び、共通パスワードを入力してください。</p>
-<p>R5R4用でログインすると、R5R4用・メンバー用の両方を閲覧・編集できます。メンバー用でログインした場合は、メンバー用のみ利用できます。</p>
-<form id="loginForm">
-<label for="role">ログイン先</label>
-<select id="role" required>
-<option value="member">R5R4用</option>
-<option value="general">メンバー用</option>
-<option value="admin">管理者用</option>
-</select>
-<label for="password">共通パスワード</label>
-<input id="password" type="password" autocomplete="current-password" maxlength="256" required>
-<button id="submit" type="submit">ログイン</button>
-<div id="status" role="status" aria-live="polite"></div>
-</form>
-<small>パスワードは他の人と共有するため、知っている人は同じ権限を使えます。</small>
-</main>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-import { browserLocalPersistence, getAuth, onAuthStateChanged, setPersistence, signInWithCustomToken, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-import { firebaseConfig } from "./firebase-config.js";
-const app = initializeApp(firebaseConfig), auth = getAuth(app);
-const form = document.getElementById("loginForm"), button = document.getElementById("submit"), status = document.getElementById("status");
-const dest = { member: "/member/index.html", general: "/general/index.html", admin: "/admin/index.html" };
-let busy = false;
-const waitUser = new Promise(r => { const u = onAuthStateChanged(auth, user => { u(); r(user); }); });
-(async () => { try { const [user, res] = await Promise.all([waitUser, fetch("/api/login", { credentials: "same-origin", cache: "no-store" })]); if (busy) return; if (res.ok) { const s = await res.json(); if (s.authenticated && dest[s.role]) { button.disabled = true; status.textContent = "ログイン状態を確認しています…"; if (user && (await user.getIdTokenResult()).claims.area === s.role) { location.replace(dest[s.role]); return; } const r2 = await fetch("/api/login?token=1", { credentials: "same-origin", cache: "no-store" }); if (r2.ok) { const d2 = await r2.json(); if (d2.customToken) { await setPersistence(auth, browserLocalPersistence); await signInWithCustomToken(auth, d2.customToken); location.replace(dest[s.role]); return; } } button.disabled = false; status.textContent = ""; } } if (user && !busy) await signOut(auth); } catch {} })();
-form.addEventListener("submit", async (e) => { e.preventDefault(); busy = true; button.disabled = true; status.textContent = "確認しています…"; try { const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", cache: "no-store", body: JSON.stringify({ role: document.getElementById("role").value, password: document.getElementById("password").value }) }); if (!res.ok) throw new Error("ログインできませんでした。入力内容を確認してください。"); const data = await res.json(); if (!data.customToken || !dest[data.role]) throw new Error("認証応答が正しくありません。"); await setPersistence(auth, browserLocalPersistence); await signInWithCustomToken(auth, data.customToken); location.replace(dest[data.role]); } catch (err) { busy = false; try { await fetch("/api/logout", { method: "POST", credentials: "same-origin", cache: "no-store" }); } catch {} status.textContent = err.message || "ログインに失敗しました。"; button.disabled = false; } });
-</script>
+  <main>
+    <h1>R4カレンダー</h1>
+    <p>利用するエリアを選び、共通パスワードを入力してください。</p>
+    <p>R5R4用でログインすると、R5R4用・メンバー用の両方を閲覧・編集できます。メンバー用でログインした場合は、メンバー用のみ利用できます。</p>
+    <form id="loginForm">
+      <label for="role">ログイン先</label>
+      <select id="role" name="role" required>
+        <option value="member">R5R4用</option>
+        <option value="general">メンバー用</option>
+        <option value="admin">管理者用</option>
+      </select>
+      <label for="password">パスワード</label>
+      <input id="password" type="password" autocomplete="current-password" maxlength="256" required>
+      <button id="submit" type="submit">ログイン</button>
+      <div id="status" role="status" aria-live="polite"></div>
+    </form>
+    <small>パスワードは他の人と共有するため、知っている人は同じ権限を使えます。</small>
+  </main>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import {
+      browserLocalPersistence,
+      getAuth,
+      onAuthStateChanged,
+      setPersistence,
+      signInWithCustomToken,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const form = document.getElementById("loginForm");
+    const button = document.getElementById("submit");
+    const status = document.getElementById("status");
+    const dest = {
+      member: "/member/index.html",
+      general: "/general/index.html",
+      admin: "/admin/index.html"
+    };
+    let busy = false;
+    const waitUser = new Promise((r) => {
+      const u = onAuthStateChanged(auth, (user) => {
+        u();
+        r(user);
+      });
+    });
+
+    (async () => {
+      try {
+        const [user, res] = await Promise.all([
+          waitUser,
+          fetch("/api/login", {
+            credentials: "same-origin",
+            cache: "no-store"
+          })
+        ]);
+        if (busy) return;
+        if (res.ok) {
+          const s = await res.json();
+          if (s.authenticated && dest[s.role]) {
+            button.disabled = true;
+            status.textContent = "ログイン状態を確認しています…";
+            if (user) {
+              const t = await user.getIdTokenResult();
+              if (t.claims.area === s.role) {
+                location.replace(dest[s.role]);
+                return;
+              }
+            }
+            const r2 = await fetch("/api/login?token=1", {
+              credentials: "same-origin",
+              cache: "no-store"
+            });
+            if (r2.ok) {
+              const d2 = await r2.json();
+              if (d2.customToken) {
+                await setPersistence(auth, browserLocalPersistence);
+                await signInWithCustomToken(auth, d2.customToken);
+                location.replace(dest[s.role]);
+                return;
+              }
+            }
+            button.disabled = false;
+            status.textContent = "";
+          }
+        }
+        if (user && !busy) await signOut(auth);
+      } catch {}
+    })();
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      busy = true;
+      button.disabled = true;
+      status.textContent = "確認しています…";
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          cache: "no-store",
+          body: JSON.stringify({
+            role: document.getElementById("role").value,
+            password: document.getElementById("password").value
+          })
+        });
+        if (!res.ok) {
+          throw new Error("ログインできませんでした。入力内容を確認してください。");
+        }
+        const data = await res.json();
+        if (!data.customToken || !dest[data.role]) {
+          throw new Error("認証応答が正しくありません。");
+        }
+        await setPersistence(auth, browserLocalPersistence);
+        await signInWithCustomToken(auth, data.customToken);
+        location.replace(dest[data.role]);
+      } catch (err) {
+        busy = false;
+        try {
+          await fetch("/api/logout", {
+            method: "POST",
+            credentials: "same-origin",
+            cache: "no-store"
+          });
+        } catch {}
+        status.textContent = err.message || "ログインに失敗しました。";
+        button.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
