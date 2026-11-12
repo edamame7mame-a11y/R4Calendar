@@ -34,7 +34,7 @@ async function verifyPassword(password, encoded, salt) {
 }
 function pemToArrayBuffer(pem) {
   // Cloudflare secrets should contain the PEM with real line breaks.
-  const body = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g, "");
+  const body = String(pem).replace(/\\r|\\n/g, "").replace(/-----BEGIN [^-]+-----|-----END [^-]+-----/g, "").replace(/[^A-Za-z0-9+/=]/g, "");
   const binary = atob(body);
   const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
   return bytes.buffer;
@@ -116,7 +116,6 @@ export async function onRequestPost({ request, env }) {
     return Response.json({ customToken, role }, {
       headers: { "Cache-Control": "no-store", "Pragma": "no-cache", "Set-Cookie": sessionCookie }
     });
-  } catch {
-    return jsonError("Authentication service error", 503);
+  } catch (e) { return jsonError("AuthError: " + (e && e.message ? e.message : String(e)), 503);
   }
 }
