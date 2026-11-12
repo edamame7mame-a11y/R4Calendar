@@ -19,7 +19,9 @@
     .btn-primary { background: #14532d; color: #ffffff; width: 100%; }
     .btn-primary:disabled { opacity: 0.6; cursor: wait; }
     .btn-sub { background: #e5e7eb; color: #1f2937; }
+    .btn-secret { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
     .btn-logout { background: #fee2e2; color: #991b1b; padding: 8px 14px; font-size: 0.85rem; }
+    .url-box { background: #f9fafb; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 12px; font-family: monospace; font-size: 0.85rem; word-break: break-all; margin-bottom: 12px; color: #1f2937; }
     #logBox { margin-top: 16px; background: #111827; color: #f9fafb; border-radius: 10px; padding: 14px; font-family: monospace; font-size: 0.86rem; line-height: 1.6; white-space: pre-wrap; display: none; }
   </style>
 </head>
@@ -38,8 +40,18 @@
     </section>
 
     <section class="card">
+      <h2>🔒 秘密の個別案内ページ（管理者控え）</h2>
+      <p>他の画面からは一切リンクされていない非公開URLのページです。教えたい相手にだけURLをコピーして送ってください。（R5R4用・メンバー用のどちらのログインでも閲覧でき、編集ボタンはR5R4・管理者のみ表示されます）</p>
+      <div id="secretUrlText" class="url-box"></div>
+      <div class="nav-grid">
+        <a href="/general/mail-guide-m9x4k2p7.html" class="btn btn-secret">✏️ メール変更手順ページを開く・編集する</a>
+        <button id="copyUrlBtn" class="btn btn-sub" type="button">📋 相手に教えるURLをコピー</button>
+      </div>
+    </section>
+
+    <section class="card">
       <h2>📦 旧サイトからの全データ引き継ぎ</h2>
-      <p>旧カレンダー（<code>r4calendar-1cb70</code>）に保存されている「予定・ラベル設定・くじ履歴・くじ設定・要点メモ・メモ画像・略奪記録・略奪ガイド定型文」の全8種類のデータを、現在の新サイトへ丸ごとコピーします。</p>
+      <p>旧カレンダー（<code>r4calendar-1cb70</code>）に保存されている全8種類のデータを、現在の新サイトへ丸ごとコピーします。</p>
       <button id="migrateBtn" class="btn btn-primary" type="button" disabled>🔄 旧サイトから全データを引き継ぐ</button>
       <div id="logBox"></div>
     </section>
@@ -71,6 +83,19 @@
     const logoutBtn = document.getElementById("logout");
     const migrateBtn = document.getElementById("migrateBtn");
     const logBox = document.getElementById("logBox");
+    const secretUrlText = document.getElementById("secretUrlText");
+    const copyUrlBtn = document.getElementById("copyUrlBtn");
+
+    const secretFullUrl = `${location.origin}/general/mail-guide-m9x4k2p7.html`;
+    secretUrlText.textContent = secretFullUrl;
+
+    copyUrlBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(secretFullUrl);
+        copyUrlBtn.textContent = "✅ URLをコピーしました！";
+        setTimeout(() => { copyUrlBtn.textContent = "📋 相手に教えるURLをコピー"; }, 2000);
+      } catch {}
+    });
 
     function appendLog(text) {
       logBox.style.display = "block";
