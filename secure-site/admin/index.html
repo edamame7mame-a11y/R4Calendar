@@ -1,26 +1,151 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
-<title>管理者エリア - R4カレンダー</title>
-<style>
-body{font-family:system-ui,sans-serif;background:#f4f5f7;margin:0;padding:24px;color:#222}
-.card{max-width:560px;margin:8vh auto;background:white;padding:24px;border-radius:16px;box-shadow:0 4px 20px #0001}
-button{padding:10px 16px;border:0;border-radius:9px;background:#555;color:white;font-size:1rem}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>管理者用エリア - R4カレンダー</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #f3f4f6; color: #111827; padding: 24px 16px; }
+    main { max-width: 680px; margin: 0 auto; display: grid; gap: 20px; }
+    .card { background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    h1 { margin: 0; font-size: 1.35rem; }
+    h2 { margin: 0 0 8px; font-size: 1.1rem; }
+    p { margin: 0 0 14px; font-size: 0.92rem; color: #4b5563; line-height: 1.6; }
+    .nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 12px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 16px; border-radius: 10px; font-weight: 700; font-size: 0.95rem; text-decoration: none; border: none; cursor: pointer; box-sizing: border-box; }
+    .btn-primary { background: #14532d; color: #ffffff; width: 100%; }
+    .btn-primary:disabled { opacity: 0.6; cursor: wait; }
+    .btn-sub { background: #e5e7eb; color: #1f2937; }
+    .btn-logout { background: #fee2e2; color: #991b1b; padding: 8px 14px; font-size: 0.85rem; }
+    #logBox { margin-top: 16px; background: #111827; color: #f9fafb; border-radius: 10px; padding: 14px; font-family: monospace; font-size: 0.86rem; line-height: 1.6; white-space: pre-wrap; display: none; }
+  </style>
 </head>
 <body>
-<main class="card">
-<h1>管理者エリア</h1>
-<p>全エリアと設定を管理する移行先です。</p>
-<p id="state">認証を確認しています…</p>
-<button id="logout" hidden>ログアウト</button>
-</main>
-<script type="module">
-import { protectArea } from "../shared/auth.js";
-protectArea("admin");
-</script>
+  <main>
+    <section class="card">
+      <div class="header-row">
+        <h1>⚙️ 管理者用エリア</h1>
+        <button id="logout" class="btn btn-logout" type="button" hidden>ログアウト</button>
+      </div>
+      <p id="state" style="margin-top:8px; margin-bottom:0;">ログイン状態を確認しています…</p>
+      <div class="nav-grid">
+        <a href="/member/index.html" class="btn btn-sub">📅 R5R4用（予定表）を開く</a>
+        <a href="/general/index.html" class="btn btn-sub">👥 メンバー用エリアを開く</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>📦 旧サイトからの全データ引き継ぎ</h2>
+      <p>旧カレンダー（<code>r4calendar-1cb70</code>）に保存されている「予定・ラベル設定・くじ履歴・くじ設定・要点メモ・メモ画像・略奪記録・略奪ガイド定型文」の全8種類のデータを、現在の新サイトへ丸ごとコピーします。</p>
+      <button id="migrateBtn" class="btn btn-primary" type="button" disabled>🔄 旧サイトから全データを引き継ぐ</button>
+      <div id="logBox"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { firebaseConfig } from "../firebase-config.js";
+
+    const oldFirebaseConfig = {
+      apiKey: "AIzaSyDHMBvpdoIfvV6KKDAMsz6I1zKeI2AVrwo",
+      authDomain: "r4calendar-1cb70.firebaseapp.com",
+      projectId: "r4calendar-1cb70",
+      storageBucket: "r4calendar-1cb70.firebasestorage.app",
+      messagingSenderId: "273656799256",
+      appId: "1:273656799256:web:254da78a155c5c8e3b5205"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const newDb = getFirestore(app);
+
+    const oldApp = initializeApp(oldFirebaseConfig, "legacy-r4calendar");
+    const oldDb = getFirestore(oldApp);
+
+    const stateEl = document.getElementById("state");
+    const logoutBtn = document.getElementById("logout");
+    const migrateBtn = document.getElementById("migrateBtn");
+    const logBox = document.getElementById("logBox");
+
+    function appendLog(text) {
+      logBox.style.display = "block";
+      logBox.textContent += text + "\n";
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        location.replace("/login.html");
+        return;
+      }
+      try {
+        const token = await user.getIdTokenResult();
+        if (!["admin", "member"].includes(token.claims.area)) {
+          await signOut(auth);
+          location.replace("/login.html");
+          return;
+        }
+        stateEl.textContent = "管理者ログイン確認済み。下のボタンから各エリアへの移動やデータ引き継ぎが行えます。";
+        logoutBtn.hidden = false;
+        migrateBtn.disabled = false;
+      } catch {
+        await signOut(auth);
+        location.replace("/login.html");
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      logoutBtn.disabled = true;
+      try {
+        await fetch("/api/logout", { method: "POST", credentials: "same-origin", cache: "no-store" });
+        await signOut(auth);
+        location.replace("/login.html");
+      } catch {
+        logoutBtn.disabled = false;
+      }
+    });
+
+    const TARGETS = [
+      { name: "events", label: "📅 カレンダー予定 (events)" },
+      { name: "calendar_settings", label: "🏷️ カレンダーラベル設定 (calendar_settings)" },
+      { name: "kuji_history", label: "🎲 くじ引き履歴 (kuji_history)" },
+      { name: "kuji_settings", label: "⚙️ くじ引き設定 (kuji_settings)" },
+      { name: "memos", label: "📝 要点メモ (memos)" },
+      { name: "memo_images", label: "🖼️ 要点メモ画像 (memo_images)" },
+      { name: "plunders", label: "🚨 略奪データベース (plunders)" },
+      { name: "plunder_templates", label: "📋 略奪ガイド定型文 (plunder_templates)" }
+    ];
+
+    migrateBtn.addEventListener("click", async () => {
+      if (!confirm("旧サイト（r4calendar-1cb70）の全データを現在のサイトへコピーします。よろしいですか？")) return;
+      migrateBtn.disabled = true;
+      logBox.textContent = "";
+      appendLog("⏳ 旧サイトからのデータ引き継ぎを開始します...");
+      let totalCount = 0;
+
+      for (const target of TARGETS) {
+        try {
+          const snap = await getDocs(collection(oldDb, target.name));
+          let count = 0;
+          for (const d of snap.docs) {
+            await setDoc(doc(newDb, target.name, d.id), d.data());
+            count++;
+            totalCount++;
+          }
+          appendLog(`✅ ${target.label}: ${count} 件コピー完了`);
+        } catch (err) {
+          appendLog(`❌ ${target.label}: エラー (${err.message || err})`);
+        }
+      }
+
+      appendLog(`\n🎉 すべての処理が完了しました！（合計 ${totalCount} 件）`);
+      appendLog("上の「📅 R5R4用（予定表）を開く」ボタンを押して、データが入っているか確認してください！");
+      migrateBtn.disabled = false;
+    });
+  </script>
 </body>
 </html>
