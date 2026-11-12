@@ -34,7 +34,7 @@ async function verifyPassword(password, encoded, salt) {
 }
 function pemToArrayBuffer(pem) {
   // Cloudflare secrets should contain the PEM with real line breaks.
-  const body = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g, "");
+  const body = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\\n|\s|"/g, "");
   const binary = atob(body);
   const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
   return bytes.buffer;
@@ -120,4 +120,3 @@ export async function onRequestPost({ request, env }) {
     return jsonError("Authentication service error", 503);
   }
 }
-
