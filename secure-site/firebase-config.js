@@ -1,7 +1,7 @@
 // Public Firebase web-app configuration (not a service account credential).
 // Authorization must be enforced by Firebase rules and server-side authentication.
 export const firebaseConfig = {
-  apiKey: "AIzaSyCwU3MIdoFtf3GhL-PyaSmGfyecG8JGg",
+  apiKey: "AIzaSyCwdU3M1doFTf3GhL-PyaSmGfyec0GBJcg",
   authDomain: "r4calendar-2c6f8.firebaseapp.com",
   projectId: "r4calendar-2c6f8",
   storageBucket: "r4calendar-2c6f8.firebasestorage.app",
